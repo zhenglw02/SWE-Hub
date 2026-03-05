@@ -1,0 +1,31 @@
+[project]
+name = "code-data-agent-sdk"
+version = "0.1.0"
+description = "代码数据合成agent"
+authors = [
+    {name = "zhengliwei01",email = "zhengliwei01@baidu.com"}
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "requests (>=2.32.5,<3.0.0)",
+    "pytest (>=9.0.2,<10.0.0)",
+    "pytest-cov (>=7.0.0,<8.0.0)",
+    # nl2repo dependencies
+    "pydantic (>=2.0.0)",
+    "pydantic-settings (>=2.0.0)",
+    "tree-sitter (>=0.20.0)",
+    "tree-sitter-python (>=0.20.0)",
+    "tree-sitter-javascript (>=0.20.0)",
+    "tree-sitter-typescript (>=0.20.0)",
+    "networkx (>=3.0)",
+    "python-louvain (>=0.16)",
+    "pyyaml (>=6.0)",
+    "tqdm (>=4.60.0)",
+    "docker (>=6.0.0)",
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
