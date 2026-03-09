@@ -110,7 +110,18 @@ python -m env_agent.main \
 向 Python 仓库注入微小 Bug，验证测试 PASS→FAIL 回归，然后生成模拟真实用户视角的 GitHub Issue 报告。
 
 流水线包含两个可独立或组合运行的步骤：
-- **preprocess**：验证仓库运行环境，采集 ground-truth 测试结果
+- **preprocess**：在 Agent 启动前完成两项离线准备工作：
+  1. **测试报告**（K8s sandbox）：在沙箱中执行 pytest，将每条用例的 PASS/FAIL 状态记录到 `{repo}_test_report.json`，作为后续验证 PASS→FAIL 回归的 ground-truth oracle。该功能已集成到 `main.py` 的 preprocess 步骤中，由 `preprocessor/test_report_generator.py` 实现。
+  2. **仓库分析**（本地，无需 sandbox）：使用 tree-sitter 解析全部 Python 源文件，提取所有类与函数的全限定名（qname）和行号范围，并通过 import 感知的调用解析构建正向/反向调用图。每个非测试符号按"被多少条 PASSED 测试（传递地）调用"打分并降序排列，最终将包含 **hotspots 排行榜**与**完整 definitions 映射**的结果保存为 `{repo}_analysis.json`。此文件是 bug 注入 Agent 的核心信息来源：`GET_HOTSPOTS` 工具从中读取高影响力的注入候选目标，`INSPECT_SYMBOL` 工具从中获取指定符号的调用方、被调用方及源码位置，辅助 Agent 精确定位并理解要修改的函数。该功能由 `preprocessor/repo_analyzer.py` 实现，已集成到 `main.py` 的 preprocess 步骤中；也可单独运行：
+
+     ```bash
+     python data_synthesis_pipeline/bug_agent/preprocessor/repo_analyzer.py \
+       --repo-path /path/to/local/repo \
+       --repo-name owner__repo__commit \
+       --output-dir ./reports/owner__repo__commit \
+       [--test-report ./reports/owner__repo__commit/owner__repo__commit_test_report.json] \
+       [--config /path/to/lang_config.yaml]
+     ```
 - **bug_issue**：运行 Bug 注入 Agent，生成 git 补丁，产出 Issue 报告
 
 ### 输入 JSONL 格式

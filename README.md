@@ -110,7 +110,18 @@ One JSON file per repo under `<output-root>/step_1_env_setup/<repo>.json`:
 Injects subtle bugs into Python repositories, verifies PASS→FAIL test regressions, then generates realistic GitHub-style issue reports describing the bug from a user's perspective.
 
 The pipeline has two steps that can be run separately or together:
-- **preprocess**: validates the repo environment and collects ground-truth test results
+- **preprocess**: runs two sub-tasks offline before any agent is launched:
+  1. **Test report** (K8s sandbox): executes pytest and records the PASS/FAIL status of every test case into `{repo}_test_report.json`. This becomes the ground-truth oracle for verifying PASS→FAIL regressions later. Integrated into the preprocess step in `main.py`; implemented in `preprocessor/test_report_generator.py`.
+  2. **Repo analysis** (local, no sandbox): uses tree-sitter to parse all Python source files, extract every class and function with its qualified name and line range, and build a call graph (via import-aware call resolution). Each non-test symbol is then scored by the number of passing tests that transitively call it. The result — a ranked **hotspots list** plus a full **definitions map** — is saved to `{repo}_analysis.json`. This file is the primary information source for the bug agent: `GET_HOTSPOTS` reads it to suggest high-impact injection targets, and `INSPECT_SYMBOL` reads it to expose a symbol's callers, callees, and source location. Implemented in `preprocessor/repo_analyzer.py` and integrated into the preprocess step in `main.py`; can also be run standalone:
+
+     ```bash
+     python data_synthesis_pipeline/bug_agent/preprocessor/repo_analyzer.py \
+       --repo-path /path/to/local/repo \
+       --repo-name owner__repo__commit \
+       --output-dir ./reports/owner__repo__commit \
+       [--test-report ./reports/owner__repo__commit/owner__repo__commit_test_report.json] \
+       [--config /path/to/lang_config.yaml]
+     ```
 - **bug_issue**: runs the bug injection agent, generates the git patch, and produces the issue report
 
 ### Input JSONL format
