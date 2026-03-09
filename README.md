@@ -2,6 +2,8 @@
 
 A toolkit for synthesizing high-quality code training data using LLM agents. It provides three independent pipelines, each producing a different type of training data from real open-source repositories.
 
+> **Technical Report**: [https://arxiv.org/abs/2603.00575](https://arxiv.org/abs/2603.00575)
+
 ## Overview
 
 | Pipeline | What it produces |
