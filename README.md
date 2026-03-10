@@ -225,7 +225,7 @@ python -m nl2repo.main \
   --input meta.jsonl \
   --output ./output \
   --parallel \
-  --workers 64
+  --workers 64 
 ```
 
 ### Key options
