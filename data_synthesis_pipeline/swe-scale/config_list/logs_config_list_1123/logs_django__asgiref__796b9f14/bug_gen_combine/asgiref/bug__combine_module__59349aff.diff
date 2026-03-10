@@ -1,0 +1,63 @@
+/tmp/PATCH_1_082e4064.patch:17: trailing whitespace.
+    
+/tmp/PATCH_1_082e4064.patch:22: trailing whitespace.
+        
+warning: 2 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..6a0ebb1 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -41,17 +41,24 @@ _P = ParamSpec("_P")
+ _R = TypeVar("_R")
+ 
+ 
+-def _restore_context(context: contextvars.Context) -> None:
+-    # Check for changes in contextvars, and set them to the current
+-    # context for downstream consumers
+-    for cvar in context:
+-        cvalue = context.get(cvar)
++def _restore_context(context: contextvars.Context) -> None:  # Check for changes in contextvars, and set them to the current context for downstream consumers
++    # Get the current context
++    current_context = contextvars.copy_context()
++    
++    # For each context variable in the saved context, check if it differs from current
++    for var in context:
++        # Get the value from the saved context
++        saved_value = context[var]
++        
++        # Check if this variable exists in current context and if the value differs
+         try:
+-            if cvar.get() != cvalue:
+-                cvar.set(cvalue)
+-        except LookupError:
+-            cvar.set(cvalue)
+-
++            current_value = current_context[var]
++            if current_value != saved_value:
++                # The value changed, restore it from the saved context
++                var.set(saved_value)
++        except KeyError:
++            # Variable doesn't exist in current context, set it from saved context
++            var.set(saved_value)
+ 
+ # Python 3.12 deprecates asyncio.iscoroutinefunction() as an alias for
+ # inspect.iscoroutinefunction(), whilst also removing the _is_coroutine marker.
+@@ -100,15 +107,9 @@ class ThreadSensitiveContext:
+ 
+         return self
+ 
+-    async def __aexit__(self, exc, value, tb):
+-        if not self.token:
+-            return
+-
+-        executor = SyncToAsync.context_to_thread_executor.pop(self, None)
+-        if executor:
+-            executor.shutdown()
+-        SyncToAsync.thread_sensitive_context.reset(self.token)
+-
++    async def __aexit__ (self, exc, value, tb) :
++        if self.token is not None:
++            SyncToAsync.thread_sensitive_context.reset(self.token)
+ 
+ class AsyncToSync(Generic[_P, _R]):
+     """

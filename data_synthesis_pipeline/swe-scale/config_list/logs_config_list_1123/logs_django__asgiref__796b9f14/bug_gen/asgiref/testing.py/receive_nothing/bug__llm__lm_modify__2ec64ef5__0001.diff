@@ -1,0 +1,18 @@
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..3feb982 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -106,12 +106,11 @@ class timeout:
+             self._cancel_handler = None
+             self._task = None
+             raise asyncio.TimeoutError
++        self._task = None
+         if self._timeout is not None and self._cancel_handler is not None:
+             self._cancel_handler.cancel()
+             self._cancel_handler = None
+-        self._task = None
+         return None
+-
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+             self._task.cancel()

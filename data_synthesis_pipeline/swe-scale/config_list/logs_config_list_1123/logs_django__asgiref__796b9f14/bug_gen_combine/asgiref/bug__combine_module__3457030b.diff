@@ -1,0 +1,52 @@
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..30312d3 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -20,14 +20,19 @@ class _CVar:
+         except KeyError:
+             raise AttributeError(f"{self!r} object has no attribute {key!r}")
+ 
+-    def __setattr__(self, key: str, value: Any) -> None:
+-        if key == "_data":
+-            return super().__setattr__(key, value)
+-
+-        storage_object = self._data.get({}).copy()
+-        storage_object[key] = value
+-        self._data.set(storage_object)
+-
++    def __setattr__ (self, key: str, value: Any) -> None :
++            if key == "_data":
++                # Allow setting the _data attribute during initialization
++                super().__setattr__(key, value)
++            else:
++                # Get the current storage object or create an empty dict if none exists
++                storage_object = self._data.get({})
++                # Create a copy to avoid mutating the original
++                storage_object = storage_object.copy()
++                # Update the key with the new value
++                storage_object[key] = value
++                # Set the updated storage object back to the context variable
++                self._data.set(storage_object)
+     def __delattr__(self, key: str) -> None:
+         storage_object = self._data.get({}).copy()
+         if key in storage_object:
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..348d8ec 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -86,7 +86,7 @@ class WsgiToAsgiInstance:
+         # Go through headers and make them into environ entries
+         for name, value in self.scope.get("headers", []):
+             name = name.decode("latin1")
+-            if name == "content-length":
++            if name == "Content-Length":
+                 corrected_name = "CONTENT_LENGTH"
+             elif name == "content-type":
+                 corrected_name = "CONTENT_TYPE"
+@@ -163,4 +163,4 @@ class WsgiToAsgiInstance:
+         if not self.response_started:
+             self.response_started = True
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        self.sync_send({"type": "http.response.body"})
+\ No newline at end of file

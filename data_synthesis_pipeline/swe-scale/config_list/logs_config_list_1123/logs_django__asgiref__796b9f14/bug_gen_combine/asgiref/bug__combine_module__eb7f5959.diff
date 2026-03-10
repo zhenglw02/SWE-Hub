@@ -1,0 +1,66 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..ca43ca7 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -97,21 +97,17 @@ class CurrentThreadExecutor(Executor):
+         *args: _P.args,
+         **kwargs: _P.kwargs,
+     ) -> "Future[_R]":
+-        # Check they're not submitting from the same thread
+-        if threading.current_thread() == self._work_thread:
++        if threading.current_thread() != self._work_thread:
+             raise RuntimeError(
+                 "You cannot submit onto CurrentThreadExecutor from its own thread"
+             )
+         f: "Future[_R]" = Future()
+         work_item = _WorkItem(f, fn, *args, **kwargs)
+ 
+-        # Walk up the CurrentThreadExecutor stack to find the closest one still
+-        # running
+         executor = self
+         while True:
+             with executor._work_ready:
+-                if not executor._broken:
+-                    # Add to work queue
++                if executor._broken:
+                     executor._work_items.append(work_item)
+                     executor._work_ready.notify()
+                     break
+@@ -119,5 +115,4 @@ class CurrentThreadExecutor(Executor):
+                 raise RuntimeError("CurrentThreadExecutor already quit or is broken")
+             executor = executor._old_executor
+ 
+-        # Return the future
+-        return f
++        return f
+\ No newline at end of file
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..f1446c2 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -144,23 +144,18 @@ class StatelessServer:
+             details["future"].cancel()
+ 
+     async def application_checker(self):
+-        """
+-        Goes through the set of current application instance Futures and cleans up
+-        any that are done/prints exceptions for any that errored.
+-        """
+         while True:
+             await asyncio.sleep(self.application_checker_interval)
+             for scope_id, details in list(self.application_instances.items()):
+-                if details["future"].done():
++                if not details["future"].done():
+                     exception = details["future"].exception()
+                     if exception:
+                         await self.application_exception(exception, details)
+                     try:
+                         del self.application_instances[scope_id]
+                     except KeyError:
+-                        # Exception handling might have already got here before us. That's fine.
+                         pass
+-
++                    break
+     async def application_exception(self, exception, application_details):
+         """
+         Called whenever an application coroutine has an exception.

@@ -1,0 +1,77 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..358145e 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -164,7 +164,7 @@ class AsyncToSync(Generic[_P, _R]):
+     def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+ 
+-        if not self.force_new_loop and not self.main_event_loop:
++        if self.force_new_loop and not self.main_event_loop:
+             # There's no event loop in this thread. Look for the threadlocal if
+             # we're inside SyncToAsync
+             main_event_loop_pid = getattr(
+@@ -245,6 +245,12 @@ class AsyncToSync(Generic[_P, _R]):
+             else:
+                 running_in_main_event_loop = False
+ 
++            if not running_in_main_event_loop； "他": "兔"}为加密后的密文是 8 个字节中 8 个字节中 8 个字节中 8 个字节中8 个字节场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每
++场景每，也可以每场景也被称为“场景每场景每”;}}。"
++
++"_invalid_ code section should be removed, previous replacement error."
++            running_in_main_event_loop = False
++
+             if not running_in_main_event_loop:
+                 # Make our own event loop - in a new thread - and run inside that.
+                 loop_executor = ThreadPoolExecutor(max_workers=1)
+@@ -296,11 +302,11 @@ class AsyncToSync(Generic[_P, _R]):
+             if exc_info[1]:
+                 try:
+                     raise exc_info[1]
+-                except BaseException:
++                except Exception:
+                     result = await awaitable
+             else:
+                 result = await awaitable
+-        except BaseException as e:
++        except Exception as e:
+             call_result.set_exception(e)
+         else:
+             call_result.set_result(result)
+@@ -309,7 +315,6 @@ class AsyncToSync(Generic[_P, _R]):
+                 task_context.remove(current_task)
+             context[0] = contextvars.copy_context()
+ 
+-
+ class SyncToAsync(Generic[_P, _R]):
+     """
+     Utility class which turns a synchronous callable into an awaitable that
+@@ -362,24 +367,23 @@ class SyncToAsync(Generic[_P, _R]):
+         thread_sensitive: bool = True,
+         executor: Optional["ThreadPoolExecutor"] = None,
+     ) -> None:
++        markcoroutinefunction(self)
++        functools.update_wrapper(self, func)
++        self._executor = executor
+         if (
+             not callable(func)
+             or iscoroutinefunction(func)
+             or iscoroutinefunction(getattr(func, "__call__", func))
+         ):
+             raise TypeError("sync_to_async can only be applied to sync functions.")
+-        self.func = func
+-        functools.update_wrapper(self, func)
+         self._thread_sensitive = thread_sensitive
+-        markcoroutinefunction(self)
+         if thread_sensitive and executor is not None:
+             raise TypeError("executor must not be set when thread_sensitive is True")
+-        self._executor = executor
++        self.func = func
+         try:
+             self.__self__ = func.__self__  # type: ignore
+         except AttributeError:
+             pass
+-
+     async def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+         loop = asyncio.get_running_loop()

@@ -1,0 +1,59 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..f3a54f4 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -41,17 +41,19 @@ _P = ParamSpec("_P")
+ _R = TypeVar("_R")
+ 
+ 
+-def _restore_context(context: contextvars.Context) -> None:
+-    # Check for changes in contextvars, and set them to the current
+-    # context for downstream consumers
+-    for cvar in context:
+-        cvalue = context.get(cvar)
++def _restore_context (context: contextvars.Context) -> None : # Check for changes in contextvars, and set them to the current # context for downstream consumers
++    # Iterate through all context variables in the stored context
++    for var, value in context.items():
++        # Compare with the current value of the context variable
+         try:
+-            if cvar.get() != cvalue:
+-                cvar.set(cvalue)
++            current_value = var.get()
+         except LookupError:
+-            cvar.set(cvalue)
+-
++            # Variable is not set in current context, so set it
++            var.set(value)
++        else:
++            # If the value has changed, update the current context
++            if current_value != value:
++                var.set(value)
+ 
+ # Python 3.12 deprecates asyncio.iscoroutinefunction() as an alias for
+ # inspect.iscoroutinefunction(), whilst also removing the _is_coroutine marker.
+@@ -389,7 +391,7 @@ class SyncToAsync(Generic[_P, _R]):
+             current_thread_executor = getattr(AsyncToSync.executors, "current", None)
+             if current_thread_executor:
+                 # If we have a parent sync thread above somewhere, use that
+-                executor = current_thread_executor
++                executor = AsyncToSync.loop_thread_executors[loop]
+             elif self.thread_sensitive_context.get(None):
+                 # If we have a way of retrieving the current context, attempt
+                 # to use a per-context thread pool executor
+@@ -404,7 +406,7 @@ class SyncToAsync(Generic[_P, _R]):
+                     self.context_to_thread_executor[thread_sensitive_context] = executor
+             elif loop in AsyncToSync.loop_thread_executors:
+                 # Re-use thread executor for running loop
+-                executor = AsyncToSync.loop_thread_executors[loop]
++                executor = current_thread_executor
+             elif self.deadlock_context.get(False):
+                 raise RuntimeError(
+                     "Single thread executor already being used, would deadlock"
+@@ -459,7 +461,6 @@ class SyncToAsync(Generic[_P, _R]):
+             self.deadlock_context.set(False)
+ 
+         return ret
+-
+     def __get__(
+         self, parent: Any, objtype: Any
+     ) -> Callable[_P, Coroutine[Any, Any, _R]]:

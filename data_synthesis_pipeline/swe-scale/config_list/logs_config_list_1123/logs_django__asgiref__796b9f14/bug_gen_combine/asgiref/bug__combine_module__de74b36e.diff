@@ -1,0 +1,50 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..82e3ce1 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -293,7 +293,7 @@ class AsyncToSync(Generic[_P, _R]):
+         try:
+             # If we have an exception, run the function inside the except block
+             # after raising it so exc_info is correctly populated.
+-            if exc_info[1]:
++            if exc_info[0]:
+                 try:
+                     raise exc_info[1]
+                 except BaseException:
+@@ -309,7 +309,6 @@ class AsyncToSync(Generic[_P, _R]):
+                 task_context.remove(current_task)
+             context[0] = contextvars.copy_context()
+ 
+-
+ class SyncToAsync(Generic[_P, _R]):
+     """
+     Utility class which turns a synchronous callable into an awaitable that
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..09ccbed 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -93,7 +93,7 @@ class timeout:
+                 "Timeout context manager should be used " "inside a task"
+             )
+ 
+-        if self._timeout <= 0:
++        if self._timeout < 0:
+             self._loop.call_soon(self._cancel_task)
+             return self
+ 
+@@ -106,7 +106,7 @@ class timeout:
+             self._cancel_handler = None
+             self._task = None
+             raise asyncio.TimeoutError
+-        if self._timeout is not None and self._cancel_handler is not None:
++        if self._cancel_handler is not None:
+             self._cancel_handler.cancel()
+             self._cancel_handler = None
+         self._task = None
+@@ -115,4 +115,4 @@ class timeout:
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+             self._task.cancel()
+-            self._cancelled = True
++            self._cancelled = True
+\ No newline at end of file

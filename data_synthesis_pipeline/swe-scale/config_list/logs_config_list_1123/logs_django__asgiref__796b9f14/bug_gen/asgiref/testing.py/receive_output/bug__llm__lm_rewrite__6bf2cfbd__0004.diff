@@ -1,0 +1,38 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..1d4907a 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -41,17 +41,23 @@ _P = ParamSpec("_P")
+ _R = TypeVar("_R")
+ 
+ 
+-def _restore_context(context: contextvars.Context) -> None:
+-    # Check for changes in contextvars, and set them to the current
+-    # context for downstream consumers
+-    for cvar in context:
+-        cvalue = context.get(cvar)
++def _restore_context (context: contextvars.Context) -> None : # Check for changes in contextvars, and set them to the current # context for downstream consumers
++    # Get the current context
++    current = contextvars.copy_context()
++    
++    # Iterate through all context variables in the provided context
++    for var in context:
++        # Check if the value has changed from the current context
++        if var in current and current[var] == context[var]:
++            continue
++        
++        # Set the variable in the current context to match the provided context
++        token = var.set(context[var])
+         try:
+-            if cvar.get() != cvalue:
+-                cvar.set(cvalue)
+-        except LookupError:
+-            cvar.set(cvalue)
+-
++            # Ensure the change is applied
++            pass
++        finally:
++            var.reset(token)
+ 
+ # Python 3.12 deprecates asyncio.iscoroutinefunction() as an alias for
+ # inspect.iscoroutinefunction(), whilst also removing the _is_coroutine marker.

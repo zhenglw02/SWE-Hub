@@ -1,0 +1,24 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..cd680bf 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -100,15 +100,10 @@ class ThreadSensitiveContext:
+ 
+         return self
+ 
+-    async def __aexit__(self, exc, value, tb):
+-        if not self.token:
+-            return
+-
+-        executor = SyncToAsync.context_to_thread_executor.pop(self, None)
+-        if executor:
+-            executor.shutdown()
+-        SyncToAsync.thread_sensitive_context.reset(self.token)
+-
++    async def __aexit__ (self, exc, value, tb) :
++        if self.token is not None:
++            SyncToAsync.thread_sensitive_context.reset(self.token)
++            self.token = None
+ 
+ class AsyncToSync(Generic[_P, _R]):
+     """

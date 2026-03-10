@@ -1,0 +1,222 @@
+/tmp/PATCH_1_13d770fe.patch:9: trailing whitespace.
+    
+/tmp/PATCH_1_13d770fe.patch:13: trailing whitespace.
+    
+/tmp/PATCH_1_13d770fe.patch:41: trailing whitespace.
+        
+/tmp/PATCH_1_13d770fe.patch:75: trailing whitespace.
+    
+/tmp/PATCH_1_13d770fe.patch:78: trailing whitespace.
+    
+warning: squelched 4 whitespace errors
+warning: 9 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..0e8ae43 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -382,84 +382,111 @@ class SyncToAsync(Generic[_P, _R]):
+ 
+     async def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
++    
+         loop = asyncio.get_running_loop()
+-
+-        # Work out what thread to run the code in
++    
++        # Work out what context to use.
++        context = None
+         if self._thread_sensitive:
+-            current_thread_executor = getattr(AsyncToSync.executors, "current", None)
+-            if current_thread_executor:
+-                # If we have a parent sync thread above somewhere, use that
+-                executor = current_thread_executor
+-            elif self.thread_sensitive_context.get(None):
+-                # If we have a way of retrieving the current context, attempt
+-                # to use a per-context thread pool executor
+-                thread_sensitive_context = self.thread_sensitive_context.get()
+-
+-                if thread_sensitive_context in self.context_to_thread_executor:
+-                    # Re-use thread executor in current context
+-                    executor = self.context_to_thread_executor[thread_sensitive_context]
+-                else:
+-                    # Create new thread executor in current context
+-                    executor = ThreadPoolExecutor(max_workers=1)
+-                    self.context_to_thread_executor[thread_sensitive_context] = executor
+-            elif loop in AsyncToSync.loop_thread_executors:
+-                # Re-use thread executor for running loop
+-                executor = AsyncToSync.loop_thread_executors[loop]
+-            elif self.deadlock_context.get(False):
++            try:
++                context = self.thread_sensitive_context.get()
++            except LookupError:
++                pass
++        
++            # If we have a context, and we're inside the same context, we could
++            # end up in a deadlock - we're already in the single thread executor,
++            # and we're being asked to run something else in the same thread.
++            if context and self.deadlock_context.get(False):
+                 raise RuntimeError(
+                     "Single thread executor already being used, would deadlock"
+                 )
+-            else:
+-                # Otherwise, we run it in a fixed single thread
+-                executor = self.single_thread_executor
+-                self.deadlock_context.set(True)
+-        else:
+-            # Use the passed in executor, or the loop's default if it is None
+-            executor = self._executor
+-
+-        context = contextvars.copy_context()
+-        child = functools.partial(self.func, *args, **kwargs)
+-        func = context.run
+-        task_context: List[asyncio.Task[Any]] = []
+-
+-        # Run the code in the right thread
+-        exec_coro = loop.run_in_executor(
+-            executor,
+-            functools.partial(
+-                self.thread_handler,
+-                loop,
+-                sys.exc_info(),
+-                task_context,
+-                func,
+-                child,
+-            ),
+-        )
+-        ret: _R
++    
++        # Make a future for the return information
++        call_result: "Future[_R]" = Future()
++    
++        # Get task context so that parent task knows which task to propagate
++        # an asyncio.CancelledError to.
++        task_context = getattr(AsyncToSync.threadlocal, "task_context", None)
++    
++        # Use call_soon_threadsafe to schedule a synchronous callback on the
++        # main event loop's thread if it's there, otherwise make a new loop
++        # in this thread.
+         try:
+-            ret = await asyncio.shield(exec_coro)
+-        except asyncio.CancelledError:
+-            cancel_parent = True
+-            try:
+-                task = task_context[0]
+-                task.cancel()
++            # Check for deadlock context
++            if context:
++                # Set the deadlock context so outer sync_to_async calls can check it
++                deadlock_context_token = self.deadlock_context.set(True)
++        
++            # Choose the right executor
++            if context and self._thread_sensitive:
++                # We have a context and are in thread sensitive mode; use the
++                # executor for that context.
++                if context not in self.context_to_thread_executor:
++                    self.context_to_thread_executor[context] = ThreadPoolExecutor(max_workers=1)
++                executor = self.context_to_thread_executor[context]
++            elif self._thread_sensitive:
++                # We are in thread sensitive mode but no context; use the shared
++                # single thread executor.
++                executor = self.single_thread_executor
++            else:
++                # We are not in thread sensitive mode; use the passed in executor,
++                # or the loop's default executor if none was passed.
++                executor = self._executor
++        
++            # Run the function in the executor
++            if context and self._thread_sensitive:
++                # We're inside a context and thread sensitive, so we run directly
++                # in the same thread using the CurrentThreadExecutor context
+                 try:
+-                    await task
+-                    cancel_parent = False
+-                except asyncio.CancelledError:
+-                    pass
+-            except IndexError:
+-                pass
+-            if exec_coro.done():
+-                raise
+-            if cancel_parent:
+-                exec_coro.cancel()
+-            ret = await exec_coro
++                    # Run in the current thread
++                    result = await loop.run_in_executor(
++                        None,
++                        self.thread_handler,
++                        loop,
++                        sys.exc_info(),
++                        task_context,
++                        self.func,
++                        *args,
++                        **kwargs,
++                    )
++                except BaseException as e:
++                    call_result.set_exception(e)
++                else:
++                    call_result.set_result(result)
++            else:
++                # We're either not thread sensitive or we don't have a context,
++                # so run in the executor.
++                try:
++                    if executor is None:
++                        # Use the default executor
++                        result = await loop.run_in_executor(
++                            executor,
++                            self.thread_handler,
++                            loop,
++                            sys.exc_info(),
++                            task_context,
++                            self.func,
++                            *args,
++                            **kwargs,
++                        )
++                    else:
++                        # Use the specified executor
++                        result = await loop.run_in_executor(
++                            executor,
++                            self.func,
++                            *args,
++                            **kwargs,
++                        )
++                except BaseException as e:
++                    call_result.set_exception(e)
++                else:
++                    call_result.set_result(result)
+         finally:
+-            _restore_context(context)
+-            self.deadlock_context.set(False)
+-
+-        return ret
+-
++            if context:
++                self.deadlock_context.reset(deadlock_context_token)
++    
++        # Wait for results from the future.
++        return call_result.result()
+     def __get__(
+         self, parent: Any, objtype: Any
+     ) -> Callable[_P, Coroutine[Any, Any, _R]]:
+@@ -562,15 +589,7 @@ def sync_to_async(
+     ...
+ 
+ 
+-def sync_to_async(
+-    func: Optional[Callable[_P, _R]] = None,
+-    *,
+-    thread_sensitive: bool = True,
+-    executor: Optional["ThreadPoolExecutor"] = None,
+-) -> Union[
+-    Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]],
+-    Callable[_P, Coroutine[Any, Any, _R]],
+-]:
++def sync_to_async ( func: Optional[Callable[_P, _R]] = None, *, thread_sensitive: bool = True, executor: Optional["ThreadPoolExecutor"] = None, ) -> Union[ Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]], Callable[_P, Coroutine[Any, Any, _R]], ] :
+     if func is None:
+         return lambda f: SyncToAsync(
+             f,
+@@ -581,4 +600,4 @@ def sync_to_async(
+         func,
+         thread_sensitive=thread_sensitive,
+         executor=executor,
+-    )
++    )
+\ No newline at end of file

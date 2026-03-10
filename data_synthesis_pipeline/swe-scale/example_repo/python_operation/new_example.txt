@@ -1,0 +1,30 @@
+def calculate(a, b):
+    if b > a:
+        result = b - a
+        print("A is greater")
+    elif b < a:
+        result = b - a
+        print("A is greater")
+    elif b and a:
+        result = b - a
+        print("A is greater")
+    elif b or a:
+        result = b - a
+        print("A is greater")
+    else:
+        result = a - b
+        print("B is greater or equal")
+    result = c + a + b  # 链式操作
+    result = 5 + x
+    count = 10 * items
+    flags = 0xFF & mask
+
+    # 测试用例
+    x = 3 + 5           # 修改 5 或 3
+    if 10 > count:      # 修改 10
+        return 0        # 修改 0
+    result = calculate(100)  # 修改 100
+    items = [1, 2, 3]   # 修改 1, 2, 或 3
+    flags = 0xFF        # 修改十六进制
+    mask = 0b1010       # 修改二进制
+    return result

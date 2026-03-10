@@ -1,0 +1,45 @@
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..0299130 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -40,7 +40,7 @@ class ApplicationCommunicator:
+             # are not "leaked" into the application which would normally begin with
+             # an empty context. In Python >= 3.11 this could also be written as:
+             # asyncio.create_task(..., context=contextvars.Context())
+-            self._future = contextvars.Context().run(
++            self._future = contextvars.copy_context().run(
+                 asyncio.create_task,
+                 self.application(
+                     self.scope, self.input_queue.get, self.output_queue.put
+@@ -58,7 +58,7 @@ class ApplicationCommunicator:
+                     await self.future
+                     self.future.result()
+                 except asyncio.CancelledError:
+-                    pass
++                    await asyncio.sleep(0)
+         finally:
+             if not self.future.done():
+                 self.future.cancel()
+@@ -134,4 +134,4 @@ class ApplicationCommunicator:
+             if not self.output_queue.empty():
+                 return False
+             await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++        return self.output_queue.empty()
+\ No newline at end of file
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..f2f8081 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -112,7 +112,7 @@ class timeout:
+         self._task = None
+         return None
+ 
+-    def _cancel_task(self) -> None:
+-        if self._task is not None:
++    def _cancel_task (self) -> None :
++        if self._task is not None and not self._task.done():
+             self._task.cancel()
+-            self._cancelled = True
++        self._cancelled = True
+\ No newline at end of file

@@ -1,0 +1,46 @@
+/tmp/PATCH_1_c890a62f.patch:15: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..cb542e0 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -120,12 +120,14 @@ class Local:
+         with self._lock_storage() as storage:
+             return getattr(storage, key)
+ 
+-    def __setattr__(self, key, value):
+-        if key in ("_local", "_storage", "_thread_critical", "_thread_lock"):
++    def __setattr__ (self, key, value) :
++        if key.startswith("_"):
++            # Set internal attributes directly on the instance
+             return super().__setattr__(key, value)
++    
++        # For regular attributes, use the thread-safe storage
+         with self._lock_storage() as storage:
+             setattr(storage, key, value)
+-
+     def __delattr__(self, key):
+         with self._lock_storage() as storage:
+             delattr(storage, key)
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..9552ed7 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -41,15 +41,14 @@ class WsgiToAsgiInstance:
+                 message = await receive()
+                 if message["type"] != "http.request":
+                     raise ValueError("WSGI wrapper received a non-HTTP-request message")
+-                body.write(message.get("body", b""))
+                 if not message.get("more_body"):
+                     break
++                body.write(message.get("body", b""))
+             body.seek(0)
+             # Wrap send so it can be called from the subthread
+             self.sync_send = AsyncToSync(send)
+             # Call the WSGI app
+             await self.run_wsgi_app(body)
+-
+     def build_environ(self, scope, body):
+         """
+         Builds a scope and request body into a WSGI environ object.

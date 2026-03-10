@@ -1,0 +1,37 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..99adc28 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -61,11 +61,6 @@ class CurrentThreadExecutor(Executor):
+         self._old_executor = old_executor
+ 
+     def run_until_future(self, future: "Future[Any]") -> None:
+-        """
+-        Runs the code in the work queue until a result is available from the future.
+-        Should be run from the thread the executor is initialised in.
+-        """
+-        # Check we're in the right thread
+         if threading.current_thread() != self._work_thread:
+             raise RuntimeError(
+                 "You cannot run CurrentThreadExecutor from a different thread"
+@@ -77,19 +72,15 @@ class CurrentThreadExecutor(Executor):
+                 self._work_ready.notify()
+ 
+         future.add_done_callback(done)
+-        # Keep getting and running work items until the future we're waiting for
+-        # is done and the queue is empty.
+         while True:
+             with self._work_ready:
+                 while not self._work_items and not self._broken:
+                     self._work_ready.wait()
+-                if not self._work_items:
++                if not self._broken:
+                     break
+-                # Get a work item and run it
+                 work_item = self._work_items.popleft()
+             work_item.run()
+             del work_item
+-
+     def submit(
+         self,
+         fn: Callable[_P, _R],

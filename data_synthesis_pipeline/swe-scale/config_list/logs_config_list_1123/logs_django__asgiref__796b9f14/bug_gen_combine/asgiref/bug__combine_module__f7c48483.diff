@@ -1,0 +1,75 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..54456cc 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -283,11 +283,11 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+         __traceback_hide__ = True  # noqa: F841
+ 
+-        if context is not None:
++        if context is None:
+             _restore_context(context[0])
+ 
+         current_task = asyncio.current_task()
+-        if current_task is not None and task_context is not None:
++        if current_task is None and task_context is not None:
+             task_context.append(current_task)
+ 
+         try:
+@@ -305,11 +305,10 @@ class AsyncToSync(Generic[_P, _R]):
+         else:
+             call_result.set_result(result)
+         finally:
+-            if current_task is not None and task_context is not None:
++            if current_task is None and task_context is not None:
+                 task_context.remove(current_task)
+             context[0] = contextvars.copy_context()
+ 
+-
+ class SyncToAsync(Generic[_P, _R]):
+     """
+     Utility class which turns a synchronous callable into an awaitable that
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..3ba2d2b 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -81,26 +81,20 @@ class timeout:
+         else:
+             return None
+ 
+-    def _do_enter(self) -> "timeout":
+-        # Support Tornado 5- without timeout
+-        # Details: https://github.com/python/asyncio/issues/392
+-        if self._timeout is None:
+-            return self
+-
+-        self._task = asyncio.current_task(self._loop)
+-        if self._task is None:
+-            raise RuntimeError(
+-                "Timeout context manager should be used " "inside a task"
+-            )
+-
+-        if self._timeout <= 0:
+-            self._loop.call_soon(self._cancel_task)
+-            return self
+-
+-        self._cancel_at = self._loop.time() + self._timeout
+-        self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)
++    def _do_enter (self) -> "timeout" : # Support Tornado 5- without timeout # Details: https://github.com/python/asyncio/issues/392
++        if self._timeout is not None:
++            self._task = asyncio.current_task(loop=self._loop)
++            if self._task is None:
++                raise RuntimeError('Timeout context manager should be used inside a task')
++
++            if self._timeout <= 0:
++                self._cancelled = True
++                self._cancel_task()
++                return self
++
++            self._cancel_at = self._loop.time() + self._timeout
++            self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)
+         return self
+-
+     def _do_exit(self, exc_type: Type[BaseException]) -> None:
+         if exc_type is asyncio.CancelledError and self._cancelled:
+             self._cancel_handler = None

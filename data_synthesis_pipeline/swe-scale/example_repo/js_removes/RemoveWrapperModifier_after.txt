@@ -1,0 +1,13 @@
+async function processFileContent(filePath, threshold) {
+    /**
+     * A sample function containing various structures to test removal modifiers.
+     */
+
+    // 目标: RemoveAssignModifier
+    let dataPoints = [];
+
+    // 目标: RemoveWrapperModifier / UnwrapWrapperModifier
+    
+
+    return dataPoints;
+}

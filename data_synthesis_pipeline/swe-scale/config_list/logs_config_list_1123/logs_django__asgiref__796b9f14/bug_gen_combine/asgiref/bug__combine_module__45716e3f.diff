@@ -1,0 +1,69 @@
+/tmp/PATCH_0_23b2fb25.patch:24: trailing whitespace.
+    
+/tmp/PATCH_0_23b2fb25.patch:37: trailing whitespace.
+    
+warning: 2 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..3e4bf50 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -356,30 +356,16 @@ class SyncToAsync(Generic[_P, _R]):
+         weakref.WeakKeyDictionary()
+     )
+ 
+-    def __init__(
+-        self,
+-        func: Callable[_P, _R],
+-        thread_sensitive: bool = True,
+-        executor: Optional["ThreadPoolExecutor"] = None,
+-    ) -> None:
+-        if (
+-            not callable(func)
+-            or iscoroutinefunction(func)
+-            or iscoroutinefunction(getattr(func, "__call__", func))
+-        ):
+-            raise TypeError("sync_to_async can only be applied to sync functions.")
++    def __init__ ( self, func: Callable[_P, _R], thread_sensitive: bool = True, executor: Optional["ThreadPoolExecutor"] = None, ) -> None :
++        if not callable(func):
++            raise TypeError("func must be a callable")
++    
+         self.func = func
+-        functools.update_wrapper(self, func)
+         self._thread_sensitive = thread_sensitive
+-        markcoroutinefunction(self)
+-        if thread_sensitive and executor is not None:
+-            raise TypeError("executor must not be set when thread_sensitive is True")
+         self._executor = executor
+-        try:
+-            self.__self__ = func.__self__  # type: ignore
+-        except AttributeError:
+-            pass
+-
++    
++        if self._thread_sensitive and self._executor is not None:
++            raise TypeError("executor must not be set when thread_sensitive is True")
+     async def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+         loop = asyncio.get_running_loop()
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..d9d8e8d 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -75,12 +75,12 @@ class timeout:
+         return self._cancelled
+ 
+     @property
+-    def remaining(self) -> Optional[float]:
+-        if self._cancel_at is not None:
+-            return max(self._cancel_at - self._loop.time(), 0.0)
+-        else:
++    def remaining (self) -> Optional[float] :
++        if self._timeout is None:
+             return None
+-
++        if self._cancelled:
++            return 0.0
++        return max(0.0, self._cancel_at - self._loop.time())
+     def _do_enter(self) -> "timeout":
+         # Support Tornado 5- without timeout
+         # Details: https://github.com/python/asyncio/issues/392

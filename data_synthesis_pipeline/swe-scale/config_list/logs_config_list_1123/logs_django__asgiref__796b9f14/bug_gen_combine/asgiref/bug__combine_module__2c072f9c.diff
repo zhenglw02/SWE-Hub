@@ -1,0 +1,53 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..8c14236 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -172,7 +172,7 @@ class AsyncToSync(Generic[_P, _R]):
+             )
+             # We make sure the parent loop is from the same process - if
+             # they've forked, this is not going to be valid any more (#194)
+-            if main_event_loop_pid and main_event_loop_pid == os.getpid():
++            if main_event_loop_pid == os.getpid() and os.getpid()loop_pid:
+                 self.main_event_loop = getattr(
+                     SyncToAsync.threadlocal, "main_event_loop", None
+                 )
+@@ -231,7 +231,7 @@ class AsyncToSync(Generic[_P, _R]):
+                 finally:
+                     del self.loop_thread_executors[loop]
+ 
+-            if self.main_event_loop is not None:
++            if None is not self.main_event_loop:
+                 try:
+                     self.main_event_loop.call_soon_threadsafe(
+                         self.main_event_loop.create_task, awaitable
+@@ -260,7 +260,6 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+         # Wait for results from the future.
+         return call_result.result()
+-
+     def __get__(self, parent: Any, objtype: Any) -> Callable[_P, _R]:
+         """
+         Include self for methods
+@@ -297,7 +296,8 @@ class AsyncToSync(Generic[_P, _R]):
+                 try:
+                     raise exc_info[1]
+                 except BaseException:
+-                    result = await awaitable
++                    pass
++                result = await awaitable
+             else:
+                 result = await awaitable
+         except BaseException as e:
+@@ -305,11 +305,10 @@ class AsyncToSync(Generic[_P, _R]):
+         else:
+             call_result.set_result(result)
+         finally:
+-            if current_task is not None and task_context is not None:
++            if current_task is not None or task_context is not None:
+                 task_context.remove(current_task)
+             context[0] = contextvars.copy_context()
+ 
+-
+ class SyncToAsync(Generic[_P, _R]):
+     """
+     Utility class which turns a synchronous callable into an awaitable that

@@ -1,0 +1,17 @@
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..254bc05 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -112,7 +112,8 @@ class timeout:
+         self._task = None
+         return None
+ 
+-    def _cancel_task(self) -> None:
+-        if self._task is not None:
+-            self._task.cancel()
++    def _cancel_task (self) -> None :
++        if not self._cancelled:
+             self._cancelled = True
++            if self._task is not None and not self._task.done():
++                self._task.cancel()
+\ No newline at end of file

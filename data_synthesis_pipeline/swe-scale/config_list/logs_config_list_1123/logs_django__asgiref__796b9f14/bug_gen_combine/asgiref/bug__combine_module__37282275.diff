@@ -1,0 +1,53 @@
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..296cc3b 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -22,11 +22,11 @@ class ApplicationCommunicator:
+     # For Python 3.9 we need to lazily bind the queues, on 3.10+ they bind the
+     # event loop lazily.
+     @property
+-    def input_queue(self):
++    @property
++    def input_queue (self) :
+         if self._input_queue is None:
+             self._input_queue = asyncio.Queue()
+         return self._input_queue
+-
+     @property
+     def output_queue(self):
+         if self._output_queue is None:
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..9b11dba 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -133,14 +133,17 @@ class WsgiToAsgiInstance:
+ 
+     @sync_to_async
+     def run_wsgi_app(self, body):
++        # Run the WSGI app
++        if not self.response_started:
++            self.response_started = True
++            self.sync_send(self.response_start)
++        bytes_sent = 0
++        # Translate the scope and incoming request body into a WSGI environ
+         """
+         Called in a subthread to run the WSGI app. We encapsulate like
+         this so that the start_response callable is called in the same thread.
+         """
+-        # Translate the scope and incoming request body into a WSGI environ
+         environ = self.build_environ(self.scope, body)
+-        # Run the WSGI app
+-        bytes_sent = 0
+         for output in self.wsgi_application(environ, self.start_response):
+             # If this is the first response, include the response headers
+             if not self.response_started:
+@@ -160,7 +163,4 @@ class WsgiToAsgiInstance:
+             if bytes_sent == self.response_content_length:
+                 break
+         # Close connection
+-        if not self.response_started:
+-            self.response_started = True
+-            self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        self.sync_send({"type": "http.response.body"})
+\ No newline at end of file

@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__llm__lm_modify__c50820ac__0002",
+    "patch": "diff --git a/asgiref/server.py b/asgiref/server.py\nindex 131ea43..44f7beb 100644\n--- a/asgiref/server.py\n+++ b/asgiref/server.py\n@@ -160,7 +160,7 @@ class StatelessServer:\n                     except KeyError:\n                         # Exception handling might have already got here before us. That's fine.\n                         pass\n-\n+                break\n     async def application_exception(self, exception, application_details):\n         \"\"\"\n         Called whenever an application coroutine has an exception.\n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/current_thread_executor.py/run_until_future/bug__llm__lm_modify__c50820ac__0002.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

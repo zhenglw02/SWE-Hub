@@ -1,0 +1,58 @@
+/tmp/PATCH_0_ce2ac524.patch:34: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..0ac42eb 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -435,31 +435,7 @@ class SyncToAsync(Generic[_P, _R]):
+             ),
+         )
+         ret: _R
+-        try:
+-            ret = await asyncio.shield(exec_coro)
+-        except asyncio.CancelledError:
+-            cancel_parent = True
+-            try:
+-                task = task_context[0]
+-                task.cancel()
+-                try:
+-                    await task
+-                    cancel_parent = False
+-                except asyncio.CancelledError:
+-                    pass
+-            except IndexError:
+-                pass
+-            if exec_coro.done():
+-                raise
+-            if cancel_parent:
+-                exec_coro.cancel()
+-            ret = await exec_coro
+-        finally:
+-            _restore_context(context)
+-            self.deadlock_context.set(False)
+-
+-        return ret
+-
++    
+     def __get__(
+         self, parent: Any, objtype: Any
+     ) -> Callable[_P, Coroutine[Any, Any, _R]]:
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..3feb982 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -106,12 +106,11 @@ class timeout:
+             self._cancel_handler = None
+             self._task = None
+             raise asyncio.TimeoutError
++        self._task = None
+         if self._timeout is not None and self._cancel_handler is not None:
+             self._cancel_handler.cancel()
+             self._cancel_handler = None
+-        self._task = None
+         return None
+-
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+             self._task.cancel()

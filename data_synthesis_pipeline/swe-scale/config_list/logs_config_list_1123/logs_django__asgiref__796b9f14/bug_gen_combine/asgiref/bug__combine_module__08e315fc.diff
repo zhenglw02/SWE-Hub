@@ -1,0 +1,69 @@
+/tmp/PATCH_1_a77d6683.patch:22: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..aad79c6 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -283,21 +283,20 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+         __traceback_hide__ = True  # noqa: F841
+ 
+-        if context is not None:
+-            _restore_context(context[0])
+-
+         current_task = asyncio.current_task()
+         if current_task is not None and task_context is not None:
+             task_context.append(current_task)
+ 
++        if context is not None:
++            _restore_context(context[0])
++
+         try:
+-            # If we have an exception, run the function inside the except block
+-            # after raising it so exc_info is correctly populated.
+             if exc_info[1]:
+                 try:
++                    result = await awaitable
+                     raise exc_info[1]
+                 except BaseException:
+-                    result = await awaitable
++                    pass
+             else:
+                 result = await awaitable
+         except BaseException as e:
+@@ -309,7 +308,6 @@ class AsyncToSync(Generic[_P, _R]):
+                 task_context.remove(current_task)
+             context[0] = contextvars.copy_context()
+ 
+-
+ class SyncToAsync(Generic[_P, _R]):
+     """
+     Utility class which turns a synchronous callable into an awaitable that
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..a2063a7 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -84,21 +84,8 @@ class WsgiToAsgiInstance:
+             environ["REMOTE_ADDR"] = scope["client"][0]
+ 
+         # Go through headers and make them into environ entries
+-        for name, value in self.scope.get("headers", []):
+-            name = name.decode("latin1")
+-            if name == "content-length":
+-                corrected_name = "CONTENT_LENGTH"
+-            elif name == "content-type":
+-                corrected_name = "CONTENT_TYPE"
+-            else:
+-                corrected_name = "HTTP_%s" % name.upper().replace("-", "_")
+-            # HTTPbis say only ASCII chars are allowed in headers, but we latin1 just in case
+-            value = value.decode("latin1")
+-            if corrected_name in environ:
+-                value = environ[corrected_name] + "," + value
+-            environ[corrected_name] = value
++    
+         return environ
+-
+     def start_response(self, status, response_headers, exc_info=None):
+         """
+         WSGI start_response callable.

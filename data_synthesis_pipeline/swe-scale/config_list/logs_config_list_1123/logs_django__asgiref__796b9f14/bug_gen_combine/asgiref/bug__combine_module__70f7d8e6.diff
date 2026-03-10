@@ -1,0 +1,59 @@
+/tmp/PATCH_0_ef51b0ee.patch:32: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..5e0503c 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -44,7 +44,7 @@ _R = TypeVar("_R")
+ def _restore_context(context: contextvars.Context) -> None:
+     # Check for changes in contextvars, and set them to the current
+     # context for downstream consumers
+-    for cvar in context:
++    for cvar in context[1:]:
+         cvalue = context.get(cvar)
+         try:
+             if cvar.get() != cvalue:
+@@ -52,7 +52,6 @@ def _restore_context(context: contextvars.Context) -> None:
+         except LookupError:
+             cvar.set(cvalue)
+ 
+-
+ # Python 3.12 deprecates asyncio.iscoroutinefunction() as an alias for
+ # inspect.iscoroutinefunction(), whilst also removing the _is_coroutine marker.
+ # The latter is replaced with the inspect.markcoroutinefunction decorator.
+@@ -562,23 +561,18 @@ def sync_to_async(
+     ...
+ 
+ 
+-def sync_to_async(
+-    func: Optional[Callable[_P, _R]] = None,
+-    *,
+-    thread_sensitive: bool = True,
+-    executor: Optional["ThreadPoolExecutor"] = None,
+-) -> Union[
+-    Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]],
+-    Callable[_P, Coroutine[Any, Any, _R]],
+-]:
++def sync_to_async ( func: Optional[Callable[_P, _R]] = None, *, thread_sensitive: bool = True, executor: Optional["ThreadPoolExecutor"] = None, ) -> Union[ Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]], Callable[_P, Coroutine[Any, Any, _R]], ] :
+     if func is None:
+-        return lambda f: SyncToAsync(
+-            f,
+-            thread_sensitive=thread_sensitive,
+-            executor=executor,
+-        )
++        def decorator(func: Callable[_P, _R]) -> Callable[_P, Coroutine[Any, Any, _R]]:
++            return SyncToAsync(
++                func,
++                thread_sensitive=thread_sensitive,
++                executor=executor,
++            )
++        return decorator
++    
+     return SyncToAsync(
+         func,
+         thread_sensitive=thread_sensitive,
+         executor=executor,
+-    )
++    )
+\ No newline at end of file

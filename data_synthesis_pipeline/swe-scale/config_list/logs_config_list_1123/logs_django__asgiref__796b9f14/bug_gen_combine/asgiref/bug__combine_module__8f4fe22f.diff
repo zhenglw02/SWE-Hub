@@ -1,0 +1,55 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..10eed20 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -33,18 +33,16 @@ class _WorkItem:
+         self.kwargs = kwargs
+ 
+     def run(self) -> None:
+-        __traceback_hide__ = True  # noqa: F841
+-        if not self.future.set_running_or_notify_cancel():
+-            return
+-        try:
+-            result = self.fn(*self.args, **self.kwargs)
+-        except BaseException as exc:
+-            self.future.set_exception(exc)
+-            # Break a reference cycle with the exception 'exc'
+-            self = None  # type: ignore[assignment]
+-        else:
+-            self.future.set_result(result)
+-
++            if not self.future.set_running_or_notify_cancel():
++                return
++            try:
++                result = self.fn(*self.args, **self.kwargs)
++            except BaseException as exc:
++                self.future.set_exception(exc)
++                # Break a reference cycle with the exception 'exc'
++                self = None
++            else:
++                self.future.set_result(result)
+ 
+ class CurrentThreadExecutor(Executor):
+     """
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..b95de81 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -111,15 +111,14 @@ class ApplicationCommunicator:
+         except asyncio.TimeoutError as e:
+             # See if we have another error to raise inside
+             if self.future.done():
+-                self.future.result()
+-            else:
+                 self.future.cancel()
+                 try:
+                     await self.future
+                 except asyncio.CancelledError:
+                     pass
++            else:
++                self.future.result()
+             raise e
+-
+     async def receive_nothing(self, timeout=0.1, interval=0.01):
+         """
+         Checks that there is no message to receive in the given time.

@@ -1,0 +1,53 @@
+/tmp/PATCH_0_bdb83e9f.patch:14: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/compatibility.py b/asgiref/compatibility.py
+index 3a2a63e..9b4c32c 100644
+--- a/asgiref/compatibility.py
++++ b/asgiref/compatibility.py
+@@ -7,24 +7,17 @@ def is_double_callable(application):
+     """
+     Tests to see if an application is a legacy-style (double-callable) application.
+     """
+-    # Look for a hint on the object first
+     if getattr(application, "_asgi_single_callable", False):
+         return False
+     if getattr(application, "_asgi_double_callable", False):
+         return True
+-    # Uninstanted classes are double-callable
+     if inspect.isclass(application):
+         return True
+-    # Instanted classes depend on their __call__
+     if hasattr(application, "__call__"):
+-        # We only check to see if its __call__ is a coroutine function -
+-        # if it's not, it still might be a coroutine function itself.
+-        if iscoroutinefunction(application.__call__):
++        if iscoroutinefunction(application):
+             return False
+-    # Non-classes we just check directly
+     return not iscoroutinefunction(application)
+ 
+-
+ def double_to_single_callable(application):
+     """
+     Transforms a double-callable ASGI application into a single-callable one.
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..b47b9a8 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -120,12 +120,12 @@ class Local:
+         with self._lock_storage() as storage:
+             return getattr(storage, key)
+ 
+-    def __setattr__(self, key, value):
+-        if key in ("_local", "_storage", "_thread_critical", "_thread_lock"):
++    def __setattr__ (self, key, value) :
++        if key in ("_thread_critical", "_thread_lock", "_storage"):
+             return super().__setattr__(key, value)
++    
+         with self._lock_storage() as storage:
+             setattr(storage, key, value)
+-
+     def __delattr__(self, key):
+         with self._lock_storage() as storage:
+             delattr(storage, key)

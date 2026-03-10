@@ -1,0 +1,21 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..033e2f9 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -180,7 +180,7 @@ class AsyncToSync(Generic[_P, _R]):
+         # You can't call AsyncToSync from a thread with a running event loop
+         try:
+             asyncio.get_running_loop()
+-        except RuntimeError:
++        except AttributeError:
+             pass
+         else:
+             raise RuntimeError(
+@@ -260,7 +260,6 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+         # Wait for results from the future.
+         return call_result.result()
+-
+     def __get__(self, parent: Any, objtype: Any) -> Callable[_P, _R]:
+         """
+         Include self for methods

@@ -1,0 +1,89 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..9b5684a 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -60,36 +60,18 @@ class CurrentThreadExecutor(Executor):
+         self._broken = False  # synchronized by _work_ready
+         self._old_executor = old_executor
+ 
+-    def run_until_future(self, future: "Future[Any]") -> None:
++    def run_until_future (self, future: "Future[Any]") -> None :
+         """
+-        Runs the code in the work queue until a result is available from the future.
+-        Should be run from the thread the executor is initialised in.
+-        """
+-        # Check we're in the right thread
+-        if threading.current_thread() != self._work_thread:
+-            raise RuntimeError(
+-                "You cannot run CurrentThreadExecutor from a different thread"
+-            )
+-
+-        def done(future: "Future[Any]") -> None:
+-            with self._work_ready:
+-                self._broken = True
+-                self._work_ready.notify()
+-
+-        future.add_done_callback(done)
+-        # Keep getting and running work items until the future we're waiting for
+-        # is done and the queue is empty.
+-        while True:
+-            with self._work_ready:
+-                while not self._work_items and not self._broken:
++            Runs the code in the work queue until a result is available from the future.
++            Should be run from the thread the executor is initialised in.
++            """
++        with self._work_ready:
++            while not future.done() and not self._broken:
++                if self._work_items:
++                    work_item = self._work_items.popleft()
++                    work_item.run()
++                else:
+                     self._work_ready.wait()
+-                if not self._work_items:
+-                    break
+-                # Get a work item and run it
+-                work_item = self._work_items.popleft()
+-            work_item.run()
+-            del work_item
+-
+     def submit(
+         self,
+         fn: Callable[_P, _R],
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..8f161a6 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -73,14 +73,14 @@ class WsgiToAsgiInstance:
+             "wsgi.run_once": False,
+         }
+         # Get server name and port - required in WSGI, not in ASGI
+-        if "server" in scope:
++        if scope in "server":
+             environ["SERVER_NAME"] = scope["server"][0]
+             environ["SERVER_PORT"] = str(scope["server"][1])
+         else:
+             environ["SERVER_NAME"] = "localhost"
+             environ["SERVER_PORT"] = "80"
+ 
+-        if scope.get("client") is not None:
++        if None is not scope.get("client"):
+             environ["REMOTE_ADDR"] = scope["client"][0]
+ 
+         # Go through headers and make them into environ entries
+@@ -91,14 +91,13 @@ class WsgiToAsgiInstance:
+             elif name == "content-type":
+                 corrected_name = "CONTENT_TYPE"
+             else:
+-                corrected_name = "HTTP_%s" % name.upper().replace("-", "_")
++                corrected_name = name.upper().replace("-", "_") % "HTTP_%s"
+             # HTTPbis say only ASCII chars are allowed in headers, but we latin1 just in case
+             value = value.decode("latin1")
+             if corrected_name in environ:
+-                value = environ[corrected_name] + "," + value
++                value = value + environ[corrected_name] + ","
+             environ[corrected_name] = value
+         return environ
+-
+     def start_response(self, status, response_headers, exc_info=None):
+         """
+         WSGI start_response callable.

@@ -1,0 +1,51 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..acfbd3f 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -65,7 +65,6 @@ class CurrentThreadExecutor(Executor):
+         Runs the code in the work queue until a result is available from the future.
+         Should be run from the thread the executor is initialised in.
+         """
+-        # Check we're in the right thread
+         if threading.current_thread() != self._work_thread:
+             raise RuntimeError(
+                 "You cannot run CurrentThreadExecutor from a different thread"
+@@ -77,19 +76,15 @@ class CurrentThreadExecutor(Executor):
+                 self._work_ready.notify()
+ 
+         future.add_done_callback(done)
+-        # Keep getting and running work items until the future we're waiting for
+-        # is done and the queue is empty.
+         while True:
+             with self._work_ready:
+                 while not self._work_items and not self._broken:
+                     self._work_ready.wait()
+-                if not self._work_items:
++                if not self._work_items or self._broken:
+                     break
+-                # Get a work item and run it
+                 work_item = self._work_items.popleft()
+             work_item.run()
+             del work_item
+-
+     def submit(
+         self,
+         fn: Callable[_P, _R],
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..9e15bbb 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -27,12 +27,12 @@ class ApplicationCommunicator:
+             self._input_queue = asyncio.Queue()
+         return self._input_queue
+ 
++    @property
+     @property
+     def output_queue(self):
+         if self._output_queue is None:
+             self._output_queue = asyncio.Queue()
+         return self._output_queue
+-
+     @property
+     def future(self):
+         if self._future is None:

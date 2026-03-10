@@ -1,0 +1,56 @@
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..dd6033f 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -145,22 +145,22 @@ class StatelessServer:
+ 
+     async def application_checker(self):
+         """
+-        Goes through the set of current application instance Futures and cleans up
+-        any that are done/prints exceptions for any that errored.
+-        """
++            Goes through the set of current application instance Futures and cleans up
++            any that are done/prints exceptions for any that errored.
++            """
+         while True:
+             await asyncio.sleep(self.application_checker_interval)
+-            for scope_id, details in list(self.application_instances.items()):
++            # Create a list of keys to avoid modification during iteration
++            scope_ids = list(self.application_instances.keys())
++            for scope_id in scope_ids:
++                if scope_id not in self.application_instances:
++                    continue
++                details = self.application_instances[scope_id]
+                 if details["future"].done():
+                     exception = details["future"].exception()
+-                    if exception:
++                    if exception is not None:
+                         await self.application_exception(exception, details)
+-                    try:
+-                        del self.application_instances[scope_id]
+-                    except KeyError:
+-                        # Exception handling might have already got here before us. That's fine.
+-                        pass
+-
++                    self.delete_application_instance(scope_id)
+     async def application_exception(self, exception, application_details):
+         """
+         Called whenever an application coroutine has an exception.
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..3feb982 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -106,12 +106,11 @@ class timeout:
+             self._cancel_handler = None
+             self._task = None
+             raise asyncio.TimeoutError
++        self._task = None
+         if self._timeout is not None and self._cancel_handler is not None:
+             self._cancel_handler.cancel()
+             self._cancel_handler = None
+-        self._task = None
+         return None
+-
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+             self._task.cancel()

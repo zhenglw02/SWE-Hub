@@ -1,0 +1,47 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..3276059 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -451,7 +451,7 @@ class SyncToAsync(Generic[_P, _R]):
+                 pass
+             if exec_coro.done():
+                 raise
+-            if cancel_parent:
++            if not cancel_parent:
+                 exec_coro.cancel()
+             ret = await exec_coro
+         finally:
+@@ -492,7 +492,6 @@ class SyncToAsync(Generic[_P, _R]):
+         else:
+             return func(*args, **kwargs)
+ 
+-
+ @overload
+ def async_to_sync(
+     *,
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..a50d6cb 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -56,9 +56,10 @@ class ApplicationCommunicator:
+             async with async_timeout(timeout):
+                 try:
+                     await self.future
+-                    self.future.result()
+                 except asyncio.CancelledError:
+                     pass
++            if not isinstance(self.future.exception(), asyncio.CancelledError):
++                self.future.result()
+         finally:
+             if not self.future.done():
+                 self.future.cancel()
+@@ -132,6 +133,6 @@ class ApplicationCommunicator:
+         start = time.monotonic()
+         while time.monotonic() - start < timeout:
+             if not self.output_queue.empty():
+-                return False
++                return True
+             await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++        return not self.output_queue.empty()
+\ No newline at end of file

@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__2a1e4671__0002",
+  "hash_code": "2a1e4671",
+  "cost": 0,
+  "explanation": "Looking at the code, I need to implement the `input_queue` property similar to how the `output_queue` property is implemented. The `input_queue` should lazily initialize an `asyncio.Queue` instance if it doesn't exist yet.\n\nThe `input_queue` property should:\n1. Check if `self._input_queue` is None\n2. If so, initialize it as an `asyncio.Queue()`\n3. Return `self._input_queue`\n\nThis follows the same pattern as the existing `output_queue` property.",
+  "output": "Looking at the code, I need to implement the `input_queue` property similar to how the `output_queue` property is implemented. The `input_queue` should lazily initialize an `asyncio.Queue` instance if it doesn't exist yet.\n\nThe `input_queue` property should:\n1. Check if `self._input_queue` is None\n2. If so, initialize it as an `asyncio.Queue()`\n3. Return `self._input_queue`\n\nThis follows the same pattern as the existing `output_queue` property.\n\n```\n@property\ndef input_queue(self):\n    if self._input_queue is None:\n        self._input_queue = asyncio.Queue()\n    return self._input_queue\n```",
+  "rewrite": "@property\ndef input_queue(self):\n    if self._input_queue is None:\n        self._input_queue = asyncio.Queue()\n    return self._input_queue",
+  "strategy": "lm_rewrite"
+}

@@ -1,0 +1,68 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..af0cece 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -164,7 +164,7 @@ class AsyncToSync(Generic[_P, _R]):
+     def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+ 
+-        if not self.force_new_loop and not self.main_event_loop:
++        if not self.force_new_loop or not self.main_event_loop:
+             # There's no event loop in this thread. Look for the threadlocal if
+             # we're inside SyncToAsync
+             main_event_loop_pid = getattr(
+@@ -172,7 +172,7 @@ class AsyncToSync(Generic[_P, _R]):
+             )
+             # We make sure the parent loop is from the same process - if
+             # they've forked, this is not going to be valid any more (#194)
+-            if main_event_loop_pid and main_event_loop_pid == os.getpid():
++            if main_event_loop_pid or main_event_loop_pid == os.getpid():
+                 self.main_event_loop = getattr(
+                     SyncToAsync.threadlocal, "main_event_loop", None
+                 )
+@@ -260,7 +260,6 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+         # Wait for results from the future.
+         return call_result.result()
+-
+     def __get__(self, parent: Any, objtype: Any) -> Callable[_P, _R]:
+         """
+         Include self for methods
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..bc3f33c 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -137,18 +137,13 @@ class WsgiToAsgiInstance:
+         Called in a subthread to run the WSGI app. We encapsulate like
+         this so that the start_response callable is called in the same thread.
+         """
+-        # Translate the scope and incoming request body into a WSGI environ
+         environ = self.build_environ(self.scope, body)
+-        # Run the WSGI app
+         bytes_sent = 0
+         for output in self.wsgi_application(environ, self.start_response):
+-            # If this is the first response, include the response headers
+             if not self.response_started:
+                 self.response_started = True
+                 self.sync_send(self.response_start)
+-            # If the application supplies a Content-Length header
+             if self.response_content_length is not None:
+-                # The server should not transmit more bytes to the client than the header allows
+                 bytes_allowed = self.response_content_length - bytes_sent
+                 if len(output) > bytes_allowed:
+                     output = output[:bytes_allowed]
+@@ -156,11 +151,9 @@ class WsgiToAsgiInstance:
+                 {"type": "http.response.body", "body": output, "more_body": True}
+             )
+             bytes_sent += len(output)
+-            # The server should stop iterating over the response when enough data has been sent
+-            if bytes_sent == self.response_content_length:
++            if bytes_sent >= self.response_content_length:
+                 break
+-        # Close connection
+         if not self.response_started:
+             self.response_started = True
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        self.sync_send({"type": "http.response.body"})
+\ No newline at end of file

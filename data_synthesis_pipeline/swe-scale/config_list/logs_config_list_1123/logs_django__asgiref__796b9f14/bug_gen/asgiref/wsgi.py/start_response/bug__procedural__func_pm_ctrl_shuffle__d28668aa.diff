@@ -1,0 +1,43 @@
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..b7438d2 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -54,8 +54,8 @@ class WsgiToAsgiInstance:
+         """
+         Builds a scope and request body into a WSGI environ object.
+         """
+-        script_name = scope.get("root_path", "").encode("utf8").decode("latin1")
+-        path_info = scope["path"].encode("utf8").decode("latin1")
++    
++    
+         if path_info.startswith(script_name):
+             path_info = path_info[len(script_name) :]
+         environ = {
+@@ -77,7 +77,7 @@ class WsgiToAsgiInstance:
+             environ["SERVER_NAME"] = scope["server"][0]
+             environ["SERVER_PORT"] = str(scope["server"][1])
+         else:
+-            environ["SERVER_NAME"] = "localhost"
++        
+             environ["SERVER_PORT"] = "80"
+ 
+         if scope.get("client") is not None:
+@@ -89,16 +89,15 @@ class WsgiToAsgiInstance:
+             if name == "content-length":
+                 corrected_name = "CONTENT_LENGTH"
+             elif name == "content-type":
+-                corrected_name = "CONTENT_TYPE"
++            
+             else:
+                 corrected_name = "HTTP_%s" % name.upper().replace("-", "_")
+             # HTTPbis say only ASCII chars are allowed in headers, but we latin1 just in case
+-            value = value.decode("latin1")
++        
+             if corrected_name in environ:
+                 value = environ[corrected_name] + "," + value
+             environ[corrected_name] = value
+         return environ
+-
+     def start_response(self, status, response_headers, exc_info=None):
+         """
+         WSGI start_response callable.

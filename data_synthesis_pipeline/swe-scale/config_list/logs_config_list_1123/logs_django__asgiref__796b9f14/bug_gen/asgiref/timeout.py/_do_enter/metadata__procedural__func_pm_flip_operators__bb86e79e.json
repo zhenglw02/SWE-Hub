@@ -1,0 +1,9 @@
+{
+  "instance_id": "procedural__func_pm_flip_operators__bb86e79e",
+  "hash_code": "bb86e79e",
+  "cost": 0.0,
+  "explanation": "The operators in an expression are likely incorrect.",
+  "output": "def _do_enter(self) -> \"timeout\":\n    # Support Tornado 5- without timeout\n    # Details: https://github.com/python/asyncio/issues/392\n    if self._timeout is None:\n        return self\n\n    self._task = asyncio.current_task(self._loop)\n    if self._task is None:\n        raise RuntimeError(\n            \"Timeout context manager should be used \" \"inside a task\"\n        )\n\n    if self._timeout > 0:\n        self._loop.call_soon(self._cancel_task)\n        return self\n\n    self._cancel_at = self._loop.time() + self._timeout\n    self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)\n    return self",
+  "rewrite": "def _do_enter(self) -> \"timeout\":\n    # Support Tornado 5- without timeout\n    # Details: https://github.com/python/asyncio/issues/392\n    if self._timeout is None:\n        return self\n\n    self._task = asyncio.current_task(self._loop)\n    if self._task is None:\n        raise RuntimeError(\n            \"Timeout context manager should be used \" \"inside a task\"\n        )\n\n    if self._timeout > 0:\n        self._loop.call_soon(self._cancel_task)\n        return self\n\n    self._cancel_at = self._loop.time() + self._timeout\n    self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)\n    return self",
+  "strategy": "func_pm_flip_operators"
+}

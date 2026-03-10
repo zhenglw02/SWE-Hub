@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="7" failures="0" skipped="0" tests="8" time="0.979" timestamp="2026-03-04T08:42:23.844768+00:00" hostname="zyc-swe-smith-django--asgiref--7-3d5e8c94"><testcase classname="" name="tests.test_compatibility" time="0.000"><error message="collection failure">/opt/miniconda3/envs/testbed/lib/python3.12/site-packages/_pytest/python.py:498: in importtestmodule
+    mod = import_path(
+/opt/miniconda3/envs/testbed/lib/python3.12/site-packages/_pytest/pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+/opt/miniconda3/envs/testbed/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;frozen importlib._bootstrap&gt;:1387: in _gcd_import
+    ???
+&lt;frozen importlib._bootstrap&gt;:1360: in _find_and_load
+    ???
+&lt;frozen importlib._bootstrap&gt;:1331: in _find_and_load_unlocked
+    ???
+&lt;frozen importlib._bootstrap&gt;:935: in _load_unlocked
+    ???
+/opt/miniconda3/envs/testbed/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:186: in exec_module
+    exec(co, module.__dict__)
+tests/test_compatibility.py:3: in &lt;module&gt;
+    from asgiref.compatibility import double_to_single_callable, is_double_callable
+asgiref/compatibility.py:3: in &lt;module&gt;
+    from .sync import iscoroutinefunction
+E     File "/testbed/asgiref/sync.py", line 248
+E       if not running_in_main_event_loop； "他": "兔"}为加密后的密文是 8 个字节中 8 个字节中 8 个字节中 8 个字节中8 个字节场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每
+E                                        ^
+E   SyntaxError: invalid character '；' (U+FF1B)</error></testcase><testcase classname="" name="tests.test_local" time="0.000"><error message="collection failure">/opt/miniconda3/envs/testbed/lib/python3.12/site-packages/_pytest/python.py:498: in importtestmodule
+    mod = import_path(
+/opt/miniconda3/envs/testbed/lib/python3.12/site-packages/_pytest/pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+/opt/miniconda3/envs/testbed/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;frozen importlib._bootstrap&gt;:1387: in _gcd_import
+    ???
+&lt;frozen importlib._bootstrap&gt;:1360: in _find_and_load
+    ???
+&lt;frozen importlib._bootstrap&gt;:1331: in _find_and_load_unlocked
+    ???
+&lt;frozen importlib._bootstrap&gt;:935: in _load_unlocked
+    ???
+/opt/miniconda3/envs/testbed/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:186: in exec_module
+    exec(co, module.__dict__)
+tests/test_local.py:9: in &lt;module&gt;
+    from asgiref.sync import async_to_sync, sync_to_async
+E     File "/testbed/asgiref/sync.py", line 248
+E       if not running_in_main_event_loop； "他": "兔"}为加密后的密文是 8 个字节中 8 个字节中 8 个字节中 8 个字节中8 个字节场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每
+E                                        ^
+E   SyntaxError: invalid character '；' (U+FF1B)</error></testcase><testcase classname="" name="tests.test_server" time="0.000"><error message="collection failure">/opt/miniconda3/envs/testbed/lib/python3.12/site-packages/_pytest/python.py:498: in importtestmodule
+    mod = import_path(
+/opt/miniconda3/envs/testbed/lib/python3.12/site-packages/_pytest/pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+/opt/miniconda3/envs/testbed/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;frozen importlib._bootstrap&gt;:1387: in _gcd_import
+    ???
+&lt;frozen importlib._bootstrap&gt;:1360: in _find_and_load
+    ???
+&lt;frozen importlib._bootstrap&gt;:1331: in _find_and_load_unlocked
+    ???
+&lt;frozen importlib._bootstrap&gt;:935: in _load_unlocked
+    ???
+/opt/miniconda3/envs/testbed/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:186: in exec_module
+    exec(co, module.__dict__)
+tests/test_server.py:7: in &lt;module&gt;
+    from asgiref.server import StatelessServer
+asgiref/server.py:6: in &lt;module&gt;
+    from .compatibility import guarantee_single_callable
+asgiref/compatibility.py:3: in &lt;module&gt;
+    from .sync import iscoroutinefunction
+E     File "/testbed/asgiref/sync.py", line 248
+E       if not running_in_main_event_loop； "他": "兔"}为加密后的密文是 8 个字节中 8 个字节中 8 个字节中 8 个字节中8 个字节场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每
+E                                        ^
+E   SyntaxError: invalid character '；' (U+FF1B)</error></testcase><testcase classname="" name="tests.test_sync" time="0.000"><error message="collection failure">/opt/miniconda3/envs/testbed/lib/python3.12/site-packages/_pytest/python.py:498: in importtestmodule
+    mod = import_path(
+/opt/miniconda3/envs/testbed/lib/python3.12/site-packages/_pytest/pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+/opt/miniconda3/envs/testbed/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;frozen importlib._bootstrap&gt;:1387: in _gcd_import
+    ???
+&lt;frozen importlib._bootstrap&gt;:1360: in _find_and_load
+    ???
+&lt;frozen importlib._bootstrap&gt;:1331: in _find_and_load_unlocked
+    ???
+&lt;frozen importlib._bootstrap&gt;:935: in _load_unlocked
+    ???
+/opt/miniconda3/envs/testbed/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:186: in exec_module
+    exec(co, module.__dict__)
+tests/test_sync.py:15: in &lt;module&gt;
+    from asgiref.sync import (
+E     File "/testbed/asgiref/sync.py", line 248
+E       if not running_in_main_event_loop； "他": "兔"}为加密后的密文是 8 个字节中 8 个字节中 8 个字节中 8 个字节中8 个字节场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每
+E                                        ^
+E   SyntaxError: invalid character '；' (U+FF1B)</error></testcase><testcase classname="" name="tests.test_sync_contextvars" time="0.000"><error message="collection failure">/opt/miniconda3/envs/testbed/lib/python3.12/site-packages/_pytest/python.py:498: in importtestmodule
+    mod = import_path(
+/opt/miniconda3/envs/testbed/lib/python3.12/site-packages/_pytest/pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+/opt/miniconda3/envs/testbed/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;frozen importlib._bootstrap&gt;:1387: in _gcd_import
+    ???
+&lt;frozen importlib._bootstrap&gt;:1360: in _find_and_load
+    ???
+&lt;frozen importlib._bootstrap&gt;:1331: in _find_and_load_unlocked
+    ???
+&lt;frozen importlib._bootstrap&gt;:935: in _load_unlocked
+    ???
+/opt/miniconda3/envs/testbed/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:186: in exec_module
+    exec(co, module.__dict__)
+tests/test_sync_contextvars.py:8: in &lt;module&gt;
+    from asgiref.sync import ThreadSensitiveContext, async_to_sync, sync_to_async
+E     File "/testbed/asgiref/sync.py", line 248
+E       if not running_in_main_event_loop； "他": "兔"}为加密后的密文是 8 个字节中 8 个字节中 8 个字节中 8 个字节中8 个字节场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每
+E                                        ^
+E   SyntaxError: invalid character '；' (U+FF1B)</error></testcase><testcase classname="" name="tests.test_testing" time="0.000"><error message="collection failure">/opt/miniconda3/envs/testbed/lib/python3.12/site-packages/_pytest/python.py:498: in importtestmodule
+    mod = import_path(
+/opt/miniconda3/envs/testbed/lib/python3.12/site-packages/_pytest/pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+/opt/miniconda3/envs/testbed/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;frozen importlib._bootstrap&gt;:1387: in _gcd_import
+    ???
+&lt;frozen importlib._bootstrap&gt;:1360: in _find_and_load
+    ???
+&lt;frozen importlib._bootstrap&gt;:1331: in _find_and_load_unlocked
+    ???
+&lt;frozen importlib._bootstrap&gt;:935: in _load_unlocked
+    ???
+/opt/miniconda3/envs/testbed/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:186: in exec_module
+    exec(co, module.__dict__)
+tests/test_testing.py:5: in &lt;module&gt;
+    from asgiref.testing import ApplicationCommunicator
+asgiref/testing.py:5: in &lt;module&gt;
+    from .compatibility import guarantee_single_callable
+asgiref/compatibility.py:3: in &lt;module&gt;
+    from .sync import iscoroutinefunction
+E     File "/testbed/asgiref/sync.py", line 248
+E       if not running_in_main_event_loop； "他": "兔"}为加密后的密文是 8 个字节中 8 个字节中 8 个字节中 8 个字节中8 个字节场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每
+E                                        ^
+E   SyntaxError: invalid character '；' (U+FF1B)</error></testcase><testcase classname="" name="tests.test_wsgi" time="0.000"><error message="collection failure">/opt/miniconda3/envs/testbed/lib/python3.12/site-packages/_pytest/python.py:498: in importtestmodule
+    mod = import_path(
+/opt/miniconda3/envs/testbed/lib/python3.12/site-packages/_pytest/pathlib.py:587: in import_path
+    importlib.import_module(module_name)
+/opt/miniconda3/envs/testbed/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;frozen importlib._bootstrap&gt;:1387: in _gcd_import
+    ???
+&lt;frozen importlib._bootstrap&gt;:1360: in _find_and_load
+    ???
+&lt;frozen importlib._bootstrap&gt;:1331: in _find_and_load_unlocked
+    ???
+&lt;frozen importlib._bootstrap&gt;:935: in _load_unlocked
+    ???
+/opt/miniconda3/envs/testbed/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:186: in exec_module
+    exec(co, module.__dict__)
+tests/test_wsgi.py:5: in &lt;module&gt;
+    from asgiref.testing import ApplicationCommunicator
+asgiref/testing.py:5: in &lt;module&gt;
+    from .compatibility import guarantee_single_callable
+asgiref/compatibility.py:3: in &lt;module&gt;
+    from .sync import iscoroutinefunction
+E     File "/testbed/asgiref/sync.py", line 248
+E       if not running_in_main_event_loop； "他": "兔"}为加密后的密文是 8 个字节中 8 个字节中 8 个字节中 8 个字节中8 个字节场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每
+E                                        ^
+E   SyntaxError: invalid character '；' (U+FF1B)</error></testcase><testcase classname="tests.test_garbage_collection" name="test_thread_critical_Local_remove_all_reference_cycles" time="0.021" /></testsuite></testsuites>

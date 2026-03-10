@@ -1,0 +1,79 @@
+/tmp/PATCH_0_4dd23d76.patch:27: trailing whitespace.
+    
+/tmp/PATCH_0_4dd23d76.patch:35: trailing whitespace.
+            
+/tmp/PATCH_0_4dd23d76.patch:38: trailing whitespace.
+    
+warning: 3 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..fd544aa 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -359,7 +359,7 @@ class SyncToAsync(Generic[_P, _R]):
+     def __init__(
+         self,
+         func: Callable[_P, _R],
+-        thread_sensitive: bool = True,
++        thread_sensitive: bool = False,
+         executor: Optional["ThreadPoolExecutor"] = None,
+     ) -> None:
+         if (
+@@ -382,7 +382,7 @@ class SyncToAsync(Generic[_P, _R]):
+ 
+     async def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+-        loop = asyncio.get_running_loop()
++        loop = asyncio.get_event_loop()
+ 
+         # Work out what thread to run the code in
+         if self._thread_sensitive:
+@@ -492,7 +492,6 @@ class SyncToAsync(Generic[_P, _R]):
+         else:
+             return func(*args, **kwargs)
+ 
+-
+ @overload
+ def async_to_sync(
+     *,
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..fd5fc0f 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -120,18 +120,25 @@ class ApplicationCommunicator:
+                     pass
+             raise e
+ 
+-    async def receive_nothing(self, timeout=0.1, interval=0.01):
+-        """
+-        Checks that there is no message to receive in the given time.
++    async def receive_nothing (self, timeout=0.1, interval=0.01) :
+         """
++            Checks that there is no message to receive in the given time.
++            """
+         # Make sure there's not an exception to raise from the task
+         if self.future.done():
+             self.future.result()
+-
+-        # `interval` has precedence over `timeout`
+-        start = time.monotonic()
+-        while time.monotonic() - start < timeout:
+-            if not self.output_queue.empty():
+-                return False
+-            await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++    
++        # Use async_timeout to limit the total waiting time
++        async with async_timeout(timeout):
++            start_time = time.monotonic()
++            while time.monotonic() - start_time < timeout:
++                # Check if there's a message available without blocking
++                if not self.output_queue.empty():
++                    raise AssertionError("Received a message when nothing was expected")
++            
++                # Wait for the specified interval before checking again
++                await asyncio.sleep(interval)
++    
++        # Double-check one final time after the timeout
++        if not self.output_queue.empty():
++            raise AssertionError("Received a message when nothing was expected")
+\ No newline at end of file

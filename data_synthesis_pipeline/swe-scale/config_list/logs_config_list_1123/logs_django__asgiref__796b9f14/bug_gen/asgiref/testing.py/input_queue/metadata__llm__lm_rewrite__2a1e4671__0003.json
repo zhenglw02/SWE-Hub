@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__2a1e4671__0003",
+  "hash_code": "2a1e4671",
+  "cost": 0,
+  "explanation": "To implement the `input_queue` property, we need to ensure it lazily initializes the `_input_queue` attribute when first accessed. The property should return the queue instance. Based on the surrounding code structure, we should mirror the pattern used in `output_queue`.\n\nHere's the implementation:",
+  "output": "To implement the `input_queue` property, we need to ensure it lazily initializes the `_input_queue` attribute when first accessed. The property should return the queue instance. Based on the surrounding code structure, we should mirror the pattern used in `output_queue`.\n\nHere's the implementation:\n\n```python\n@property\ndef input_queue(self):\n    if self._input_queue is None:\n        self._input_queue = asyncio.Queue()\n    return self._input_queue\n```",
+  "rewrite": "@property\ndef input_queue(self):\n    if self._input_queue is None:\n        self._input_queue = asyncio.Queue()\n    return self._input_queue",
+  "strategy": "lm_rewrite"
+}

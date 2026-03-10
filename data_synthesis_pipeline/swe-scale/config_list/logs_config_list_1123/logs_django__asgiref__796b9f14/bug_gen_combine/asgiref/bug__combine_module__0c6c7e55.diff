@@ -1,0 +1,117 @@
+/tmp/PATCH_0_c054001a.patch:23: trailing whitespace.
+    
+/tmp/PATCH_0_c054001a.patch:27: trailing whitespace.
+    
+/tmp/PATCH_0_c054001a.patch:38: trailing whitespace.
+    
+warning: 3 lines add whitespace errors.
+/tmp/PATCH_1_267cd747.patch:30: trailing whitespace.
+    
+/tmp/PATCH_1_267cd747.patch:33: trailing whitespace.
+    
+/tmp/PATCH_1_267cd747.patch:40: trailing whitespace.
+    
+/tmp/PATCH_1_267cd747.patch:43: trailing whitespace.
+    
+/tmp/PATCH_1_267cd747.patch:46: trailing whitespace.
+    
+warning: squelched 1 whitespace error
+warning: 6 lines add whitespace errors.
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..be794c9 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -119,20 +119,26 @@ class StatelessServer:
+         }
+         return input_queue
+ 
+-    def delete_oldest_application_instance(self):
+-        """
+-        Finds and deletes the oldest application instance
+-        """
+-        oldest_time = min(
+-            details["last_used"] for details in self.application_instances.values()
+-        )
++    def delete_oldest_application_instance (self) :
++        """
++            Finds and deletes the oldest application instance
++            """
++        # Find the scope_id with the smallest last_used timestamp
++        if not self.application_instances:
++            return
++    
++        # Find the oldest instance by comparing last_used timestamps
++        oldest_scope_id = None
++        oldest_timestamp = float('inf')
++    
+         for scope_id, details in self.application_instances.items():
+-            if details["last_used"] == oldest_time:
+-                self.delete_application_instance(scope_id)
+-                # Return to make sure we only delete one in case two have
+-                # the same oldest time
+-                return
+-
++            if details["last_used"] < oldest_timestamp:
++                oldest_timestamp = details["last_used"]
++                oldest_scope_id = scope_id
++    
++        # If we found an oldest instance, delete it
++        if oldest_scope_id is not None:
++            self.delete_application_instance(oldest_scope_id)
+     def delete_application_instance(self, scope_id):
+         """
+         Removes an application instance (makes sure its task is stopped,
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..f0e41d4 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -31,25 +31,31 @@ class WsgiToAsgiInstance:
+         self.response_started = False
+         self.response_content_length = None
+ 
+-    async def __call__(self, scope, receive, send):
+-        if scope["type"] != "http":
+-            raise ValueError("WSGI wrapper received a non-HTTP scope")
++    async def __call__ (self, scope, receive, send) :
++        # Store the scope for later use in build_environ
+         self.scope = scope
+-        with SpooledTemporaryFile(max_size=65536) as body:
+-            # Alright, wait for the http.request messages
+-            while True:
+-                message = await receive()
+-                if message["type"] != "http.request":
+-                    raise ValueError("WSGI wrapper received a non-HTTP-request message")
+-                body.write(message.get("body", b""))
+-                if not message.get("more_body"):
+-                    break
+-            body.seek(0)
+-            # Wrap send so it can be called from the subthread
+-            self.sync_send = AsyncToSync(send)
+-            # Call the WSGI app
+-            await self.run_wsgi_app(body)
+-
++    
++        # Create a temporary file to buffer the request body
++        body_file = SpooledTemporaryFile(max_size=64 * 1024)
++    
++        # Collect all body chunks
++        more_body = True
++        while more_body:
++            message = await receive()
++            body_file.write(message.get("body", b""))
++            more_body = message.get("more_body", False)
++    
++        # Seek to the beginning for reading
++        body_file.seek(0)
++    
++        # Wrap send for synchronous use
++        self.sync_send = AsyncToSync(send)
++    
++        # Run the WSGI application
++        await self.run_wsgi_app(body_file)
++    
++        # Close the body file
++        body_file.close()
+     def build_environ(self, scope, body):
+         """
+         Builds a scope and request body into a WSGI environ object.

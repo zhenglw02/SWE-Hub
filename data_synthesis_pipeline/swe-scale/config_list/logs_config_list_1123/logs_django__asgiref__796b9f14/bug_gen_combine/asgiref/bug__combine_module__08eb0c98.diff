@@ -1,0 +1,199 @@
+/tmp/PATCH_0_76405d08.patch:21: trailing whitespace.
+    
+/tmp/PATCH_0_76405d08.patch:26: trailing whitespace.
+    
+/tmp/PATCH_0_76405d08.patch:29: trailing whitespace.
+    
+/tmp/PATCH_0_76405d08.patch:40: trailing whitespace.
+    
+/tmp/PATCH_0_76405d08.patch:43: trailing whitespace.
+    
+warning: squelched 2 whitespace errors
+warning: 7 lines add whitespace errors.
+/tmp/PATCH_1_4c4ecb6b.patch:50: trailing whitespace.
+    
+/tmp/PATCH_1_4c4ecb6b.patch:78: trailing whitespace.
+    
+/tmp/PATCH_1_4c4ecb6b.patch:85: trailing whitespace.
+    
+/tmp/PATCH_1_4c4ecb6b.patch:93: trailing whitespace.
+    
+/tmp/PATCH_1_4c4ecb6b.patch:103: trailing whitespace.
+    
+warning: squelched 1 whitespace error
+warning: 6 lines add whitespace errors.
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..d039d50 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -92,33 +92,39 @@ class StatelessServer:
+ 
+     def get_or_create_application_instance(self, scope_id, scope):
+         """
+-        Creates an application instance and returns its queue.
+-        """
++            Creates an application instance and returns its queue.
++            """
++        # Check if we already have an instance with this scope_id
+         if scope_id in self.application_instances:
++            # Update last_used timestamp and return existing queue
+             self.application_instances[scope_id]["last_used"] = time.time()
+-            return self.application_instances[scope_id]["input_queue"]
+-        # See if we need to delete an old one
+-        while len(self.application_instances) > self.max_applications:
++            return self.application_instances[scope_id]["queue"]
++    
++        # If we're at maximum capacity, delete the oldest instance first
++        if len(self.application_instances) >= self.max_applications:
+             self.delete_oldest_application_instance()
+-        # Make an instance of the application
++    
++        # Create input queue for the new application instance
+         input_queue = asyncio.Queue()
++    
++        # Wrap the application with guarantee_single_callable for compatibility
+         application_instance = guarantee_single_callable(self.application)
+-        # Run it, and stash the future for later checking
+-        future = asyncio.ensure_future(
+-            application_instance(
+-                scope=scope,
+-                receive=input_queue.get,
+-                send=lambda message: self.application_send(scope, message),
+-            ),
+-        )
++    
++        # Create the application coroutine
++        application_coroutine = application_instance(scope, input_queue.get, self.application_send)
++    
++        # Start the application coroutine as a task
++        future = asyncio.ensure_future(application_coroutine)
++    
++        # Store the application instance details
+         self.application_instances[scope_id] = {
+-            "input_queue": input_queue,
++            "queue": input_queue,
+             "future": future,
+             "scope": scope,
+             "last_used": time.time(),
+         }
++    
+         return input_queue
+-
+     def delete_oldest_application_instance(self):
+         """
+         Finds and deletes the oldest application instance
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..178fa7a 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -50,55 +50,66 @@ class WsgiToAsgiInstance:
+             # Call the WSGI app
+             await self.run_wsgi_app(body)
+ 
+-    def build_environ(self, scope, body):
++    def build_environ (self, scope, body) :
+         """
+-        Builds a scope and request body into a WSGI environ object.
+-        """
+-        script_name = scope.get("root_path", "").encode("utf8").decode("latin1")
+-        path_info = scope["path"].encode("utf8").decode("latin1")
+-        if path_info.startswith(script_name):
+-            path_info = path_info[len(script_name) :]
++            Builds a scope and request body into a WSGI environ object.
++            """
+         environ = {
+-            "REQUEST_METHOD": scope["method"],
+-            "SCRIPT_NAME": script_name,
+-            "PATH_INFO": path_info,
+-            "QUERY_STRING": scope["query_string"].decode("ascii"),
+-            "SERVER_PROTOCOL": "HTTP/%s" % scope["http_version"],
+-            "wsgi.version": (1, 0),
+-            "wsgi.url_scheme": scope.get("scheme", "http"),
+-            "wsgi.input": body,
+-            "wsgi.errors": sys.stderr,
+-            "wsgi.multithread": True,
+-            "wsgi.multiprocess": True,
+-            "wsgi.run_once": False,
++            'REQUEST_METHOD': scope.get('method', 'GET'),
++            'SCRIPT_NAME': scope.get('root_path', '').encode('utf8').decode('latin1'),
++            'PATH_INFO': scope.get('path', '').encode('utf8').decode('latin1'),
++            'QUERY_STRING': scope.get('query_string', b'').decode('latin1'),
++            'SERVER_PROTOCOL': 'HTTP/' + scope.get('http_version', '1.1'),
++            'wsgi.version': (1, 0),
++            'wsgi.url_scheme': scope.get('scheme', 'http'),
++            'wsgi.input': body,
++            'wsgi.errors': sys.stderr,
++            'wsgi.multithread': True,
++            'wsgi.multiprocess': False,
++            'wsgi.run_once': False,
+         }
+-        # Get server name and port - required in WSGI, not in ASGI
+-        if "server" in scope:
+-            environ["SERVER_NAME"] = scope["server"][0]
+-            environ["SERVER_PORT"] = str(scope["server"][1])
++    
++        # Server and client addresses
++        if 'server' in scope and scope['server'] is not None:
++            environ['SERVER_NAME'] = scope['server'][0]
++            environ['SERVER_PORT'] = str(scope['server'][1])
+         else:
+-            environ["SERVER_NAME"] = "localhost"
+-            environ["SERVER_PORT"] = "80"
+-
+-        if scope.get("client") is not None:
+-            environ["REMOTE_ADDR"] = scope["client"][0]
+-
+-        # Go through headers and make them into environ entries
+-        for name, value in self.scope.get("headers", []):
+-            name = name.decode("latin1")
+-            if name == "content-length":
+-                corrected_name = "CONTENT_LENGTH"
+-            elif name == "content-type":
+-                corrected_name = "CONTENT_TYPE"
+-            else:
+-                corrected_name = "HTTP_%s" % name.upper().replace("-", "_")
+-            # HTTPbis say only ASCII chars are allowed in headers, but we latin1 just in case
+-            value = value.decode("latin1")
+-            if corrected_name in environ:
+-                value = environ[corrected_name] + "," + value
+-            environ[corrected_name] = value
++            environ['SERVER_NAME'] = 'localhost'
++            environ['SERVER_PORT'] = '80'
++    
++        if 'client' in scope and scope['client'] is not None:
++            environ['REMOTE_ADDR'] = scope['client'][0]
++            environ['REMOTE_PORT'] = str(scope['client'][1])
++        else:
++            environ['REMOTE_ADDR'] = '127.0.0.1'
++            environ['REMOTE_PORT'] = '0'
++    
++        # HTTP headers
++        for name, value in scope.get('headers', []):
++            name = name.decode('latin1').upper()
++            if name not in ('CONTENT-TYPE', 'CONTENT-LENGTH'):
++                name = 'HTTP_' + name
++            name = name.replace('-', '_')
++            environ[name] = value.decode('latin1')
++    
++        # Content-Type and Content-Length get special treatment
++        content_type = None
++        content_length = None
++        for name, value in scope.get('headers', []):
++            name = name.decode('latin1').lower()
++            if name == 'content-type':
++                content_type = value.decode('latin1')
++            elif name == 'content-length':
++                content_length = value.decode('latin1')
++    
++        if content_type:
++            environ['CONTENT_TYPE'] = content_type
++        if content_length:
++            environ['CONTENT_LENGTH'] = content_length
++        else:
++            environ['CONTENT_LENGTH'] = '0'
++    
+         return environ
+-
+     def start_response(self, status, response_headers, exc_info=None):
+         """
+         WSGI start_response callable.

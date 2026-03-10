@@ -1,0 +1,69 @@
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..9cb5e52 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -82,6 +82,11 @@ class Local:
+     def _lock_storage(self):
+         # Thread safe access to storage
+         if self._thread_critical:
++            with self._thread_lock:
++                yield self._storage
++        else:
++            # Lock for thread_critical=False as other threads
++            # can access the exact same storage object
+             is_async = True
+             try:
+                 # this is a test for are we in a async or sync
+@@ -110,12 +115,6 @@ class Local:
+                 # can't be accessed in another thread (we don't
+                 # need any locks)
+                 yield self._storage.cvar
+-        else:
+-            # Lock for thread_critical=False as other threads
+-            # can access the exact same storage object
+-            with self._thread_lock:
+-                yield self._storage
+-
+     def __getattr__(self, key):
+         with self._lock_storage() as storage:
+             return getattr(storage, key)
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..b376281 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -119,20 +119,22 @@ class StatelessServer:
+         }
+         return input_queue
+ 
+-    def delete_oldest_application_instance(self):
+-        """
+-        Finds and deletes the oldest application instance
+-        """
+-        oldest_time = min(
+-            details["last_used"] for details in self.application_instances.values()
+-        )
++    def delete_oldest_application_instance (self) :
++        """
++            Finds and deletes the oldest application instance
++            """
++        if not self.application_instances:
++            return
++        # Find the scope_id for the oldest instance (smallest last_used)
++        oldest_scope_id = None
++        min_last_used = float('inf')
+         for scope_id, details in self.application_instances.items():
+-            if details["last_used"] == oldest_time:
+-                self.delete_application_instance(scope_id)
+-                # Return to make sure we only delete one in case two have
+-                # the same oldest time
+-                return
+-
++            if details["last_used"] < min_last_used:
++                min_last_used = details["last_used"]
++                oldest_scope_id = scope_id
++        # Remove the oldest instance
++        if oldest_scope_id is not None:
++            self.delete_application_instance(oldest_scope_id)
+     def delete_application_instance(self, scope_id):
+         """
+         Removes an application instance (makes sure its task is stopped,

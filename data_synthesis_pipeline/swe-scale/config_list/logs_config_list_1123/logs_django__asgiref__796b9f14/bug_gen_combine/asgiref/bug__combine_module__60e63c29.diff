@@ -1,0 +1,111 @@
+/tmp/PATCH_0_303112de.patch:61: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+/tmp/PATCH_1_f308696b.patch:28: trailing whitespace.
+    
+/tmp/PATCH_1_f308696b.patch:31: trailing whitespace.
+    
+warning: 2 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..e43b0a7 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -209,58 +209,7 @@ class AsyncToSync(Generic[_P, _R]):
+         # Use call_soon_threadsafe to schedule a synchronous callback on the
+         # main event loop's thread if it's there, otherwise make a new loop
+         # in this thread.
+-        try:
+-            awaitable = self.main_wrap(
+-                call_result,
+-                sys.exc_info(),
+-                task_context,
+-                context,
+-                # prepare an awaitable which can be passed as is to self.main_wrap,
+-                # so that `args` and `kwargs` don't need to be
+-                # destructured when passed to self.main_wrap
+-                # (which is required by `ParamSpec`)
+-                # as that may cause overlapping arguments
+-                self.awaitable(*args, **kwargs),
+-            )
+-
+-            async def new_loop_wrap() -> None:
+-                loop = asyncio.get_running_loop()
+-                self.loop_thread_executors[loop] = current_executor
+-                try:
+-                    await awaitable
+-                finally:
+-                    del self.loop_thread_executors[loop]
+-
+-            if self.main_event_loop is not None:
+-                try:
+-                    self.main_event_loop.call_soon_threadsafe(
+-                        self.main_event_loop.create_task, awaitable
+-                    )
+-                except RuntimeError:
+-                    running_in_main_event_loop = False
+-                else:
+-                    running_in_main_event_loop = True
+-                    # Run the CurrentThreadExecutor until the future is done.
+-                    current_executor.run_until_future(call_result)
+-            else:
+-                running_in_main_event_loop = False
+-
+-            if not running_in_main_event_loop:
+-                # Make our own event loop - in a new thread - and run inside that.
+-                loop_executor = ThreadPoolExecutor(max_workers=1)
+-                loop_future = loop_executor.submit(asyncio.run, new_loop_wrap())
+-                # Run the CurrentThreadExecutor until the future is done.
+-                current_executor.run_until_future(loop_future)
+-                # Wait for future and/or allow for exception propagation
+-                loop_future.result()
+-        finally:
+-            _restore_context(context[0])
+-            # Restore old current thread executor state
+-            self.executors.current = old_executor
+-
+-        # Wait for results from the future.
+-        return call_result.result()
+-
++    
+     def __get__(self, parent: Any, objtype: Any) -> Callable[_P, _R]:
+         """
+         Include self for methods
+@@ -356,30 +305,17 @@ class SyncToAsync(Generic[_P, _R]):
+         weakref.WeakKeyDictionary()
+     )
+ 
+-    def __init__(
+-        self,
+-        func: Callable[_P, _R],
+-        thread_sensitive: bool = True,
+-        executor: Optional["ThreadPoolExecutor"] = None,
+-    ) -> None:
+-        if (
+-            not callable(func)
+-            or iscoroutinefunction(func)
+-            or iscoroutinefunction(getattr(func, "__call__", func))
+-        ):
+-            raise TypeError("sync_to_async can only be applied to sync functions.")
+-        self.func = func
+-        functools.update_wrapper(self, func)
+-        self._thread_sensitive = thread_sensitive
+-        markcoroutinefunction(self)
++    def __init__(self, func: Callable[_P, _R], thread_sensitive: bool = True, executor: Optional["ThreadPoolExecutor"] = None) -> None:
++        if not callable(func):
++            raise TypeError("func must be callable")
++    
+         if thread_sensitive and executor is not None:
+             raise TypeError("executor must not be set when thread_sensitive is True")
++    
++        self.func = func
++        self._thread_sensitive = thread_sensitive
+         self._executor = executor
+-        try:
+-            self.__self__ = func.__self__  # type: ignore
+-        except AttributeError:
+-            pass
+-
++        functools.update_wrapper(self, func)
+     async def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+         loop = asyncio.get_running_loop()

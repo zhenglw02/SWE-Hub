@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__eb3271b5__0003",
+  "hash_code": "eb3271b5",
+  "cost": 0,
+  "explanation": "The function `delete_oldest_application_instance` should find the application instance that was used least recently (has the smallest `last_used` timestamp) and remove it using the existing `delete_application_instance` method. This ensures proper cleanup of the oldest instance when we need to make space for new ones.\n\nHere's the implementation:",
+  "output": "The function `delete_oldest_application_instance` should find the application instance that was used least recently (has the smallest `last_used` timestamp) and remove it using the existing `delete_application_instance` method. This ensures proper cleanup of the oldest instance when we need to make space for new ones.\n\nHere's the implementation:\n\n```\ndef delete_oldest_application_instance (self) :\n    \"\"\"\n        Finds and deletes the oldest application instance\n        \"\"\"\n    if not self.application_instances:\n        return\n    \n    # Find the scope_id with the smallest last_used timestamp\n    oldest_scope_id = min(\n        self.application_instances.keys(),\n        key=lambda scope_id: self.application_instances[scope_id][\"last_used\"]\n    )\n    \n    # Delete the oldest instance\n    self.delete_application_instance(oldest_scope_id)\n```",
+  "rewrite": "def delete_oldest_application_instance (self) :\n    \"\"\"\n        Finds and deletes the oldest application instance\n        \"\"\"\n    if not self.application_instances:\n        return\n    \n    # Find the scope_id with the smallest last_used timestamp\n    oldest_scope_id = min(\n        self.application_instances.keys(),\n        key=lambda scope_id: self.application_instances[scope_id][\"last_used\"]\n    )\n    \n    # Delete the oldest instance\n    self.delete_application_instance(oldest_scope_id)",
+  "strategy": "lm_rewrite"
+}

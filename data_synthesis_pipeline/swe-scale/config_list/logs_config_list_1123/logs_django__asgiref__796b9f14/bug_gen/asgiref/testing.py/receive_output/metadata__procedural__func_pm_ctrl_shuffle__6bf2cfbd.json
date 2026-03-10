@@ -1,0 +1,9 @@
+{
+  "instance_id": "procedural__func_pm_ctrl_shuffle__6bf2cfbd",
+  "hash_code": "6bf2cfbd",
+  "cost": 0.0,
+  "explanation": "The lines inside a function may be out of order.",
+  "output": "async def receive_output(self, timeout=1):\n    \"\"\"\n    Receives a single message from the application, with optional timeout.\n    \"\"\"\n    # Make sure there's not an exception to raise from the task\n    # Wait and receive the message\n    if self.future.done():\n        self.future.result()\n    try:\n        async with async_timeout(timeout):\n            return await self.output_queue.get()\n    except asyncio.TimeoutError as e:\n        # See if we have another error to raise inside\n        if self.future.done():\n            self.future.result()\n        else:\n            self.future.cancel()\n            try:\n                await self.future\n            except asyncio.CancelledError:\n                pass\n        raise e",
+  "rewrite": "async def receive_output(self, timeout=1):\n    \"\"\"\n    Receives a single message from the application, with optional timeout.\n    \"\"\"\n    # Make sure there's not an exception to raise from the task\n    # Wait and receive the message\n    if self.future.done():\n        self.future.result()\n    try:\n        async with async_timeout(timeout):\n            return await self.output_queue.get()\n    except asyncio.TimeoutError as e:\n        # See if we have another error to raise inside\n        if self.future.done():\n            self.future.result()\n        else:\n            self.future.cancel()\n            try:\n                await self.future\n            except asyncio.CancelledError:\n                pass\n        raise e",
+  "strategy": "func_pm_ctrl_shuffle"
+}

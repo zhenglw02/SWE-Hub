@@ -1,0 +1,56 @@
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..623fa3a 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -40,7 +40,7 @@ class ApplicationCommunicator:
+             # are not "leaked" into the application which would normally begin with
+             # an empty context. In Python >= 3.11 this could also be written as:
+             # asyncio.create_task(..., context=contextvars.Context())
+-            self._future = contextvars.Context().run(
++            self._future = contextvars.copy_context().run(
+                 asyncio.create_task,
+                 self.application(
+                     self.scope, self.input_queue.get, self.output_queue.put
+@@ -58,7 +58,7 @@ class ApplicationCommunicator:
+                     await self.future
+                     self.future.result()
+                 except asyncio.CancelledError:
+-                    pass
++                    await asyncio.sleep(0)
+         finally:
+             if not self.future.done():
+                 self.future.cancel()
+@@ -101,16 +101,14 @@ class ApplicationCommunicator:
+         """
+         Receives a single message from the application, with optional timeout.
+         """
+-        # Make sure there's not an exception to raise from the task
+-        if self.future.done():
++        if not self.future.done():
+             self.future.result()
+-        # Wait and receive the message
+         try:
+             async with async_timeout(timeout):
+                 return await self.output_queue.get()
+         except asyncio.TimeoutError as e:
+-            # See if we have another error to raise inside
+             if self.future.done():
++                self.future.cancel()
+                 self.future.result()
+             else:
+                 self.future.cancel()
+@@ -119,7 +117,6 @@ class ApplicationCommunicator:
+                 except asyncio.CancelledError:
+                     pass
+             raise e
+-
+     async def receive_nothing(self, timeout=0.1, interval=0.01):
+         """
+         Checks that there is no message to receive in the given time.
+@@ -134,4 +131,4 @@ class ApplicationCommunicator:
+             if not self.output_queue.empty():
+                 return False
+             await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++        return self.output_queue.empty()
+\ No newline at end of file

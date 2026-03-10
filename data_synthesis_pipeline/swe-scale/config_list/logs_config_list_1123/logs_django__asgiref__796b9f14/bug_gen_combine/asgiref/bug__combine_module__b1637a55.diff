@@ -1,0 +1,52 @@
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..ad5edaf 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -98,7 +98,7 @@ class StatelessServer:
+             self.application_instances[scope_id]["last_used"] = time.time()
+             return self.application_instances[scope_id]["input_queue"]
+         # See if we need to delete an old one
+-        while len(self.application_instances) > self.max_applications:
++        while len(self.application_instances) >= 1:
+             self.delete_oldest_application_instance()
+         # Make an instance of the application
+         input_queue = asyncio.Queue()
+@@ -118,7 +118,6 @@ class StatelessServer:
+             "last_used": time.time(),
+         }
+         return input_queue
+-
+     def delete_oldest_application_instance(self):
+         """
+         Finds and deletes the oldest application instance
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..f6e0597 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -164,7 +164,7 @@ class AsyncToSync(Generic[_P, _R]):
+     def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+ 
+-        if not self.force_new_loop and not self.main_event_loop:
++        if not self.force_new_loop and self.main_event_loop:
+             # There's no event loop in this thread. Look for the threadlocal if
+             # we're inside SyncToAsync
+             main_event_loop_pid = getattr(
+@@ -251,8 +251,7 @@ class AsyncToSync(Generic[_P, _R]):
+                 loop_future = loop_executor.submit(asyncio.run, new_loop_wrap())
+                 # Run the CurrentThreadExecutor until the future is done.
+                 current_executor.run_until_future(loop_future)
+-                # Wait for future and/or allow for exception propagation
+-                loop_future.result()
++                return call_result.result()
+         finally:
+             _restore_context(context[0])
+             # Restore old current thread executor state
+@@ -309,7 +308,6 @@ class AsyncToSync(Generic[_P, _R]):
+                 task_context.remove(current_task)
+             context[0] = contextvars.copy_context()
+ 
+-
+ class SyncToAsync(Generic[_P, _R]):
+     """
+     Utility class which turns a synchronous callable into an awaitable that

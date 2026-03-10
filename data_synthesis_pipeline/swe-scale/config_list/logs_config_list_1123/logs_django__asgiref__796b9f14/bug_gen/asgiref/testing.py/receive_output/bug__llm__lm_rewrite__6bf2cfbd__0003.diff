@@ -1,0 +1,55 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..92dc3fa 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -469,29 +469,32 @@ class SyncToAsync(Generic[_P, _R]):
+         func = functools.partial(self.__call__, parent)
+         return functools.update_wrapper(func, self.func)
+ 
+-    def thread_handler(self, loop, exc_info, task_context, func, *args, **kwargs):
++    def thread_handler (self, loop, exc_info, task_context, func, *args, **kwargs) :
+         """
+-        Wraps the sync application with exception handling.
+-        """
+-
+-        __traceback_hide__ = True  # noqa: F841
+-
+-        # Set the threadlocal for AsyncToSync
++            Wraps the sync application with exception handling.
++            """
++        # Set the threadlocal to point to the currently running loop
+         self.threadlocal.main_event_loop = loop
+         self.threadlocal.main_event_loop_pid = os.getpid()
++    
++        # Set the task context so that AsyncToSync can find it
+         self.threadlocal.task_context = task_context
+-
+-        # Run the function
+-        # If we have an exception, run the function inside the except block
+-        # after raising it so exc_info is correctly populated.
+-        if exc_info[1]:
+-            try:
+-                raise exc_info[1]
+-            except BaseException:
++    
++        try:
++            # If we have an exception, run the function inside the except block
++            # after raising it so exc_info is correctly populated
++            if exc_info[1]:
++                try:
++                    raise exc_info[1]
++                except BaseException:
++                    return func(*args, **kwargs)
++            else:
+                 return func(*args, **kwargs)
+-        else:
+-            return func(*args, **kwargs)
+-
++        finally:
++            # Clear the threadlocal
++            del self.threadlocal.main_event_loop
++            del self.threadlocal.main_event_loop_pid
++            del self.threadlocal.task_context
+ 
+ @overload
+ def async_to_sync(

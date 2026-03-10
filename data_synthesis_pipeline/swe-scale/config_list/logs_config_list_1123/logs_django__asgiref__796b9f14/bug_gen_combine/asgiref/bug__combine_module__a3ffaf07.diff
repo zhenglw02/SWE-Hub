@@ -1,0 +1,95 @@
+/tmp/PATCH_0_57b3aede.patch:32: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..f6eac74 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -469,29 +469,30 @@ class SyncToAsync(Generic[_P, _R]):
+         func = functools.partial(self.__call__, parent)
+         return functools.update_wrapper(func, self.func)
+ 
+-    def thread_handler(self, loop, exc_info, task_context, func, *args, **kwargs):
++    def thread_handler (self, loop, exc_info, task_context, func, *args, **kwargs) :
+         """
+-        Wraps the sync application with exception handling.
+-        """
+-
+-        __traceback_hide__ = True  # noqa: F841
+-
+-        # Set the threadlocal for AsyncToSync
++            Wraps the sync application with exception handling.
++            """
++        # Set the threadlocal to pass the loop onto any underlying AsyncToSync
+         self.threadlocal.main_event_loop = loop
+         self.threadlocal.main_event_loop_pid = os.getpid()
+         self.threadlocal.task_context = task_context
+-
+-        # Run the function
+-        # If we have an exception, run the function inside the except block
+-        # after raising it so exc_info is correctly populated.
+-        if exc_info[1]:
+-            try:
+-                raise exc_info[1]
+-            except BaseException:
++    
++        try:
++            # If we have an exception, run the function inside the except block
++            # after raising it so exc_info is correctly populated.
++            if exc_info[1]:
++                try:
++                    raise exc_info[1]
++                except:
++                    return func(*args, **kwargs)
++            else:
+                 return func(*args, **kwargs)
+-        else:
+-            return func(*args, **kwargs)
+-
++        finally:
++            # Clear the threadlocal after execution
++            self.threadlocal.main_event_loop = None
++            self.threadlocal.main_event_loop_pid = None
++            self.threadlocal.task_context = None
+ 
+ @overload
+ def async_to_sync(
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..313937c 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -81,26 +81,16 @@ class timeout:
+         else:
+             return None
+ 
+-    def _do_enter(self) -> "timeout":
+-        # Support Tornado 5- without timeout
+-        # Details: https://github.com/python/asyncio/issues/392
+-        if self._timeout is None:
+-            return self
+-
+-        self._task = asyncio.current_task(self._loop)
+-        if self._task is None:
+-            raise RuntimeError(
+-                "Timeout context manager should be used " "inside a task"
++    def _do_enter (self) -> "timeout" : # Support Tornado 5- without timeout # Details: https://github.com/python/asyncio/issues/392
++        if self._timeout is not None:
++            self._task = asyncio.current_task(self._loop)
++            if self._task is None:
++                return self
++            self._cancel_at = self._loop.time() + self._timeout
++            self._cancel_handler = self._loop.call_at(
++                self._cancel_at, self._cancel_task
+             )
+-
+-        if self._timeout <= 0:
+-            self._loop.call_soon(self._cancel_task)
+-            return self
+-
+-        self._cancel_at = self._loop.time() + self._timeout
+-        self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)
+         return self
+-
+     def _do_exit(self, exc_type: Type[BaseException]) -> None:
+         if exc_type is asyncio.CancelledError and self._cancelled:
+             self._cancel_handler = None

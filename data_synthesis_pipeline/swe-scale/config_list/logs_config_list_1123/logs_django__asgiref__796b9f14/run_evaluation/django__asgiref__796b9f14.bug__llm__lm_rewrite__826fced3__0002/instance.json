@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__llm__lm_rewrite__826fced3__0002",
+    "patch": "diff --git a/asgiref/testing.py b/asgiref/testing.py\nindex d6ccee5..9e15bbb 100644\n--- a/asgiref/testing.py\n+++ b/asgiref/testing.py\n@@ -27,12 +27,12 @@ class ApplicationCommunicator:\n             self._input_queue = asyncio.Queue()\n         return self._input_queue\n \n+    @property\n     @property\n     def output_queue(self):\n         if self._output_queue is None:\n             self._output_queue = asyncio.Queue()\n         return self._output_queue\n-\n     @property\n     def future(self):\n         if self._future is None:\n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/local.py/__setattr__/bug__llm__lm_rewrite__826fced3__0002.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

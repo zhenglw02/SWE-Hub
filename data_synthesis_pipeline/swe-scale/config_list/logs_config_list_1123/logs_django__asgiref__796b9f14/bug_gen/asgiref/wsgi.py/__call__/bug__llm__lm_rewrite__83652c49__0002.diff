@@ -1,0 +1,69 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..e8f15dc 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -60,36 +60,34 @@ class CurrentThreadExecutor(Executor):
+         self._broken = False  # synchronized by _work_ready
+         self._old_executor = old_executor
+ 
+-    def run_until_future(self, future: "Future[Any]") -> None:
+-        """
+-        Runs the code in the work queue until a result is available from the future.
+-        Should be run from the thread the executor is initialised in.
+-        """
+-        # Check we're in the right thread
+-        if threading.current_thread() != self._work_thread:
+-            raise RuntimeError(
+-                "You cannot run CurrentThreadExecutor from a different thread"
+-            )
+-
+-        def done(future: "Future[Any]") -> None:
+-            with self._work_ready:
+-                self._broken = True
+-                self._work_ready.notify()
+-
+-        future.add_done_callback(done)
+-        # Keep getting and running work items until the future we're waiting for
+-        # is done and the queue is empty.
+-        while True:
+-            with self._work_ready:
+-                while not self._work_items and not self._broken:
+-                    self._work_ready.wait()
+-                if not self._work_items:
+-                    break
+-                # Get a work item and run it
+-                work_item = self._work_items.popleft()
+-            work_item.run()
+-            del work_item
+-
++    def run_until_future (self, future: "Future[Any]") -> None :
++            """
++                Runs the code in the work queue until a result is available from the future.
++                Should be run from the thread the executor is initialised in.
++                """
++            if threading.current_thread() != self._work_thread:
++                raise RuntimeError("run_until_future must be called from the work thread")
++        
++            while not future.done():
++                # Wait for work items or future completion
++                with self._work_ready:
++                    if not self._work_items and not self._broken and not future.done():
++                        # Wait for work items to arrive or future to complete
++                        self._work_ready.wait(timeout=0.1)
++                
++                    if self._broken:
++                        # Executor was broken, stop processing
++                        break
++                
++                    # Process all available work items
++                    while self._work_items:
++                        work_item = self._work_items.popleft()
++                        try:
++                            work_item.run()
++                        except BaseException:
++                            # Log or handle unexpected exceptions in work items
++                            # But don't break the loop as we're waiting for the future
++                            pass
+     def submit(
+         self,
+         fn: Callable[_P, _R],

@@ -1,0 +1,60 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..7e539a5 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -172,7 +172,7 @@ class AsyncToSync(Generic[_P, _R]):
+             )
+             # We make sure the parent loop is from the same process - if
+             # they've forked, this is not going to be valid any more (#194)
+-            if main_event_loop_pid and main_event_loop_pid == os.getpid():
++            if main_event_loop_pid == os.getpid() and os.getpid()loop_pid:
+                 self.main_event_loop = getattr(
+                     SyncToAsync.threadlocal, "main_event_loop", None
+                 )
+@@ -231,7 +231,7 @@ class AsyncToSync(Generic[_P, _R]):
+                 finally:
+                     del self.loop_thread_executors[loop]
+ 
+-            if self.main_event_loop is not None:
++            if None is not self.main_event_loop:
+                 try:
+                     self.main_event_loop.call_soon_threadsafe(
+                         self.main_event_loop.create_task, awaitable
+@@ -260,7 +260,6 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+         # Wait for results from the future.
+         return call_result.result()
+-
+     def __get__(self, parent: Any, objtype: Any) -> Callable[_P, _R]:
+         """
+         Include self for methods
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..4320a81 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -147,20 +147,20 @@ class WsgiToAsgiInstance:
+                 self.response_started = True
+                 self.sync_send(self.response_start)
+             # If the application supplies a Content-Length header
+-            if self.response_content_length is not None:
++            if self.response_content_length is None:
+                 # The server should not transmit more bytes to the client than the header allows
+                 bytes_allowed = self.response_content_length - bytes_sent
+-                if len(output) > bytes_allowed:
++                if len(output) <= bytes_allowed:
+                     output = output[:bytes_allowed]
+             self.sync_send(
+                 {"type": "http.response.body", "body": output, "more_body": True}
+             )
+             bytes_sent += len(output)
+             # The server should stop iterating over the response when enough data has been sent
+-            if bytes_sent == self.response_content_length:
++            if bytes_sent != self.response_content_length:
+                 break
+         # Close connection
+         if not self.response_started:
+             self.response_started = True
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        self.sync_send({"type": "http.response.body"})
+\ No newline at end of file

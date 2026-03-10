@@ -1,0 +1,245 @@
+/tmp/PATCH_1_2fc25c35.patch:25: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..83b9279 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -9,59 +9,8 @@ logger = logging.getLogger(__name__)
+ 
+ 
+ class StatelessServer:
+-    """
+-    Base server class that handles basic concepts like application instance
+-    creation/pooling, exception handling, and similar, for stateless protocols
+-    (i.e. ones without actual incoming connections to the process)
+-
+-    Your code should override the handle() method, doing whatever it needs to,
+-    and calling get_or_create_application_instance with a unique `scope_id`
+-    and `scope` for the scope it wants to get.
+-
+-    If an application instance is found with the same `scope_id`, you are
+-    given its input queue, otherwise one is made for you with the scope provided
+-    and you are given that fresh new input queue. Either way, you should do
+-    something like:
+-
+-    input_queue = self.get_or_create_application_instance(
+-        "user-123456",
+-        {"type": "testprotocol", "user_id": "123456", "username": "andrew"},
+-    )
+-    input_queue.put_nowait(message)
+-
+-    If you try and create an application instance and there are already
+-    `max_application` instances, the oldest/least recently used one will be
+-    reclaimed and shut down to make space.
+-
+-    Application coroutines that error will be found periodically (every 100ms
+-    by default) and have their exceptions printed to the console. Override
+-    application_exception() if you want to do more when this happens.
+-
+-    If you override run(), make sure you handle things like launching the
+-    application checker.
+-    """
+-
+-    application_checker_interval = 0.1
+-
+-    def __init__(self, application, max_applications=1000):
+-        # Parameters
+-        self.application = application
+-        self.max_applications = max_applications
+-        # Initialisation
+-        self.application_instances = {}
+-
+     ### Mainloop and handling
+ 
+-    def run(self):
+-        """
+-        Runs the asyncio event loop with our handler loop.
+-        """
+-        event_loop = asyncio.get_event_loop()
+-        try:
+-            event_loop.run_until_complete(self.arun())
+-        except KeyboardInterrupt:
+-            logger.info("Exiting due to Ctrl-C/interrupt")
+-
+     async def arun(self):
+         """
+         Runs the asyncio event loop with our handler loop.
+@@ -79,16 +28,22 @@ class StatelessServer:
+         except Done:
+             pass
+ 
+-    async def handle(self):
+-        raise NotImplementedError("You must implement handle()")
++    def __init__(self, application, max_applications=1000):
++        # Parameters
++        self.application = application
++        self.max_applications = max_applications
++        # Initialisation
++        self.application_instances = {}
+ 
+-    async def application_send(self, scope, message):
++    def run(self):
+         """
+-        Receives outbound sends from applications and handles them.
++        Runs the asyncio event loop with our handler loop.
+         """
+-        raise NotImplementedError("You must implement application_send()")
+-
+-    ### Application instance management
++        event_loop = asyncio.get_event_loop()
++        try:
++            event_loop.run_until_complete(self.arun())
++        except KeyboardInterrupt:
++            logger.info("Exiting due to Ctrl-C/interrupt")
+ 
+     def get_or_create_application_instance(self, scope_id, scope):
+         """
+@@ -119,30 +74,6 @@ class StatelessServer:
+         }
+         return input_queue
+ 
+-    def delete_oldest_application_instance(self):
+-        """
+-        Finds and deletes the oldest application instance
+-        """
+-        oldest_time = min(
+-            details["last_used"] for details in self.application_instances.values()
+-        )
+-        for scope_id, details in self.application_instances.items():
+-            if details["last_used"] == oldest_time:
+-                self.delete_application_instance(scope_id)
+-                # Return to make sure we only delete one in case two have
+-                # the same oldest time
+-                return
+-
+-    def delete_application_instance(self, scope_id):
+-        """
+-        Removes an application instance (makes sure its task is stopped,
+-        then removes it from the current set)
+-        """
+-        details = self.application_instances[scope_id]
+-        del self.application_instances[scope_id]
+-        if not details["future"].done():
+-            details["future"].cancel()
+-
+     async def application_checker(self):
+         """
+         Goes through the set of current application instance Futures and cleans up
+@@ -161,6 +92,47 @@ class StatelessServer:
+                         # Exception handling might have already got here before us. That's fine.
+                         pass
+ 
++    async def application_send(self, scope, message):
++        """
++        Receives outbound sends from applications and handles them.
++        """
++        raise NotImplementedError("You must implement application_send()")
++
++    """
++    Base server class that handles basic concepts like application instance
++    creation/pooling, exception handling, and similar, for stateless protocols
++    (i.e. ones without actual incoming connections to the process)
++
++    Your code should override the handle() method, doing whatever it needs to,
++    and calling get_or_create_application_instance with a unique `scope_id`
++    and `scope` for the scope it wants to get.
++
++    If an application instance is found with the same `scope_id`, you are
++    given its input queue, otherwise one is made for you with the scope provided
++    and you are given that fresh new input queue. Either way, you should do
++    something like:
++
++    input_queue = self.get_or_create_application_instance(
++        "user-123456",
++        {"type": "testprotocol", "user_id": "123456", "username": "andrew"},
++    )
++    input_queue.put_nowait(message)
++
++    If you try and create an application instance and there are already
++    `max_application` instances, the oldest/least recently used one will be
++    reclaimed and shut down to make space.
++
++    Application coroutines that error will be found periodically (every 100ms
++    by default) and have their exceptions printed to the console. Override
++    application_exception() if you want to do more when this happens.
++
++    If you override run(), make sure you handle things like launching the
++    application checker.
++    """
++
++    async def handle(self):
++        raise NotImplementedError("You must implement handle()")
++
+     async def application_exception(self, exception, application_details):
+         """
+         Called whenever an application coroutine has an exception.
+@@ -171,3 +143,31 @@ class StatelessServer:
+             "".join(traceback.format_tb(exception.__traceback__)),
+             f"  {exception}",
+         )
++
++    ### Application instance management
++
++    def delete_application_instance(self, scope_id):
++        """
++        Removes an application instance (makes sure its task is stopped,
++        then removes it from the current set)
++        """
++        details = self.application_instances[scope_id]
++        del self.application_instances[scope_id]
++        if not details["future"].done():
++            details["future"].cancel()
++
++    def delete_oldest_application_instance(self):
++        """
++        Finds and deletes the oldest application instance
++        """
++        oldest_time = min(
++            details["last_used"] for details in self.application_instances.values()
++        )
++        for scope_id, details in self.application_instances.items():
++            if details["last_used"] == oldest_time:
++                self.delete_application_instance(scope_id)
++                # Return to make sure we only delete one in case two have
++                # the same oldest time
++                return
++
++    application_checker_interval = 0.1
+\ No newline at end of file
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..58a194f 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -469,19 +469,15 @@ class SyncToAsync(Generic[_P, _R]):
+         func = functools.partial(self.__call__, parent)
+         return functools.update_wrapper(func, self.func)
+ 
+-    def thread_handler(self, loop, exc_info, task_context, func, *args, **kwargs):
++    def thread_handler (self, loop, exc_info, task_context, func, *args, **kwargs) :
+         """
+-        Wraps the sync application with exception handling.
+-        """
+-
+-        __traceback_hide__ = True  # noqa: F841
+-
++            Wraps the sync application with exception handling.
++            """
+         # Set the threadlocal for AsyncToSync
+         self.threadlocal.main_event_loop = loop
+         self.threadlocal.main_event_loop_pid = os.getpid()
+         self.threadlocal.task_context = task_context
+-
+-        # Run the function
++    
+         # If we have an exception, run the function inside the except block
+         # after raising it so exc_info is correctly populated.
+         if exc_info[1]:
+@@ -492,7 +488,6 @@ class SyncToAsync(Generic[_P, _R]):
+         else:
+             return func(*args, **kwargs)
+ 
+-
+ @overload
+ def async_to_sync(
+     *,

@@ -1,0 +1,30 @@
+Applied patch to 'asgiref/testing.py' cleanly.
+Applied patch to 'asgiref/testing.py' cleanly.
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..1b4bd71 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -33,21 +33,12 @@ class ApplicationCommunicator:
+             self._output_queue = asyncio.Queue()
+         return self._output_queue
+ 
++    @property
+     @property
+     def future(self):
+         if self._future is None:
+-            # Clear context - this ensures that context vars set in the testing scope
+-            # are not "leaked" into the application which would normally begin with
+-            # an empty context. In Python >= 3.11 this could also be written as:
+-            # asyncio.create_task(..., context=contextvars.Context())
+-            self._future = contextvars.Context().run(
+-                asyncio.create_task,
+-                self.application(
+-                    self.scope, self.input_queue.get, self.output_queue.put
+-                ),
+-            )
++            self._future = asyncio.Future()
+         return self._future
+-
+     async def wait(self, timeout=1):
+         """
+         Waits for the application to stop itself and returns any exceptions.

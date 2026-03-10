@@ -1,0 +1,53 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..c0ba10a 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -65,7 +65,6 @@ class CurrentThreadExecutor(Executor):
+         Runs the code in the work queue until a result is available from the future.
+         Should be run from the thread the executor is initialised in.
+         """
+-        # Check we're in the right thread
+         if threading.current_thread() != self._work_thread:
+             raise RuntimeError(
+                 "You cannot run CurrentThreadExecutor from a different thread"
+@@ -77,19 +76,15 @@ class CurrentThreadExecutor(Executor):
+                 self._work_ready.notify()
+ 
+         future.add_done_callback(done)
+-        # Keep getting and running work items until the future we're waiting for
+-        # is done and the queue is empty.
+         while True:
+             with self._work_ready:
+                 while not self._work_items and not self._broken:
+                     self._work_ready.wait()
+-                if not self._work_items:
++                if self._work_items is None:
+                     break
+-                # Get a work item and run it
+                 work_item = self._work_items.popleft()
+             work_item.run()
+             del work_item
+-
+     def submit(
+         self,
+         fn: Callable[_P, _R],
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..592f4a6 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -14,7 +14,7 @@ class _CVar:
+         )
+ 
+     def __getattr__(self, key):
+-        storage_object = self._data.get({})
++        storage_object = {}
+         try:
+             return storage_object[key]
+         except KeyError:
+@@ -36,7 +36,6 @@ class _CVar:
+         else:
+             raise AttributeError(f"{self!r} object has no attribute {key!r}")
+ 
+-
+ class Local:
+     """Local storage for async tasks.

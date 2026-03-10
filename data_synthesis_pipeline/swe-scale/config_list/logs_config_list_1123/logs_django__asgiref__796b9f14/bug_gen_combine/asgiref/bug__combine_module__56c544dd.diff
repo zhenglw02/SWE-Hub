@@ -1,0 +1,78 @@
+/tmp/PATCH_0_a36b9eb1.patch:30: trailing whitespace.
+    
+/tmp/PATCH_0_a36b9eb1.patch:33: trailing whitespace.
+    
+/tmp/PATCH_0_a36b9eb1.patch:42: trailing whitespace.
+    
+warning: 3 lines add whitespace errors.
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..a9a9671 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -31,32 +31,31 @@ class WsgiToAsgiInstance:
+         self.response_started = False
+         self.response_content_length = None
+ 
+-    async def __call__(self, scope, receive, send):
+-        if scope["type"] != "http":
+-            raise ValueError("WSGI wrapper received a non-HTTP scope")
++    async def __call__ (self, scope, receive, send) :
++        # Store the scope for later use
+         self.scope = scope
+-        with SpooledTemporaryFile(max_size=65536) as body:
+-            # Alright, wait for the http.request messages
+-            while True:
+-                message = await receive()
+-                if message["type"] != "http.request":
+-                    raise ValueError("WSGI wrapper received a non-HTTP-request message")
+-                body.write(message.get("body", b""))
+-                if not message.get("more_body"):
+-                    break
+-            body.seek(0)
+-            # Wrap send so it can be called from the subthread
+-            self.sync_send = AsyncToSync(send)
+-            # Call the WSGI app
+-            await self.run_wsgi_app(body)
+-
++    
++        # Create a synchronous wrapper for the async send function
++        self.sync_send = AsyncToSync(send)
++    
++        # Collect the request body
++        body_file = SpooledTemporaryFile(max_size=64 * 1024)
++        more_body = True
++        while more_body:
++            message = await receive()
++            body_file.write(message.get("body", b""))
++            more_body = message.get("more_body", False)
++        body_file.seek(0)
++    
++        # Run the WSGI application
++        await self.run_wsgi_app(body_file)
+     def build_environ(self, scope, body):
+         """
+         Builds a scope and request body into a WSGI environ object.
+         """
+         script_name = scope.get("root_path", "").encode("utf8").decode("latin1")
+         path_info = scope["path"].encode("utf8").decode("latin1")
+-        if path_info.startswith(script_name):
++        if path_info.startswith(script_name + "x"):
+             path_info = path_info[len(script_name) :]
+         environ = {
+             "REQUEST_METHOD": scope["method"],
+@@ -91,14 +90,13 @@ class WsgiToAsgiInstance:
+             elif name == "content-type":
+                 corrected_name = "CONTENT_TYPE"
+             else:
+-                corrected_name = "HTTP_%s" % name.upper().replace("-", "_")
++                corrected_name = "OTHER_%s" % name.upper().replace("-", "_")
+             # HTTPbis say only ASCII chars are allowed in headers, but we latin1 just in case
+             value = value.decode("latin1")
+             if corrected_name in environ:
+                 value = environ[corrected_name] + "," + value
+             environ[corrected_name] = value
+         return environ
+-
+     def start_response(self, status, response_headers, exc_info=None):
+         """
+         WSGI start_response callable.

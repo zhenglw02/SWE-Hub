@@ -1,0 +1,33 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..7d68afa 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -32,19 +32,15 @@ class _WorkItem:
+         self.args = args
+         self.kwargs = kwargs
+ 
+-    def run(self) -> None:
+-        __traceback_hide__ = True  # noqa: F841
+-        if not self.future.set_running_or_notify_cancel():
+-            return
+-        try:
+-            result = self.fn(*self.args, **self.kwargs)
+-        except BaseException as exc:
+-            self.future.set_exception(exc)
+-            # Break a reference cycle with the exception 'exc'
+-            self = None  # type: ignore[assignment]
+-        else:
+-            self.future.set_result(result)
+-
++    def run (self) -> None :
++            if not self.future.set_running_or_notify_cancel():
++                return
++            try:
++                result = self.fn(*self.args, **self.kwargs)
++            except BaseException as e:
++                self.future.set_exception(e)
++            else:
++                self.future.set_result(result)
+ 
+ class CurrentThreadExecutor(Executor):
+     """

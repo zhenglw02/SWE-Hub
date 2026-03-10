@@ -1,0 +1,86 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..4a58c2d 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -516,32 +516,10 @@ def async_to_sync(
+     ...
+ 
+ 
+-def async_to_sync(
+-    awaitable: Optional[
+-        Union[
+-            Callable[_P, Coroutine[Any, Any, _R]],
+-            Callable[_P, Awaitable[_R]],
+-        ]
+-    ] = None,
+-    *,
+-    force_new_loop: bool = False,
+-) -> Union[
+-    Callable[
+-        [Union[Callable[_P, Coroutine[Any, Any, _R]], Callable[_P, Awaitable[_R]]]],
+-        Callable[_P, _R],
+-    ],
+-    Callable[_P, _R],
+-]:
++def async_to_sync ( awaitable: Optional[ Union[ Callable[_P, Coroutine[Any, Any, _R]], Callable[_P, Awaitable[_R]], ] ] = None, *, force_new_loop: bool = False, ) -> Union[ Callable[ [Union[Callable[_P, Coroutine[Any, Any, _R]], Callable[_P, Awaitable[_R]]]], Callable[_P, _R], ], Callable[_P, _R], ] :
+     if awaitable is None:
+-        return lambda f: AsyncToSync(
+-            f,
+-            force_new_loop=force_new_loop,
+-        )
+-    return AsyncToSync(
+-        awaitable,
+-        force_new_loop=force_new_loop,
+-    )
+-
++        return lambda f: AsyncToSync(f, force_new_loop=force_new_loop)
++    return AsyncToSync(awaitable, force_new_loop=force_new_loop)
+ 
+ @overload
+ def sync_to_async(
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..22dea77 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -48,25 +48,24 @@ class ApplicationCommunicator:
+             )
+         return self._future
+ 
+-    async def wait(self, timeout=1):
+-        """
+-        Waits for the application to stop itself and returns any exceptions.
++    async def wait (self, timeout=1) :
+         """
++            Waits for the application to stop itself and returns any exceptions.
++            """
+         try:
+-            async with async_timeout(timeout):
+-                try:
+-                    await self.future
+-                    self.future.result()
+-                except asyncio.CancelledError:
+-                    pass
+-        finally:
+-            if not self.future.done():
+-                self.future.cancel()
+-                try:
+-                    await self.future
+-                except asyncio.CancelledError:
+-                    pass
+-
++            await asyncio.wait_for(self.future, timeout=timeout)
++        except asyncio.TimeoutError:
++            # If we timeout, cancel the task and re-raise
++            self.future.cancel()
++            try:
++                await self.future
++            except asyncio.CancelledError:
++                pass
++            raise
++        except Exception:
++            # If the task raised an exception, we want to propagate it
++            # We need to get the result to re-raise the exception
++            self.future.result()
+     def stop(self, exceptions=True):
+         future = self._future
+         if future is None:

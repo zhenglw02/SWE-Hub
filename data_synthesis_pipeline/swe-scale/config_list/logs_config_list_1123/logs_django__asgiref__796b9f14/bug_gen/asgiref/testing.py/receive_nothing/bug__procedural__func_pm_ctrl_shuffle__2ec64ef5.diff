@@ -1,0 +1,22 @@
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..340620c 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -68,16 +68,15 @@ class ApplicationCommunicator:
+                     pass
+ 
+     def stop(self, exceptions=True):
+-        future = self._future
+         if future is None:
+             return
++        future = self._future
+ 
+         if not future.done():
+             future.cancel()
+         elif exceptions:
+             # Give a chance to raise any exceptions
+             future.result()
+-
+     def __del__(self):
+         # Clean up on deletion
+         try:

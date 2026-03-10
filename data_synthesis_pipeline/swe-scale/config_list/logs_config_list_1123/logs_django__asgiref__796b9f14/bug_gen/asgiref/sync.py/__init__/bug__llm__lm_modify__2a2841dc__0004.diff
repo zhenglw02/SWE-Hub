@@ -1,0 +1,26 @@
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..c548641 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -36,7 +36,6 @@ class WsgiToAsgiInstance:
+             raise ValueError("WSGI wrapper received a non-HTTP scope")
+         self.scope = scope
+         with SpooledTemporaryFile(max_size=65536) as body:
+-            # Alright, wait for the http.request messages
+             while True:
+                 message = await receive()
+                 if message["type"] != "http.request":
+@@ -44,12 +43,8 @@ class WsgiToAsgiInstance:
+                 body.write(message.get("body", b""))
+                 if not message.get("more_body"):
+                     break
+-            body.seek(0)
+-            # Wrap send so it can be called from the subthread
+             self.sync_send = AsyncToSync(send)
+-            # Call the WSGI app
+-            await self.run_wsgi_app(body)
+-
++            self.run_wsgi_app(body)
+     def build_environ(self, scope, body):
+         """
+         Builds a scope and request body into a WSGI environ object.

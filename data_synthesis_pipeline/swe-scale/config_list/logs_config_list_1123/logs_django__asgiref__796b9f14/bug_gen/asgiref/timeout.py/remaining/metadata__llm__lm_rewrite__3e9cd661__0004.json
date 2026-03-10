@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__3e9cd661__0004",
+  "hash_code": "3e9cd661",
+  "cost": 0,
+  "explanation": "We need to implement the `remaining` property which should return the remaining time until the timeout expires.  \nIf no timeout is set (i.e., `self._timeout` is `None`), it should return `None`.  \nIf the timeout has already expired (i.e., `self._cancelled` is `True`), it should return `0.0`.  \nOtherwise, it should compute the remaining time as `max(0, self._cancel_at - self._loop.time())`.\n\nExplanation:  \n- `self._cancel_at` is set in `_do_enter()` if `self._timeout > 0`.  \n- If the timeout has expired (`self._cancelled` is `True`), then `remaining` should be 0.  \n- If timeout is `None`, return `None`.  \n- Else, calculate remaining time based on current loop time.",
+  "output": "We need to implement the `remaining` property which should return the remaining time until the timeout expires.  \nIf no timeout is set (i.e., `self._timeout` is `None`), it should return `None`.  \nIf the timeout has already expired (i.e., `self._cancelled` is `True`), it should return `0.0`.  \nOtherwise, it should compute the remaining time as `max(0, self._cancel_at - self._loop.time())`.\n\nExplanation:  \n- `self._cancel_at` is set in `_do_enter()` if `self._timeout > 0`.  \n- If the timeout has expired (`self._cancelled` is `True`), then `remaining` should be 0.  \n- If timeout is `None`, return `None`.  \n- Else, calculate remaining time based on current loop time.\n\n```\ndef remaining (self) -> Optional[float] :\n    if self._timeout is None:\n        return None\n    if self._cancelled:\n        return 0.0\n    return max(0.0, self._cancel_at - self._loop.time())\n```",
+  "rewrite": "def remaining (self) -> Optional[float] :\n    if self._timeout is None:\n        return None\n    if self._cancelled:\n        return 0.0\n    return max(0.0, self._cancel_at - self._loop.time())",
+  "strategy": "lm_rewrite"
+}

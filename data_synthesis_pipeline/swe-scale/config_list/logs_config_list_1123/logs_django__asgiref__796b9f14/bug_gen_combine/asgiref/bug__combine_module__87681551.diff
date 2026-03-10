@@ -1,0 +1,46 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..46f4c8c 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -33,9 +33,9 @@ class _WorkItem:
+         self.kwargs = kwargs
+ 
+     def run(self) -> None:
+-        __traceback_hide__ = True  # noqa: F841
+-        if not self.future.set_running_or_notify_cancel():
++        # noqa: F841  if not self.future.set_running_or_notify_cancel():
+             return
++        __traceback_hide__ = True
+         try:
+             result = self.fn(*self.args, **self.kwargs)
+         except BaseException as exc:
+@@ -45,7 +45,6 @@ class _WorkItem:
+         else:
+             self.future.set_result(result)
+ 
+-
+ class CurrentThreadExecutor(Executor):
+     """
+     An Executor that actually runs code in the thread it is instantiated in.
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..d9d8e8d 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -75,12 +75,12 @@ class timeout:
+         return self._cancelled
+ 
+     @property
+-    def remaining(self) -> Optional[float]:
+-        if self._cancel_at is not None:
+-            return max(self._cancel_at - self._loop.time(), 0.0)
+-        else:
++    def remaining (self) -> Optional[float] :
++        if self._timeout is None:
+             return None
+-
++        if self._cancelled:
++            return 0.0
++        return max(0.0, self._cancel_at - self._loop.time())
+     def _do_enter(self) -> "timeout":
+         # Support Tornado 5- without timeout
+         # Details: https://github.com/python/asyncio/issues/392

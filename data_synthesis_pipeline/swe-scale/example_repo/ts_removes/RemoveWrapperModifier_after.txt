@@ -1,0 +1,14 @@
+async function testRemovals(filePath: string, threshold: number): Promise<number[] | null> {
+  
+  // ----------------------------------------------------
+  // 目标: RemoveAssignModifier (lexical_declaration)
+  let dataPoints: number[] = [];
+  // ----------------------------------------------------
+
+  // ----------------------------------------------------
+  // 目标: RemoveWrapperModifier / UnwrapWrapperModifier
+  
+  // ----------------------------------------------------
+
+  return dataPoints;
+}

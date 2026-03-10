@@ -1,0 +1,61 @@
+/tmp/PATCH_1_b0e2bfd7.patch:17: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..1c710b0 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -460,14 +460,7 @@ class SyncToAsync(Generic[_P, _R]):
+ 
+         return ret
+ 
+-    def __get__(
+-        self, parent: Any, objtype: Any
+-    ) -> Callable[_P, Coroutine[Any, Any, _R]]:
+-        """
+-        Include self for methods
+-        """
+-        func = functools.partial(self.__call__, parent)
+-        return functools.update_wrapper(func, self.func)
++    
+ 
+     def thread_handler(self, loop, exc_info, task_context, func, *args, **kwargs):
+         """
+@@ -492,7 +485,6 @@ class SyncToAsync(Generic[_P, _R]):
+         else:
+             return func(*args, **kwargs)
+ 
+-
+ @overload
+ def async_to_sync(
+     *,
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..1277082 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -82,8 +82,6 @@ class timeout:
+             return None
+ 
+     def _do_enter(self) -> "timeout":
+-        # Support Tornado 5- without timeout
+-        # Details: https://github.com/python/asyncio/issues/392
+         if self._timeout is None:
+             return self
+ 
+@@ -97,7 +95,7 @@ class timeout:
+             self._loop.call_soon(self._cancel_task)
+             return self
+ 
+-        self._cancel_at = self._loop.time() + self._timeout
++        self._cancel_at = self._loop.time() - self._timeout
+         self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)
+         return self
+ 
+@@ -114,5 +112,5 @@ class timeout:
+ 
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+-            self._task.cancel()
+             self._cancelled = True
++            self._task.cancel()
+\ No newline at end of file

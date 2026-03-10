@@ -1,0 +1,49 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..2dcd1b5 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -100,15 +100,9 @@ class ThreadSensitiveContext:
+ 
+         return self
+ 
+-    async def __aexit__(self, exc, value, tb):
+-        if not self.token:
+-            return
+-
+-        executor = SyncToAsync.context_to_thread_executor.pop(self, None)
+-        if executor:
+-            executor.shutdown()
+-        SyncToAsync.thread_sensitive_context.reset(self.token)
+-
++    async def __aexit__ (self, exc, value, tb) :
++        if self.token is not None:
++            SyncToAsync.thread_sensitive_context.reset(self.token)
+ 
+ class AsyncToSync(Generic[_P, _R]):
+     """
+@@ -405,7 +399,7 @@ class SyncToAsync(Generic[_P, _R]):
+             elif loop in AsyncToSync.loop_thread_executors:
+                 # Re-use thread executor for running loop
+                 executor = AsyncToSync.loop_thread_executors[loop]
+-            elif self.deadlock_context.get(False):
++            elif self.deadlock_context.get(None):
+                 raise RuntimeError(
+                     "Single thread executor already being used, would deadlock"
+                 )
+@@ -440,7 +434,7 @@ class SyncToAsync(Generic[_P, _R]):
+         except asyncio.CancelledError:
+             cancel_parent = True
+             try:
+-                task = task_context[0]
++                task = task_context[1]
+                 task.cancel()
+                 try:
+                     await task
+@@ -459,7 +453,6 @@ class SyncToAsync(Generic[_P, _R]):
+             self.deadlock_context.set(False)
+ 
+         return ret
+-
+     def __get__(
+         self, parent: Any, objtype: Any
+     ) -> Callable[_P, Coroutine[Any, Any, _R]]:

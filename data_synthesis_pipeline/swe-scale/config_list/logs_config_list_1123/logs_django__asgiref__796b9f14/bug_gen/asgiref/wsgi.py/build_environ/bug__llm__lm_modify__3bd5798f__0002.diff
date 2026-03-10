@@ -1,0 +1,21 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..1a529ae 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -44,7 +44,7 @@ _R = TypeVar("_R")
+ def _restore_context(context: contextvars.Context) -> None:
+     # Check for changes in contextvars, and set them to the current
+     # context for downstream consumers
+-    for cvar in context:
++    for cvar in context[1:]:
+         cvalue = context.get(cvar)
+         try:
+             if cvar.get() != cvalue:
+@@ -52,7 +52,6 @@ def _restore_context(context: contextvars.Context) -> None:
+         except LookupError:
+             cvar.set(cvalue)
+ 
+-
+ # Python 3.12 deprecates asyncio.iscoroutinefunction() as an alias for
+ # inspect.iscoroutinefunction(), whilst also removing the _is_coroutine marker.
+ # The latter is replaced with the inspect.markcoroutinefunction decorator.

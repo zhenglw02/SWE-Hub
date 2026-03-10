@@ -1,0 +1,82 @@
+/tmp/PATCH_0_f4d124bb.patch:20: trailing whitespace.
+    
+/tmp/PATCH_0_f4d124bb.patch:40: trailing whitespace.
+    
+warning: 2 lines add whitespace errors.
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..a26f922 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -81,38 +81,11 @@ class timeout:
+         else:
+             return None
+ 
+-    def _do_enter(self) -> "timeout":
+-        # Support Tornado 5- without timeout
+-        # Details: https://github.com/python/asyncio/issues/392
+-        if self._timeout is None:
+-            return self
+-
+-        self._task = asyncio.current_task(self._loop)
+-        if self._task is None:
+-            raise RuntimeError(
+-                "Timeout context manager should be used " "inside a task"
+-            )
++    
+ 
+-        if self._timeout <= 0:
+-            self._loop.call_soon(self._cancel_task)
+-            return self
+-
+-        self._cancel_at = self._loop.time() + self._timeout
+-        self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)
+-        return self
+-
+-    def _do_exit(self, exc_type: Type[BaseException]) -> None:
+-        if exc_type is asyncio.CancelledError and self._cancelled:
+-            self._cancel_handler = None
+-            self._task = None
+-            raise asyncio.TimeoutError
+-        if self._timeout is not None and self._cancel_handler is not None:
+-            self._cancel_handler.cancel()
+-            self._cancel_handler = None
+-        self._task = None
+-        return None
++    
+ 
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+             self._task.cancel()
+-            self._cancelled = True
++            self._cancelled = True
+\ No newline at end of file
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..4320a81 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -147,20 +147,20 @@ class WsgiToAsgiInstance:
+                 self.response_started = True
+                 self.sync_send(self.response_start)
+             # If the application supplies a Content-Length header
+-            if self.response_content_length is not None:
++            if self.response_content_length is None:
+                 # The server should not transmit more bytes to the client than the header allows
+                 bytes_allowed = self.response_content_length - bytes_sent
+-                if len(output) > bytes_allowed:
++                if len(output) <= bytes_allowed:
+                     output = output[:bytes_allowed]
+             self.sync_send(
+                 {"type": "http.response.body", "body": output, "more_body": True}
+             )
+             bytes_sent += len(output)
+             # The server should stop iterating over the response when enough data has been sent
+-            if bytes_sent == self.response_content_length:
++            if bytes_sent != self.response_content_length:
+                 break
+         # Close connection
+         if not self.response_started:
+             self.response_started = True
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        self.sync_send({"type": "http.response.body"})
+\ No newline at end of file

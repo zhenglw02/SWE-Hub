@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__826fced3__0003",
+  "hash_code": "826fced3",
+  "cost": 0,
+  "explanation": "The `__setattr__` method needs to handle setting attributes on the `Local` class while respecting the thread-critical behavior. When `key` is one of the internal attributes (`_thread_critical`, `_thread_lock`, or `_storage`), it should use the standard object attribute setting. For all other keys, it should use the context manager to get the appropriate storage object and set the attribute on that storage.\n\nHere's the implementation:",
+  "output": "The `__setattr__` method needs to handle setting attributes on the `Local` class while respecting the thread-critical behavior. When `key` is one of the internal attributes (`_thread_critical`, `_thread_lock`, or `_storage`), it should use the standard object attribute setting. For all other keys, it should use the context manager to get the appropriate storage object and set the attribute on that storage.\n\nHere's the implementation:\n\n```\ndef __setattr__ (self, key, value) :\n    if key in (\"_thread_critical\", \"_thread_lock\", \"_storage\"):\n        return super().__setattr__(key, value)\n    \n    with self._lock_storage() as storage:\n        setattr(storage, key, value)\n```",
+  "rewrite": "def __setattr__ (self, key, value) :\n    if key in (\"_thread_critical\", \"_thread_lock\", \"_storage\"):\n        return super().__setattr__(key, value)\n    \n    with self._lock_storage() as storage:\n        setattr(storage, key, value)",
+  "strategy": "lm_rewrite"
+}

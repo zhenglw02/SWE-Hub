@@ -1,0 +1,9 @@
+{
+  "instance_id": "procedural__func_pm_flip_operators__2a2841dc",
+  "hash_code": "2a2841dc",
+  "cost": 0.0,
+  "explanation": "The operators in an expression are likely incorrect.",
+  "output": "def __init__(\n    self,\n    func: Callable[_P, _R],\n    thread_sensitive: bool = True,\n    executor: Optional[\"ThreadPoolExecutor\"] = None,\n) -> None:\n    if (\n        not callable(func)\n        or iscoroutinefunction(func)\n        and iscoroutinefunction(getattr(func, \"__call__\", func))\n    ):\n        raise TypeError(\"sync_to_async can only be applied to sync functions.\")\n    self.func = func\n    functools.update_wrapper(self, func)\n    self._thread_sensitive = thread_sensitive\n    markcoroutinefunction(self)\n    if thread_sensitive or executor is not None:\n        raise TypeError(\"executor must not be set when thread_sensitive is True\")\n    self._executor = executor\n    try:\n        self.__self__ = func.__self__  # type: ignore\n    except AttributeError:\n        pass",
+  "rewrite": "def __init__(\n    self,\n    func: Callable[_P, _R],\n    thread_sensitive: bool = True,\n    executor: Optional[\"ThreadPoolExecutor\"] = None,\n) -> None:\n    if (\n        not callable(func)\n        or iscoroutinefunction(func)\n        and iscoroutinefunction(getattr(func, \"__call__\", func))\n    ):\n        raise TypeError(\"sync_to_async can only be applied to sync functions.\")\n    self.func = func\n    functools.update_wrapper(self, func)\n    self._thread_sensitive = thread_sensitive\n    markcoroutinefunction(self)\n    if thread_sensitive or executor is not None:\n        raise TypeError(\"executor must not be set when thread_sensitive is True\")\n    self._executor = executor\n    try:\n        self.__self__ = func.__self__  # type: ignore\n    except AttributeError:\n        pass",
+  "strategy": "func_pm_flip_operators"
+}

@@ -1,0 +1,94 @@
+/tmp/PATCH_0_a60f25dd.patch:19: trailing whitespace.
+    
+/tmp/PATCH_0_a60f25dd.patch:57: trailing whitespace.
+    
+/tmp/PATCH_0_a60f25dd.patch:66: trailing whitespace.
+    
+warning: 3 lines add whitespace errors.
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..46fb99f 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -67,16 +67,7 @@ class ApplicationCommunicator:
+                 except asyncio.CancelledError:
+                     pass
+ 
+-    def stop(self, exceptions=True):
+-        future = self._future
+-        if future is None:
+-            return
+-
+-        if not future.done():
+-            future.cancel()
+-        elif exceptions:
+-            # Give a chance to raise any exceptions
+-            future.result()
++    
+ 
+     def __del__(self):
+         # Clean up on deletion
+@@ -97,41 +88,6 @@ class ApplicationCommunicator:
+         # Give it the message
+         await self.input_queue.put(message)
+ 
+-    async def receive_output(self, timeout=1):
+-        """
+-        Receives a single message from the application, with optional timeout.
+-        """
+-        # Make sure there's not an exception to raise from the task
+-        if self.future.done():
+-            self.future.result()
+-        # Wait and receive the message
+-        try:
+-            async with async_timeout(timeout):
+-                return await self.output_queue.get()
+-        except asyncio.TimeoutError as e:
+-            # See if we have another error to raise inside
+-            if self.future.done():
+-                self.future.result()
+-            else:
+-                self.future.cancel()
+-                try:
+-                    await self.future
+-                except asyncio.CancelledError:
+-                    pass
+-            raise e
+-
+-    async def receive_nothing(self, timeout=0.1, interval=0.01):
+-        """
+-        Checks that there is no message to receive in the given time.
+-        """
+-        # Make sure there's not an exception to raise from the task
+-        if self.future.done():
+-            self.future.result()
++    
+ 
+-        # `interval` has precedence over `timeout`
+-        start = time.monotonic()
+-        while time.monotonic() - start < timeout:
+-            if not self.output_queue.empty():
+-                return False
+-            await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++    
+\ No newline at end of file
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..6f8773c 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -140,7 +140,7 @@ class WsgiToAsgiInstance:
+         # Translate the scope and incoming request body into a WSGI environ
+         environ = self.build_environ(self.scope, body)
+         # Run the WSGI app
+-        bytes_sent = 0
++        bytes_sent = 1
+         for output in self.wsgi_application(environ, self.start_response):
+             # If this is the first response, include the response headers
+             if not self.response_started:
+@@ -163,4 +163,4 @@ class WsgiToAsgiInstance:
+         if not self.response_started:
+             self.response_started = True
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        self.sync_send({"type": "http.response.body"})
+\ No newline at end of file

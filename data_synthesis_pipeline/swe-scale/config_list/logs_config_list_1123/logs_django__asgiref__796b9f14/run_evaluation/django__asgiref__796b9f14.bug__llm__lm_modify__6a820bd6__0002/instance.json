@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__llm__lm_modify__6a820bd6__0002",
+    "patch": "diff --git a/asgiref/local.py b/asgiref/local.py\nindex 845313a..52aaa0f 100644\n--- a/asgiref/local.py\n+++ b/asgiref/local.py\n@@ -111,10 +111,7 @@ class Local:\n                 # need any locks)\n                 yield self._storage.cvar\n         else:\n-            # Lock for thread_critical=False as other threads\n-            # can access the exact same storage object\n-            with self._thread_lock:\n-                yield self._storage\n+            yield self._storage\n \n     def __getattr__(self, key):\n         with self._lock_storage() as storage:\n@@ -128,4 +125,4 @@ class Local:\n \n     def __delattr__(self, key):\n         with self._lock_storage() as storage:\n-            delattr(storage, key)\n+            delattr(storage, key)\n\\ No newline at end of file\n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/sync.py/AsyncToSync/bug__llm__lm_modify__6a820bd6__0002.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

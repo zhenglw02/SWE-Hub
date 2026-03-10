@@ -1,0 +1,76 @@
+/tmp/PATCH_0_d41c1ca3.patch:34: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..73c297e 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -35,19 +35,29 @@ class ApplicationCommunicator:
+ 
+     @property
+     def future(self):
++        """
++        The future that runs the ASGI application.
++        Created lazily on first access.
++        """
+         if self._future is None:
+-            # Clear context - this ensures that context vars set in the testing scope
+-            # are not "leaked" into the application which would normally begin with
+-            # an empty context. In Python >= 3.11 this could also be written as:
+-            # asyncio.create_task(..., context=contextvars.Context())
+-            self._future = contextvars.Context().run(
+-                asyncio.create_task,
+-                self.application(
+-                    self.scope, self.input_queue.get, self.output_queue.put
+-                ),
+-            )
++            # Create the application task
++            self._future = asyncio.create_task(self._run_application())
+         return self._future
+ 
++    async def _run_application(self):
++        """
++        Internal method to run the ASGI application and handle message passing.
++        """
++        # Create the ASGI callable with the appropriate scope
++        instance = self.application(self.scope)
++    
++        try:
++            # Run the application with the input and output queues
++            await instance(self.input_queue.get, self.output_queue.put)
++        finally:
++            # Ensure any cleanup happens
++            if hasattr(instance, 'close'):
++                await instance.close()
+     async def wait(self, timeout=1):
+         """
+         Waits for the application to stop itself and returns any exceptions.
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..52ba854 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -82,8 +82,6 @@ class timeout:
+             return None
+ 
+     def _do_enter(self) -> "timeout":
+-        # Support Tornado 5- without timeout
+-        # Details: https://github.com/python/asyncio/issues/392
+         if self._timeout is None:
+             return self
+ 
+@@ -93,14 +91,13 @@ class timeout:
+                 "Timeout context manager should be used " "inside a task"
+             )
+ 
+-        if self._timeout <= 0:
++        if self._timeout < 0:
+             self._loop.call_soon(self._cancel_task)
+             return self
+ 
+         self._cancel_at = self._loop.time() + self._timeout
+         self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)
+         return self
+-
+     def _do_exit(self, exc_type: Type[BaseException]) -> None:
+         if exc_type is asyncio.CancelledError and self._cancelled:
+             self._cancel_handler = None

@@ -1,0 +1,34 @@
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..692b4a7 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -101,17 +101,19 @@ class timeout:
+         self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)
+         return self
+ 
+-    def _do_exit(self, exc_type: Type[BaseException]) -> None:
+-        if exc_type is asyncio.CancelledError and self._cancelled:
+-            self._cancel_handler = None
+-            self._task = None
+-            raise asyncio.TimeoutError
+-        if self._timeout is not None and self._cancel_handler is not None:
+-            self._cancel_handler.cancel()
+-            self._cancel_handler = None
++    def _do_exit (self, exc_type: Type[BaseException]) -> None :
++        if self._timeout is not None and self._timeout > 0:
++            if self._cancel_handler is not None:
++                self._cancel_handler.cancel()
++                self._cancel_handler = None
++            
++            if exc_type is asyncio.CancelledError and self._cancelled:
++                # Suppress the cancellation if it was caused by the timeout
++                # This prevents the CancelledError from propagating
++                pass
++            
+         self._task = None
+-        return None
+-
++        self._cancel_at = None
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+             self._task.cancel()

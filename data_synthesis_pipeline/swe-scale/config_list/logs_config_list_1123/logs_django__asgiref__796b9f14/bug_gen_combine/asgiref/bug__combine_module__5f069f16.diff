@@ -1,0 +1,124 @@
+/tmp/PATCH_0_6d3fd528.patch:32: trailing whitespace.
+    
+/tmp/PATCH_0_6d3fd528.patch:40: trailing whitespace.
+    
+/tmp/PATCH_0_6d3fd528.patch:42: trailing whitespace.
+    
+/tmp/PATCH_0_6d3fd528.patch:45: trailing whitespace.
+    
+warning: 4 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..2143345 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -268,47 +268,25 @@ class AsyncToSync(Generic[_P, _R]):
+         func = functools.partial(self.__call__, parent)
+         return functools.update_wrapper(func, self.awaitable)
+ 
+-    async def main_wrap(
+-        self,
+-        call_result: "Future[_R]",
+-        exc_info: "OptExcInfo",
+-        task_context: "Optional[List[asyncio.Task[Any]]]",
+-        context: List[contextvars.Context],
+-        awaitable: Union[Coroutine[Any, Any, _R], Awaitable[_R]],
+-    ) -> None:
++    async def main_wrap ( self, call_result: "Future[_R]", exc_info: "OptExcInfo", task_context: "Optional[List[asyncio.Task[Any]]]", context: List[contextvars.Context], awaitable: Union[Coroutine[Any, Any, _R], Awaitable[_R]], ) -> None :
+         """
+-        Wraps the awaitable with something that puts the result into the
+-        result/exception future.
+-        """
+-
+-        __traceback_hide__ = True  # noqa: F841
+-
+-        if context is not None:
+-            _restore_context(context[0])
+-
+-        current_task = asyncio.current_task()
+-        if current_task is not None and task_context is not None:
+-            task_context.append(current_task)
+-
++            Wraps the awaitable with something that puts the result into the
++            result/exception future.
++            """
++        if task_context is not None:
++            self.threadlocal.task_context = task_context
+         try:
+-            # If we have an exception, run the function inside the except block
+-            # after raising it so exc_info is correctly populated.
+-            if exc_info[1]:
+-                try:
+-                    raise exc_info[1]
+-                except BaseException:
+-                    result = await awaitable
+-            else:
+-                result = await awaitable
+-        except BaseException as e:
++            # Run the awaitable in the copied context
++            result = await awaitable
++        except Exception as e:
++            # Set exception on the future
+             call_result.set_exception(e)
+         else:
++            # Set result on the future
+             call_result.set_result(result)
+         finally:
+-            if current_task is not None and task_context is not None:
+-                task_context.remove(current_task)
+-            context[0] = contextvars.copy_context()
+-
++            # Always restore the context
++            _restore_context(context[0])
+ 
+ class SyncToAsync(Generic[_P, _R]):
+     """
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..396124f 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -31,25 +31,27 @@ class WsgiToAsgiInstance:
+         self.response_started = False
+         self.response_content_length = None
+ 
+-    async def __call__(self, scope, receive, send):
+-        if scope["type"] != "http":
+-            raise ValueError("WSGI wrapper received a non-HTTP scope")
++    async def __call__ (self, scope, receive, send) :
++        # Store the scope for later use
+         self.scope = scope
+-        with SpooledTemporaryFile(max_size=65536) as body:
+-            # Alright, wait for the http.request messages
+-            while True:
+-                message = await receive()
+-                if message["type"] != "http.request":
+-                    raise ValueError("WSGI wrapper received a non-HTTP-request message")
+-                body.write(message.get("body", b""))
+-                if not message.get("more_body"):
+-                    break
+-            body.seek(0)
+-            # Wrap send so it can be called from the subthread
+-            self.sync_send = AsyncToSync(send)
+-            # Call the WSGI app
+-            await self.run_wsgi_app(body)
+-
++        # Store send for synchronous access
++        self.sync_send = AsyncToSync(send)
++    
++        # Collect the request body
++        body_file = SpooledTemporaryFile(max_size=64 * 1024)
++        more_body = True
++        while more_body:
++            message = await receive()
++            body_file.write(message.get("body", b""))
++            more_body = message.get("more_body", False)
++    
++        body_file.seek(0)
++    
++        # Run the WSGI application
++        await self.run_wsgi_app(body_file)
++    
++        # Close the body file
++        body_file.close()
+     def build_environ(self, scope, body):
+         """
+         Builds a scope and request body into a WSGI environ object.

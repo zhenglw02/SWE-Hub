@@ -1,0 +1,76 @@
+diff --git a/asgiref/compatibility.py b/asgiref/compatibility.py
+index 3a2a63e..9b4c32c 100644
+--- a/asgiref/compatibility.py
++++ b/asgiref/compatibility.py
+@@ -7,24 +7,17 @@ def is_double_callable(application):
+     """
+     Tests to see if an application is a legacy-style (double-callable) application.
+     """
+-    # Look for a hint on the object first
+     if getattr(application, "_asgi_single_callable", False):
+         return False
+     if getattr(application, "_asgi_double_callable", False):
+         return True
+-    # Uninstanted classes are double-callable
+     if inspect.isclass(application):
+         return True
+-    # Instanted classes depend on their __call__
+     if hasattr(application, "__call__"):
+-        # We only check to see if its __call__ is a coroutine function -
+-        # if it's not, it still might be a coroutine function itself.
+-        if iscoroutinefunction(application.__call__):
++        if iscoroutinefunction(application):
+             return False
+-    # Non-classes we just check directly
+     return not iscoroutinefunction(application)
+ 
+-
+ def double_to_single_callable(application):
+     """
+     Transforms a double-callable ASGI application into a single-callable one.
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..9af60d7 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -67,17 +67,31 @@ class ApplicationCommunicator:
+                 except asyncio.CancelledError:
+                     pass
+ 
+-    def stop(self, exceptions=True):
+-        future = self._future
+-        if future is None:
++    def stop (self, exceptions=True) :
++        if self._future is None :
+             return
+-
+-        if not future.done():
+-            future.cancel()
+-        elif exceptions:
+-            # Give a chance to raise any exceptions
+-            future.result()
+-
++        if not self._future.done() :
++            self._future.cancel()
++            try:
++                # Create a new event loop if none exists for this thread
++                loop = asyncio.get_event_loop()
++                if loop.is_running():
++                    # If loop is running, we need to run in a separate way
++                    # Since this is a synchronous method, we'll use run_until_complete
++                    # with a wrapper task
++                    async def _cancel_wait():
++                        try:
++                            await self._future
++                        except asyncio.CancelledError:
++                            pass
++                    loop.create_task(_cancel_wait())
++                else:
++                    loop.run_until_complete(self._future)
++            except (RuntimeError, asyncio.CancelledError):
++                # Event loop issues or cancellation complete
++                pass
++        if exceptions and self._future.done():
++            self._future.result()
+     def __del__(self):
+         # Clean up on deletion
+         try:

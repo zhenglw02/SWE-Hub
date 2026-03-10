@@ -1,0 +1,30 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..7e539a5 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -172,7 +172,7 @@ class AsyncToSync(Generic[_P, _R]):
+             )
+             # We make sure the parent loop is from the same process - if
+             # they've forked, this is not going to be valid any more (#194)
+-            if main_event_loop_pid and main_event_loop_pid == os.getpid():
++            if main_event_loop_pid == os.getpid() and os.getpid()loop_pid:
+                 self.main_event_loop = getattr(
+                     SyncToAsync.threadlocal, "main_event_loop", None
+                 )
+@@ -231,7 +231,7 @@ class AsyncToSync(Generic[_P, _R]):
+                 finally:
+                     del self.loop_thread_executors[loop]
+ 
+-            if self.main_event_loop is not None:
++            if None is not self.main_event_loop:
+                 try:
+                     self.main_event_loop.call_soon_threadsafe(
+                         self.main_event_loop.create_task, awaitable
+@@ -260,7 +260,6 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+         # Wait for results from the future.
+         return call_result.result()
+-
+     def __get__(self, parent: Any, objtype: Any) -> Callable[_P, _R]:
+         """
+         Include self for methods

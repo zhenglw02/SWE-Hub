@@ -1,0 +1,90 @@
+/tmp/PATCH_0_18647f8b.patch:23: trailing whitespace.
+    
+/tmp/PATCH_0_18647f8b.patch:29: trailing whitespace.
+    
+/tmp/PATCH_0_18647f8b.patch:32: trailing whitespace.
+    
+warning: 3 lines add whitespace errors.
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..03ebff4 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -67,17 +67,41 @@ class ApplicationCommunicator:
+                 except asyncio.CancelledError:
+                     pass
+ 
+-    def stop(self, exceptions=True):
+-        future = self._future
+-        if future is None:
++    def stop (self, exceptions=True) :
++        # If there's no future created yet, nothing to stop
++        if self._future is None:
+             return
+-
+-        if not future.done():
+-            future.cancel()
+-        elif exceptions:
+-            # Give a chance to raise any exceptions
+-            future.result()
+-
++    
++        # If the future is already done, handle exceptions if requested
++        if self._future.done():
++            if exceptions:
++                self._future.result()
++            return
++    
++        # Cancel the future if it's still running
++        self._future.cancel()
++    
++        # If exceptions are requested, await the future to handle any exceptions
++        if exceptions:
++            try:
++                # We need to run this in an event loop
++                # Since this is a synchronous method, we'll get the running loop
++                loop = asyncio.get_running_loop()
++                # Create a task to await the future
++                stop_task = loop.create_task(self._wait_for_stop())
++                # Run it until complete
++                loop.run_until_complete(stop_task)
++            except RuntimeError:
++                # No running event loop - we can't await it synchronously
++                # This matches the behavior in __del__ where we catch RuntimeError
++                pass
++
++    async def _wait_for_stop(self):
++        """Helper method to await the future cancellation"""
++        try:
++            await self._future
++        except asyncio.CancelledError:
++            pass
+     def __del__(self):
+         # Clean up on deletion
+         try:
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..493718c 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -74,11 +74,11 @@ class WsgiToAsgiInstance:
+         }
+         # Get server name and port - required in WSGI, not in ASGI
+         if "server" in scope:
+-            environ["SERVER_NAME"] = scope["server"][0]
+-            environ["SERVER_PORT"] = str(scope["server"][1])
+-        else:
+             environ["SERVER_NAME"] = "localhost"
+             environ["SERVER_PORT"] = "80"
++        else:
++            environ["SERVER_NAME"] = scope["server"][0]
++            environ["SERVER_PORT"] = str(scope["server"][1])
+ 
+         if scope.get("client") is not None:
+             environ["REMOTE_ADDR"] = scope["client"][0]
+@@ -98,7 +98,6 @@ class WsgiToAsgiInstance:
+                 value = environ[corrected_name] + "," + value
+             environ[corrected_name] = value
+         return environ
+-
+     def start_response(self, status, response_headers, exc_info=None):
+         """
+         WSGI start_response callable.

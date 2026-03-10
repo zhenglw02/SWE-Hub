@@ -1,0 +1,83 @@
+/tmp/PATCH_1_d0de56d6.patch:42: trailing whitespace.
+    
+/tmp/PATCH_1_d0de56d6.patch:46: trailing whitespace.
+        
+warning: 2 lines add whitespace errors.
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..1f59097 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -90,34 +90,18 @@ class CurrentThreadExecutor(Executor):
+             work_item.run()
+             del work_item
+ 
+-    def submit(
+-        self,
+-        fn: Callable[_P, _R],
+-        /,
+-        *args: _P.args,
+-        **kwargs: _P.kwargs,
+-    ) -> "Future[_R]":
+-        # Check they're not submitting from the same thread
++    def submit ( self, fn: Callable[_P, _R], /, *args: _P.args, **kwargs: _P.kwargs, ) -> "Future[_R]" : # Check they're not submitting from the same thread
+         if threading.current_thread() == self._work_thread:
+             raise RuntimeError(
+-                "You cannot submit onto CurrentThreadExecutor from its own thread"
++                "You cannot submit to CurrentThreadExecutor from the same thread"
+             )
+-        f: "Future[_R]" = Future()
+-        work_item = _WorkItem(f, fn, *args, **kwargs)
+-
+-        # Walk up the CurrentThreadExecutor stack to find the closest one still
+-        # running
+-        executor = self
+-        while True:
+-            with executor._work_ready:
+-                if not executor._broken:
+-                    # Add to work queue
+-                    executor._work_items.append(work_item)
+-                    executor._work_ready.notify()
+-                    break
+-            if executor._old_executor is None:
+-                raise RuntimeError("CurrentThreadExecutor already quit or is broken")
+-            executor = executor._old_executor
+-
+-        # Return the future
+-        return f
++    
++        with self._work_ready:
++            if self._broken:
++                raise RuntimeError("Executor is broken")
++        
++            future: "Future[_R]" = Future()
++            work_item = _WorkItem(future, fn, *args, **kwargs)
++            self._work_items.append(work_item)
++            self._work_ready.notify()
++            return future
+\ No newline at end of file
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..bd0f956 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -28,14 +28,16 @@ class _CVar:
+         storage_object[key] = value
+         self._data.set(storage_object)
+ 
+-    def __delattr__(self, key: str) -> None:
++    def __delattr__ (self, key: str) -> None :
++        if key == "_data":
++            return super().__delattr__(key)
++
+         storage_object = self._data.get({}).copy()
+-        if key in storage_object:
++        try:
+             del storage_object[key]
+-            self._data.set(storage_object)
+-        else:
++        except KeyError:
+             raise AttributeError(f"{self!r} object has no attribute {key!r}")
+-
++        self._data.set(storage_object)
+ 
+ class Local:
+     """Local storage for async tasks.

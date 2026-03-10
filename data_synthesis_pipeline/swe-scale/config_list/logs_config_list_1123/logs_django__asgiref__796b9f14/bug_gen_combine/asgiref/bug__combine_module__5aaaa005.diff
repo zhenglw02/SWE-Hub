@@ -1,0 +1,71 @@
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..0d82cda 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -98,7 +98,7 @@ class StatelessServer:
+             self.application_instances[scope_id]["last_used"] = time.time()
+             return self.application_instances[scope_id]["input_queue"]
+         # See if we need to delete an old one
+-        while len(self.application_instances) > self.max_applications:
++        while len(self.application_instances) >= self.max_applications:
+             self.delete_oldest_application_instance()
+         # Make an instance of the application
+         input_queue = asyncio.Queue()
+@@ -119,20 +119,22 @@ class StatelessServer:
+         }
+         return input_queue
+ 
+-    def delete_oldest_application_instance(self):
++    def delete_oldest_application_instance (self) :
+         """
+-        Finds and deletes the oldest application instance
+-        """
+-        oldest_time = min(
+-            details["last_used"] for details in self.application_instances.values()
+-        )
++            Finds and deletes the oldest application instance
++            """
++        if not self.application_instances:
++            return
++        # Find the scope_id for the oldest instance (smallest last_used)
++        oldest_scope_id = None
++        min_last_used = float('inf')
+         for scope_id, details in self.application_instances.items():
+-            if details["last_used"] == oldest_time:
+-                self.delete_application_instance(scope_id)
+-                # Return to make sure we only delete one in case two have
+-                # the same oldest time
+-                return
+-
++            if details["last_used"] < min_last_used:
++                min_last_used = details["last_used"]
++                oldest_scope_id = scope_id
++        # Remove the oldest instance
++        if oldest_scope_id is not None:
++            self.delete_application_instance(oldest_scope_id)
+     def delete_application_instance(self, scope_id):
+         """
+         Removes an application instance (makes sure its task is stopped,
+@@ -149,7 +151,6 @@ class StatelessServer:
+         any that are done/prints exceptions for any that errored.
+         """
+         while True:
+-            await asyncio.sleep(self.application_checker_interval)
+             for scope_id, details in list(self.application_instances.items()):
+                 if details["future"].done():
+                     exception = details["future"].exception()
+@@ -160,6 +161,7 @@ class StatelessServer:
+                     except KeyError:
+                         # Exception handling might have already got here before us. That's fine.
+                         pass
++            await asyncio.sleep(self.application_checker_interval)
+ 
+     async def application_exception(self, exception, application_details):
+         """
+@@ -170,4 +172,4 @@ class StatelessServer:
+             exception,
+             "".join(traceback.format_tb(exception.__traceback__)),
+             f"  {exception}",
+-        )
++        )
+\ No newline at end of file

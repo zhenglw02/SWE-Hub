@@ -1,0 +1,39 @@
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..767e648 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -28,25 +28,21 @@ class timeout:
+     loop - asyncio compatible event loop
+     """
+ 
+-    def __init__(
+-        self,
+-        timeout: Optional[float],
+-        *,
+-        loop: Optional[asyncio.AbstractEventLoop] = None,
+-    ) -> None:
++    def __init__ ( self, timeout: Optional[float], *, loop: Optional[asyncio.AbstractEventLoop] = None, ) -> None :
+         self._timeout = timeout
+         if loop is None:
+-            loop = asyncio.get_running_loop()
++            self._loop = asyncio.get_running_loop()
+         else:
++            self._loop = loop
+             warnings.warn(
+-                """The loop argument to timeout() is deprecated.""", DeprecationWarning
++                "The loop argument is deprecated since Python 3.8",
++                DeprecationWarning,
++                stacklevel=2,
+             )
+-        self._loop = loop
+-        self._task = None  # type: Optional[asyncio.Task[Any]]
++        self._task = None
++        self._cancel_at = None
++        self._cancel_handler = None
+         self._cancelled = False
+-        self._cancel_handler = None  # type: Optional[asyncio.Handle]
+-        self._cancel_at = None  # type: Optional[float]
+-
+     def __enter__(self) -> "timeout":
+         return self._do_enter()
+ 

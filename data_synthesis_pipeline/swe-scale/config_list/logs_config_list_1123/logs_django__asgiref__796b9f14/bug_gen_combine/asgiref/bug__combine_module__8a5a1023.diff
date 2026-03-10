@@ -1,0 +1,57 @@
+/tmp/PATCH_0_b1f13782.patch:14: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+/tmp/PATCH_1_15879865.patch:11: trailing whitespace.
+        
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..0f3a0ed 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -32,20 +32,17 @@ class _WorkItem:
+         self.args = args
+         self.kwargs = kwargs
+ 
+-    def run(self) -> None:
+-        __traceback_hide__ = True  # noqa: F841
++    def run (self) -> None :
+         if not self.future.set_running_or_notify_cancel():
+             return
++    
+         try:
+             result = self.fn(*self.args, **self.kwargs)
+-        except BaseException as exc:
+-            self.future.set_exception(exc)
+-            # Break a reference cycle with the exception 'exc'
+-            self = None  # type: ignore[assignment]
++        except BaseException as e:
++            self.future.set_exception(e)
+         else:
+             self.future.set_result(result)
+ 
+-
+ class CurrentThreadExecutor(Executor):
+     """
+     An Executor that actually runs code in the thread it is instantiated in.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..642367a 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -449,8 +449,7 @@ class SyncToAsync(Generic[_P, _R]):
+                     pass
+             except IndexError:
+                 pass
+-            if exec_coro.done():
+-                raise
++        
+             if cancel_parent:
+                 exec_coro.cancel()
+             ret = await exec_coro
+@@ -459,7 +458,6 @@ class SyncToAsync(Generic[_P, _R]):
+             self.deadlock_context.set(False)
+ 
+         return ret
+-
+     def __get__(
+         self, parent: Any, objtype: Any
+     ) -> Callable[_P, Coroutine[Any, Any, _R]]:

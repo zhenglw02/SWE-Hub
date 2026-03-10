@@ -1,0 +1,16 @@
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..531aedf 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -95,10 +95,9 @@ class WsgiToAsgiInstance:
+             # HTTPbis say only ASCII chars are allowed in headers, but we latin1 just in case
+             value = value.decode("latin1")
+             if corrected_name in environ:
+-                value = environ[corrected_name] + "," + value
++                value = environ[corrected_name] + value
+             environ[corrected_name] = value
+         return environ
+-
+     def start_response(self, status, response_headers, exc_info=None):
+         """
+         WSGI start_response callable.

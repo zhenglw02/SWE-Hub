@@ -1,0 +1,13 @@
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..44f7beb 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -160,7 +160,7 @@ class StatelessServer:
+                     except KeyError:
+                         # Exception handling might have already got here before us. That's fine.
+                         pass
+-
++                break
+     async def application_exception(self, exception, application_details):
+         """
+         Called whenever an application coroutine has an exception.

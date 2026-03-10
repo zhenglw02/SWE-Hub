@@ -1,0 +1,50 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..4252267 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -41,17 +41,19 @@ _P = ParamSpec("_P")
+ _R = TypeVar("_R")
+ 
+ 
+-def _restore_context(context: contextvars.Context) -> None:
+-    # Check for changes in contextvars, and set them to the current
+-    # context for downstream consumers
+-    for cvar in context:
+-        cvalue = context.get(cvar)
++def _restore_context (context: contextvars.Context) -> None : # Check for changes in contextvars, and set them to the current # context for downstream consumers
++    # Iterate through all context variables in the stored context
++    for var, value in context.items():
++        # Compare with the current value of the context variable
+         try:
+-            if cvar.get() != cvalue:
+-                cvar.set(cvalue)
++            current_value = var.get()
+         except LookupError:
+-            cvar.set(cvalue)
+-
++            # Variable is not set in current context, so set it
++            var.set(value)
++        else:
++            # If the value has changed, update the current context
++            if current_value != value:
++                var.set(value)
+ 
+ # Python 3.12 deprecates asyncio.iscoroutinefunction() as an alias for
+ # inspect.iscoroutinefunction(), whilst also removing the _is_coroutine marker.
+@@ -390,7 +392,7 @@ class SyncToAsync(Generic[_P, _R]):
+             if current_thread_executor:
+                 # If we have a parent sync thread above somewhere, use that
+                 executor = current_thread_executor
+-            elif self.thread_sensitive_context.get(None):
++            elif self.thread_sensitive_context.get(None) is None:
+                 # If we have a way of retrieving the current context, attempt
+                 # to use a per-context thread pool executor
+                 thread_sensitive_context = self.thread_sensitive_context.get()
+@@ -492,7 +494,6 @@ class SyncToAsync(Generic[_P, _R]):
+         else:
+             return func(*args, **kwargs)
+ 
+-
+ @overload
+ def async_to_sync(
+     *,

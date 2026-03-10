@@ -1,0 +1,65 @@
+diff --git a/asgiref/compatibility.py b/asgiref/compatibility.py
+index 3a2a63e..9b4c32c 100644
+--- a/asgiref/compatibility.py
++++ b/asgiref/compatibility.py
+@@ -7,24 +7,17 @@ def is_double_callable(application):
+     """
+     Tests to see if an application is a legacy-style (double-callable) application.
+     """
+-    # Look for a hint on the object first
+     if getattr(application, "_asgi_single_callable", False):
+         return False
+     if getattr(application, "_asgi_double_callable", False):
+         return True
+-    # Uninstanted classes are double-callable
+     if inspect.isclass(application):
+         return True
+-    # Instanted classes depend on their __call__
+     if hasattr(application, "__call__"):
+-        # We only check to see if its __call__ is a coroutine function -
+-        # if it's not, it still might be a coroutine function itself.
+-        if iscoroutinefunction(application.__call__):
++        if iscoroutinefunction(application):
+             return False
+-    # Non-classes we just check directly
+     return not iscoroutinefunction(application)
+ 
+-
+ def double_to_single_callable(application):
+     """
+     Transforms a double-callable ASGI application into a single-callable one.
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..9b11dba 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -133,14 +133,17 @@ class WsgiToAsgiInstance:
+ 
+     @sync_to_async
+     def run_wsgi_app(self, body):
++        # Run the WSGI app
++        if not self.response_started:
++            self.response_started = True
++            self.sync_send(self.response_start)
++        bytes_sent = 0
++        # Translate the scope and incoming request body into a WSGI environ
+         """
+         Called in a subthread to run the WSGI app. We encapsulate like
+         this so that the start_response callable is called in the same thread.
+         """
+-        # Translate the scope and incoming request body into a WSGI environ
+         environ = self.build_environ(self.scope, body)
+-        # Run the WSGI app
+-        bytes_sent = 0
+         for output in self.wsgi_application(environ, self.start_response):
+             # If this is the first response, include the response headers
+             if not self.response_started:
+@@ -160,7 +163,4 @@ class WsgiToAsgiInstance:
+             if bytes_sent == self.response_content_length:
+                 break
+         # Close connection
+-        if not self.response_started:
+-            self.response_started = True
+-            self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        self.sync_send({"type": "http.response.body"})
+\ No newline at end of file

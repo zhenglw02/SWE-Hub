@@ -1,0 +1,47 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..dd70af6 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -143,8 +143,6 @@ class AsyncToSync(Generic[_P, _R]):
+             not iscoroutinefunction(awaitable)
+             and not iscoroutinefunction(getattr(awaitable, "__call__", awaitable))
+         ):
+-            # Python does not have very reliable detection of async functions
+-            # (lots of false negatives) so this is just a warning.
+             warnings.warn(
+                 "async_to_sync was passed a non-async-marked callable", stacklevel=2
+             )
+@@ -158,9 +156,7 @@ class AsyncToSync(Generic[_P, _R]):
+         try:
+             self.main_event_loop = asyncio.get_running_loop()
+         except RuntimeError:
+-            # There's no event loop in this thread.
+-            pass
+-
++            self.main_event_loop = asyncio.new_event_loop()
+     def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+ 
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..c29e7af 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -32,9 +32,9 @@ class WsgiToAsgiInstance:
+         self.response_content_length = None
+ 
+     async def __call__(self, scope, receive, send):
++        self.scope = scope
+         if scope["type"] != "http":
+             raise ValueError("WSGI wrapper received a non-HTTP scope")
+-        self.scope = scope
+         with SpooledTemporaryFile(max_size=65536) as body:
+             # Alright, wait for the http.request messages
+             while True:
+@@ -49,7 +49,6 @@ class WsgiToAsgiInstance:
+             self.sync_send = AsyncToSync(send)
+             # Call the WSGI app
+             await self.run_wsgi_app(body)
+-
+     def build_environ(self, scope, body):
+         """
+         Builds a scope and request body into a WSGI environ object.

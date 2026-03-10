@@ -1,0 +1,53 @@
+/tmp/PATCH_1_4b13ea98.patch:17: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..a22e24a 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -24,7 +24,8 @@ class _CVar:
+         if key == "_data":
+             return super().__setattr__(key, value)
+ 
+-        storage_object = self._data.get({}).copy()
++        storage_object = self._data.get({})
++        storage_object = storage_object.copy()
+         storage_object[key] = value
+         self._data.set(storage_object)
+ 
+@@ -36,7 +37,6 @@ class _CVar:
+         else:
+             raise AttributeError(f"{self!r} object has no attribute {key!r}")
+ 
+-
+ class Local:
+     """Local storage for async tasks.
+ 
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..1c710b0 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -460,14 +460,7 @@ class SyncToAsync(Generic[_P, _R]):
+ 
+         return ret
+ 
+-    def __get__(
+-        self, parent: Any, objtype: Any
+-    ) -> Callable[_P, Coroutine[Any, Any, _R]]:
+-        """
+-        Include self for methods
+-        """
+-        func = functools.partial(self.__call__, parent)
+-        return functools.update_wrapper(func, self.func)
++    
+ 
+     def thread_handler(self, loop, exc_info, task_context, func, *args, **kwargs):
+         """
+@@ -492,7 +485,6 @@ class SyncToAsync(Generic[_P, _R]):
+         else:
+             return func(*args, **kwargs)
+ 
+-
+ @overload
+ def async_to_sync(
+     *,

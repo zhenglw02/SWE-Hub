@@ -1,0 +1,21 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..c62a707 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -390,7 +390,7 @@ class SyncToAsync(Generic[_P, _R]):
+             if current_thread_executor:
+                 # If we have a parent sync thread above somewhere, use that
+                 executor = current_thread_executor
+-            elif self.thread_sensitive_context.get(None):
++            elif self.thread_sensitive_context.get(None) is None:
+                 # If we have a way of retrieving the current context, attempt
+                 # to use a per-context thread pool executor
+                 thread_sensitive_context = self.thread_sensitive_context.get()
+@@ -492,7 +492,6 @@ class SyncToAsync(Generic[_P, _R]):
+         else:
+             return func(*args, **kwargs)
+ 
+-
+ @overload
+ def async_to_sync(
+     *,

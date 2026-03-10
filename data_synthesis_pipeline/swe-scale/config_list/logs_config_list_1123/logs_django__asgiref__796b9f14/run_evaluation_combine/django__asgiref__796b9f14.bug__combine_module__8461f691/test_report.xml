@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="10" failures="6" skipped="0" tests="44" time="1.642" timestamp="2026-03-04T08:42:06.090130+00:00" hostname="zyc-swe-smith-django--asgiref--7-210003d5"><testcase classname="" name="tests.test_sync" time="0.000"><error message="collection failure">E   RuntimeError: no running event loop
+
+During handling of the above exception, another exception occurred:
+E   NameError: name 'main_event_loop' is not defined</error><error message="collection failure">E   RuntimeError: no running event loop
+
+During handling of the above exception, another exception occurred:
+E   NameError: name 'main_event_loop' is not defined</error><error message="collection failure">E   RuntimeError: no running event loop
+
+During handling of the above exception, another exception occurred:
+E   NameError: name 'main_event_loop' is not defined</error><error message="collection failure">E   RuntimeError: no running event loop
+
+During handling of the above exception, another exception occurred:
+E   NameError: name 'main_event_loop' is not defined</error><error message="collection failure">E   RuntimeError: no running event loop
+
+During handling of the above exception, another exception occurred:
+E   NameError: name 'main_event_loop' is not defined</error><error message="collection failure">E   RuntimeError: no running event loop
+
+During handling of the above exception, another exception occurred:
+E   NameError: name 'main_event_loop' is not defined</error><error message="collection failure">E   RuntimeError: no running event loop
+
+During handling of the above exception, another exception occurred:
+E   NameError: name 'main_event_loop' is not defined</error><error message="collection failure">E   RuntimeError: no running event loop
+
+During handling of the above exception, another exception occurred:
+E   NameError: name 'main_event_loop' is not defined</error><error message="collection failure">E   RuntimeError: no running event loop
+
+During handling of the above exception, another exception occurred:
+E   NameError: name 'main_event_loop' is not defined</error><error message="collection failure">E   RuntimeError: no running event loop
+
+During handling of the above exception, another exception occurred:
+E   NameError: name 'main_event_loop' is not defined</error></testcase><testcase classname="tests.test_garbage_collection" name="test_thread_critical_Local_remove_all_reference_cycles" time="0.016" /><testcase classname="tests.test_compatibility" name="test_is_double_callable" time="0.001" /><testcase classname="tests.test_testing" name="test_receive_nothing" time="0.124" /><testcase classname="tests.test_wsgi" name="test_basic_wsgi" time="0.003" /><testcase classname="tests.test_local" name="test_local_task" time="0.002" /><testcase classname="tests.test_server" name="test_stateless_server" time="0.003" /><testcase classname="tests.test_compatibility" name="test_double_to_single_signature" time="0.000" /><testcase classname="tests.test_sync_contextvars" name="test_thread_sensitive_with_context_different" time="0.003" /><testcase classname="tests.test_local" name="test_local_thread" time="0.001" /><testcase classname="tests.test_compatibility" name="test_double_to_single_communicator" time="0.001" /><testcase classname="tests.test_wsgi" name="test_script_name" time="0.000" /><testcase classname="tests.test_wsgi" name="test_wsgi_path_encoding" time="0.001" /><testcase classname="tests.test_sync_contextvars" name="test_sync_to_async_contextvars" time="1.002" /><testcase classname="tests.test_local" name="test_local_thread_nested" time="0.001" /><testcase classname="tests.test_local" name="test_local_cycle" time="0.009" /><testcase classname="tests.test_server" name="test_server_delete_instance" time="0.004" /><testcase classname="tests.test_wsgi" name="test_wsgi_empty_body" time="0.001" /><testcase classname="tests.test_wsgi" name="test_wsgi_clamped_body" time="0.001" /><testcase classname="tests.test_wsgi" name="test_wsgi_stops_iterating_after_content_length_bytes" time="0.001" /><testcase classname="tests.test_wsgi" name="test_wsgi_multiple_start_response" time="0.001" /><testcase classname="tests.test_wsgi" name="test_wsgi_multi_body" time="0.001" /><testcase classname="tests.test_local" name="test_local_task_to_sync" time="0.001" /><testcase classname="tests.test_local" name="test_local_thread_to_async" time="0.000"><failure message="NameError: name 'main_event_loop' is not defined">E   RuntimeError: no running event loop
+
+During handling of the above exception, another exception occurred:
+E   NameError: name 'main_event_loop' is not defined</failure></testcase><testcase classname="tests.test_local" name="test_local_task_to_sync_to_task" time="0.001"><failure message="NameError: name 'main_event_loop' is not defined">E   RuntimeError: no running event loop
+
+During handling of the above exception, another exception occurred:
+E   NameError: name 'main_event_loop' is not defined</failure></testcase><testcase classname="tests.test_local" name="test_local_many_layers" time="0.001"><failure message="NameError: name 'main_event_loop' is not defined">E   RuntimeError: no running event loop
+
+During handling of the above exception, another exception occurred:
+E   NameError: name 'main_event_loop' is not defined</failure></testcase><testcase classname="tests.test_local" name="test_local_critical_no_task_to_thread" time="0.001" /><testcase classname="tests.test_local" name="test_local_critical_no_thread_to_task" time="0.000"><failure message="NameError: name 'main_event_loop' is not defined">E   RuntimeError: no running event loop
+
+During handling of the above exception, another exception occurred:
+E   NameError: name 'main_event_loop' is not defined</failure></testcase><testcase classname="tests.test_local" name="test_local_threads_and_tasks" time="0.002" /><testcase classname="tests.test_local" name="test_thread_critical_local_not_context_dependent_in_sync_thread" time="0.000"><failure message="NameError: name 'main_event_loop' is not defined">E   RuntimeError: no running event loop
+
+During handling of the above exception, another exception occurred:
+E   NameError: name 'main_event_loop' is not defined</failure></testcase><testcase classname="tests.test_local" name="test_visibility_thread_asgiref" time="0.001" /><testcase classname="tests.test_local" name="test_visibility_task" time="0.001" /><testcase classname="tests.test_local" name="test_deletion" time="0.001" /><testcase classname="tests.test_testing" name="test_receive_nothing_lazy_loop" time="0.122" /><testcase classname="tests.test_sync_contextvars" name="test_async_to_sync_contextvars" time="0.001"><failure message="NameError: name 'main_event_loop' is not defined">E   RuntimeError: no running event loop
+
+During handling of the above exception, another exception occurred:
+E   NameError: name 'main_event_loop' is not defined</failure></testcase></testsuite></testsuites>

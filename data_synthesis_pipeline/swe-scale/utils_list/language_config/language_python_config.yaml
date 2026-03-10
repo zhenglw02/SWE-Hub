@@ -1,0 +1,176 @@
+# python_config.yaml
+
+name: Python
+placeholder_body: "pass # TODO: Implement this function"
+indent_size: 4
+file_extensions: [".py", ".pyw"]
+file_patterns: ["/tests", "/test", "/testing", "test_"]
+
+# 所有 Tree-sitter 查询
+queries:
+  # 用于识别代码实体的查询
+  entity_query: |
+      (function_definition name: (identifier) @entity.name) @entity.function
+      (class_definition name: (identifier) @entity.name) @entity.class
+
+  # 用于计算代码复杂度的查询
+  complexity_query: |
+    (if_statement) @decision
+    (for_statement) @decision
+    (while_statement) @decision
+    (except_clause) @decision
+    (conditional_expression) @decision ; for ternary operator (x if C else y)
+    (boolean_operator) @operator
+    (#match? @operator "^(and|or)$")
+    (comparison_operator) @comparison
+
+  # 用于 FilterManager 的查询, 用于获取 entity 中是否包含一些基础属性
+  filters_query:
+    has_class_parents: "(argument_list) @check"
+    has_decorators: "(decorated_definition) @decorator"
+    has_function_definitions: "(function_definition) @function"
+    has_loops: "(for_statement) @loop (while_statement) @loop"
+    has_indexing: "(subscript) @indexing"
+    has_conditionals: "(if_statement) @if_statement"
+    has_function_calls: "(call) @function_call"
+    has_return_statements: "(return_statement) @return_statement"
+    has_exceptions: "(try_statement) @try_statement"
+    has_list_comprehensions: "(list_comprehension) @list_comprehension"
+    has_imports: "[(import_statement) (import_from_statement)]"
+    has_assignments: "[(assignment) @assignment (augmented_assignment) @assignment]"
+    has_nested_class_definitions: "(class_definition) @class"
+    has_lambda_functions: "(lambda) @lambda"
+    has_arithmetic_operations: "(binary_operator) @binary_op"
+    has_wrappers: "(try_statement (except_clause)) @try_except"
+    has_off_by_one_comparison: '(comparison_operator ["<" ">" "<=" ">="])'
+    has_if_else: "(if_statement alternative: (_) @else)"
+    has_binary_operations: "(binary_operator) @binary_op"
+    has_boolean_operations: "(boolean_operator) @bool_op"
+    has_unary_operations: "(unary_operator) @unary_op"
+    has_nested_function_definitions: "(function_definition) @nested_function"
+
+  # 用于各种 Modifier 的查询 (按功能组织)
+  modifiers:
+    operations:
+      SWAP_OPERANDS: |
+        (binary_operator left: (_) @left right: (_) @right) @target
+        (comparison_operator . (_) @left . _ . (_) @right) @target
+        (boolean_operator left: (_) @left right: (_) @right) @target
+      CHANGE_OPERATOR: |
+        (binary_operator operator: _ @operator) @target
+        (comparison_operator operators: _ @operator) @target
+      FLIP_OPERATOR: |
+        (comparison_operator operators: _ @operator) @target
+        (boolean_operator operator: _ @operator) @target
+      # BREAK_CHAINS: (binary_operator left: (_) @left right: (_) @right) @target
+      BREAK_CHAINS: |
+        (binary_operator left: (binary_operator left: (_) @operand) @sub_expression)
+        (binary_operator right: (binary_operator right: (_) @operand) @sub_expression)
+      CHANGE_CONSTANTS: "(integer) @integer"
+      # CHANGE_CONSTANTS: |
+      #   (binary_operator (integer) @integer) @target
+      #   (assignment (integer) @integer) @target
+      #   (return_statement (integer) @integer) @target
+      #   (call (integer) @integer) @target
+      #   (list (integer) @integer) @target
+      #   (expression_statement (integer) @integer) @target
+      
+    control_flow:
+      INVERT_IF_ELSE: |
+        (if_statement
+          consequence: (block) @if_body
+          alternative: (else_clause body: (block) @else_body )
+        ) @target
+      INVERT_IF_ELIF: |
+        (if_statement
+          consequence: (block) @if_body
+          alternative: (elif_clause consequence: (block) @elif_body)
+        ) @target
+      SHUFFLE_FUNCTION_BODY: |
+        (function_definition body: (block) @function_body)
+
+    classes:
+      REMOVE_CLASS_BASES: "(class_definition superclasses: (argument_list) @inheritance_clause)"
+      SHUFFLE_CLASS_BODY: "(class_definition body: (block) @class_body)"
+      FIND_CLASS_FUNCTIONS: "(class_definition body: (block (function_definition) @function))"
+
+    removals:
+      FIND_LOOPS: "[ (for_statement) @loop (while_statement) @loop ]"
+      FIND_CONDITIONALS: "(if_statement) @conditional"
+      FIND_ASSIGNMENTS: "[ (assignment) @assignment (augmented_assignment) @assignment ]"
+      FIND_WRAPPERS: "[ (with_statement) @wrapper (try_statement) @wrapper ]"
+      FIND_WRAPPERS_WITH_BODY: |
+        [
+          (with_statement body: (_) @body) @wrapper
+          (try_statement body: (_) @body) @wrapper
+        ]
+    
+  # 语言特殊逻辑
+  change_operators_groups:
+    add_sub_ops: ["+", "-"]
+    mul_div_ops: ["*", "/", "//", "%"]
+    bit_ops: ["&", "|", "^"]
+    shift_ops: ["<<", ">>"]
+    power_ops: ["**"]
+  flipped_operators:
+    '<': '>='
+    '>': '<='
+    '<=': '>'
+    '>=': '<'
+    '==': '!='
+    '!=': '=='
+    'is': 'is not'
+    'is not': 'is'
+    'in': 'not in'
+    'not in': 'in'
+    'and': 'or'
+    'or': 'and'
+  change_constants_valid_parents: [
+    'binary_operator', 'comparison_operator', 'assignment', 'return_statement',
+    'call', 'list', 'expression_statement', 'augmented_assignment', 'subscript',
+    'tuple', 'set', 'dictionary'
+  ]
+  function_context_types: ["function_definition"]
+  shuffle_lines_blacklist: [':']
+
+  # 用于分析调用关系的查询
+  dependency_analysis:
+    call_site_query: |
+      (call
+        function: [
+          (identifier) @call.name
+          (attribute object: (_) @call.object attribute: (identifier) @call.name)
+        ]
+      ) @call.expression
+    import_query: |
+      (import_statement
+        name: [
+          (dotted_name) @import.path
+          (aliased_import
+            name: (dotted_name) @import.path
+            alias: (identifier) @import.alias
+          )
+        ]
+      )
+
+      (import_from_statement
+        module_name: [
+          (dotted_name) @import.from
+          (relative_import) @import.from
+        ]
+        name: [
+          (dotted_name) @import.name
+          (aliased_import
+            name: (dotted_name) @import.name
+            alias: (identifier) @import.alias
+          )
+        ]
+      )
+
+      (import_from_statement
+        module_name: [
+          (dotted_name) @import.from
+          (relative_import) @import.from
+        ]
+        (wildcard_import) @import.wildcard
+      )

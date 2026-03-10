@@ -1,0 +1,62 @@
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..351ec2a 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -155,12 +155,10 @@ class StatelessServer:
+                     exception = details["future"].exception()
+                     if exception:
+                         await self.application_exception(exception, details)
+-                    try:
+-                        del self.application_instances[scope_id]
+-                    except KeyError:
+-                        # Exception handling might have already got here before us. That's fine.
+-                        pass
+-
++                try:
++                    del self.application_instances[scope_id]
++                except KeyError:
++                    pass
+     async def application_exception(self, exception, application_details):
+         """
+         Called whenever an application coroutine has an exception.
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..f8febd9 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -103,34 +103,28 @@ class WsgiToAsgiInstance:
+         """
+         WSGI start_response callable.
+         """
+-        # Don't allow re-calling once response has begun
+         if self.response_started:
+             raise exc_info[1].with_traceback(exc_info[2])
+-        # Don't allow re-calling without exc_info
+         if hasattr(self, "response_start") and exc_info is None:
+             raise ValueError(
+                 "You cannot call start_response a second time without exc_info"
+             )
+-        # Extract status code
+-        status_code, _ = status.split(" ", 1)
++        status_code, _ = status.rsplit(" ", 1)
+         status_code = int(status_code)
+-        # Extract headers
+         headers = [
+             (name.lower().encode("ascii"), value.encode("ascii"))
+             for name, value in response_headers
+         ]
+-        # Extract content-length
+         self.response_content_length = None
+         for name, value in response_headers:
+             if name.lower() == "content-length":
+                 self.response_content_length = int(value)
+-        # Build and send response start message.
++                break
+         self.response_start = {
+             "type": "http.response.start",
+             "status": status_code,
+             "headers": headers,
+         }
+-
+     @sync_to_async
+     def run_wsgi_app(self, body):
+         """

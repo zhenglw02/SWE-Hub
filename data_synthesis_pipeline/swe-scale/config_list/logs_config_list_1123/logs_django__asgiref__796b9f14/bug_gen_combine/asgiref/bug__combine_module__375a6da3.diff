@@ -1,0 +1,111 @@
+/tmp/PATCH_0_d9d42f88.patch:37: trailing whitespace.
+    
+/tmp/PATCH_0_d9d42f88.patch:40: trailing whitespace.
+    
+/tmp/PATCH_0_d9d42f88.patch:44: trailing whitespace.
+    
+/tmp/PATCH_0_d9d42f88.patch:53: trailing whitespace.
+    
+/tmp/PATCH_0_d9d42f88.patch:63: trailing whitespace.
+    
+warning: squelched 1 whitespace error
+warning: 6 lines add whitespace errors.
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..a50d6cb 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -56,9 +56,10 @@ class ApplicationCommunicator:
+             async with async_timeout(timeout):
+                 try:
+                     await self.future
+-                    self.future.result()
+                 except asyncio.CancelledError:
+                     pass
++            if not isinstance(self.future.exception(), asyncio.CancelledError):
++                self.future.result()
+         finally:
+             if not self.future.done():
+                 self.future.cancel()
+@@ -132,6 +133,6 @@ class ApplicationCommunicator:
+         start = time.monotonic()
+         while time.monotonic() - start < timeout:
+             if not self.output_queue.empty():
+-                return False
++                return True
+             await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++        return not self.output_queue.empty()
+\ No newline at end of file
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..f3ae5c8 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -99,38 +99,42 @@ class WsgiToAsgiInstance:
+             environ[corrected_name] = value
+         return environ
+ 
+-    def start_response(self, status, response_headers, exc_info=None):
++    def start_response (self, status, response_headers, exc_info=None) :
+         """
+-        WSGI start_response callable.
+-        """
+-        # Don't allow re-calling once response has begun
+-        if self.response_started:
+-            raise exc_info[1].with_traceback(exc_info[2])
+-        # Don't allow re-calling without exc_info
+-        if hasattr(self, "response_start") and exc_info is None:
+-            raise ValueError(
+-                "You cannot call start_response a second time without exc_info"
+-            )
+-        # Extract status code
+-        status_code, _ = status.split(" ", 1)
+-        status_code = int(status_code)
+-        # Extract headers
+-        headers = [
+-            (name.lower().encode("ascii"), value.encode("ascii"))
+-            for name, value in response_headers
+-        ]
+-        # Extract content-length
+-        self.response_content_length = None
++            WSGI start_response callable.
++            """
++        # If we've already started the response and exc_info is provided, we should re-raise
++        if exc_info and self.response_started:
++            raise exc_info[0](exc_info[1]).with_traceback(exc_info[2])
++    
++        # Parse the status code from the status string (e.g., "200 OK" -> 200)
++        status_code = int(status.split()[0])
++    
++        # Convert headers to the format expected by ASGI
++        headers = []
++        content_length = None
++    
+         for name, value in response_headers:
+-            if name.lower() == "content-length":
+-                self.response_content_length = int(value)
+-        # Build and send response start message.
++            # Store Content-Length separately for tracking
++            if name.lower() == 'content-length':
++                content_length = int(value)
++            headers.append((name.lower().encode('latin1'), value.encode('latin1')))
++    
++        # Store the response start information
+         self.response_start = {
+             "type": "http.response.start",
+             "status": status_code,
+-            "headers": headers,
++            "headers": headers
+         }
+-
++        self.response_content_length = content_length
++    
++        # Return a write callable (though in this implementation, writing is handled separately)
++        def write(data):
++            # This would typically write data to the response body
++            # However, in our implementation, the response body is handled in run_wsgi_app
++            pass
++    
++        return write
+     @sync_to_async
+     def run_wsgi_app(self, body):
+         """

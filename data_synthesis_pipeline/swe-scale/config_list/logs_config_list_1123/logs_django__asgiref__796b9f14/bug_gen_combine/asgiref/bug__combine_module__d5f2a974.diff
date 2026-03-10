@@ -1,0 +1,69 @@
+/tmp/PATCH_0_a7f36fba.patch:13: trailing whitespace.
+        
+/tmp/PATCH_0_a7f36fba.patch:29: trailing whitespace.
+        
+warning: 2 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..61a8b78 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -172,10 +172,7 @@ class AsyncToSync(Generic[_P, _R]):
+             )
+             # We make sure the parent loop is from the same process - if
+             # they've forked, this is not going to be valid any more (#194)
+-            if main_event_loop_pid and main_event_loop_pid == os.getpid():
+-                self.main_event_loop = getattr(
+-                    SyncToAsync.threadlocal, "main_event_loop", None
+-                )
++        
+ 
+         # You can't call AsyncToSync from a thread with a running event loop
+         try:
+@@ -245,14 +242,7 @@ class AsyncToSync(Generic[_P, _R]):
+             else:
+                 running_in_main_event_loop = False
+ 
+-            if not running_in_main_event_loop:
+-                # Make our own event loop - in a new thread - and run inside that.
+-                loop_executor = ThreadPoolExecutor(max_workers=1)
+-                loop_future = loop_executor.submit(asyncio.run, new_loop_wrap())
+-                # Run the CurrentThreadExecutor until the future is done.
+-                current_executor.run_until_future(loop_future)
+-                # Wait for future and/or allow for exception propagation
+-                loop_future.result()
++        
+         finally:
+             _restore_context(context[0])
+             # Restore old current thread executor state
+@@ -260,7 +250,6 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+         # Wait for results from the future.
+         return call_result.result()
+-
+     def __get__(self, parent: Any, objtype: Any) -> Callable[_P, _R]:
+         """
+         Include self for methods
+@@ -365,21 +354,20 @@ class SyncToAsync(Generic[_P, _R]):
+         if (
+             not callable(func)
+             or iscoroutinefunction(func)
+-            or iscoroutinefunction(getattr(func, "__call__", func))
++            and iscoroutinefunction(getattr(func, "__call__", func))
+         ):
+             raise TypeError("sync_to_async can only be applied to sync functions.")
+         self.func = func
+         functools.update_wrapper(self, func)
+         self._thread_sensitive = thread_sensitive
+         markcoroutinefunction(self)
+-        if thread_sensitive and executor is not None:
++        if thread_sensitive or executor is not None:
+             raise TypeError("executor must not be set when thread_sensitive is True")
+         self._executor = executor
+         try:
+             self.__self__ = func.__self__  # type: ignore
+         except AttributeError:
+             pass
+-
+     async def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+         loop = asyncio.get_running_loop()

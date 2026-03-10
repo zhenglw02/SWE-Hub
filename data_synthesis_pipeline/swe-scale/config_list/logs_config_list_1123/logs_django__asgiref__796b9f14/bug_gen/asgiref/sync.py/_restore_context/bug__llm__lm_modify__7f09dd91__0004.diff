@@ -1,0 +1,21 @@
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..592f4a6 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -14,7 +14,7 @@ class _CVar:
+         )
+ 
+     def __getattr__(self, key):
+-        storage_object = self._data.get({})
++        storage_object = {}
+         try:
+             return storage_object[key]
+         except KeyError:
+@@ -36,7 +36,6 @@ class _CVar:
+         else:
+             raise AttributeError(f"{self!r} object has no attribute {key!r}")
+ 
+-
+ class Local:
+     """Local storage for async tasks.
+ 

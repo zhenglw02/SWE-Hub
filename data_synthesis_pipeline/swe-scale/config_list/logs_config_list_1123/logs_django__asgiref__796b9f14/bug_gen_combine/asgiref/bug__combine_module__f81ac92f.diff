@@ -1,0 +1,77 @@
+/tmp/PATCH_0_bfadc3fb.patch:24: trailing whitespace.
+    
+/tmp/PATCH_0_bfadc3fb.patch:30: trailing whitespace.
+    
+/tmp/PATCH_0_bfadc3fb.patch:39: trailing whitespace.
+    
+warning: 3 lines add whitespace errors.
+/tmp/PATCH_1_41b90b65.patch:10: trailing whitespace.
+        
+/tmp/PATCH_1_41b90b65.patch:17: trailing whitespace.
+        
+warning: 2 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..834e4a7 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -356,30 +356,19 @@ class SyncToAsync(Generic[_P, _R]):
+         weakref.WeakKeyDictionary()
+     )
+ 
+-    def __init__(
+-        self,
+-        func: Callable[_P, _R],
+-        thread_sensitive: bool = True,
+-        executor: Optional["ThreadPoolExecutor"] = None,
+-    ) -> None:
+-        if (
+-            not callable(func)
+-            or iscoroutinefunction(func)
+-            or iscoroutinefunction(getattr(func, "__call__", func))
+-        ):
+-            raise TypeError("sync_to_async can only be applied to sync functions.")
++    def __init__ ( self, func: Callable[_P, _R], thread_sensitive: bool = True, executor: Optional["ThreadPoolExecutor"] = None, ) -> None :
++        if not callable(func):
++            raise TypeError("func must be callable")
++    
+         self.func = func
+-        functools.update_wrapper(self, func)
+         self._thread_sensitive = thread_sensitive
+-        markcoroutinefunction(self)
++        self._executor = executor
++    
+         if thread_sensitive and executor is not None:
+             raise TypeError("executor must not be set when thread_sensitive is True")
+-        self._executor = executor
+-        try:
+-            self.__self__ = func.__self__  # type: ignore
+-        except AttributeError:
+-            pass
+-
++    
++        # Copy function attributes for __get__
++        functools.update_wrapper(self, func)
+     async def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+         loop = asyncio.get_running_loop()
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..8bc25a4 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -155,12 +155,12 @@ class WsgiToAsgiInstance:
+             self.sync_send(
+                 {"type": "http.response.body", "body": output, "more_body": True}
+             )
+-            bytes_sent += len(output)
++        
+             # The server should stop iterating over the response when enough data has been sent
+             if bytes_sent == self.response_content_length:
+                 break
+         # Close connection
+         if not self.response_started:
+-            self.response_started = True
++        
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        self.sync_send({"type": "http.response.body"})
+\ No newline at end of file

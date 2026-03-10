@@ -1,0 +1,93 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..a6d596b 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -98,16 +98,7 @@ class CurrentThreadExecutor(Executor):
+         **kwargs: _P.kwargs,
+     ) -> "Future[_R]":
+         # Check they're not submitting from the same thread
+-        if threading.current_thread() == self._work_thread:
+-            raise RuntimeError(
+-                "You cannot submit onto CurrentThreadExecutor from its own thread"
+-            )
+         f: "Future[_R]" = Future()
+-        work_item = _WorkItem(f, fn, *args, **kwargs)
+-
+-        # Walk up the CurrentThreadExecutor stack to find the closest one still
+-        # running
+-        executor = self
+         while True:
+             with executor._work_ready:
+                 if not executor._broken:
+@@ -118,6 +109,15 @@ class CurrentThreadExecutor(Executor):
+             if executor._old_executor is None:
+                 raise RuntimeError("CurrentThreadExecutor already quit or is broken")
+             executor = executor._old_executor
++        if threading.current_thread() == self._work_thread:
++            raise RuntimeError(
++                "You cannot submit onto CurrentThreadExecutor from its own thread"
++            )
+ 
++        # running
+         # Return the future
+-        return f
++        # Walk up the CurrentThreadExecutor stack to find the closest one still
++        executor = self
++
++        work_item = _WorkItem(f, fn, *args, **kwargs)
++        return f
+\ No newline at end of file
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..9e84599 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -79,43 +79,12 @@ class Local:
+             self._storage = _CVar()
+ 
+     @contextlib.contextmanager
+-    def _lock_storage(self):
+-        # Thread safe access to storage
+-        if self._thread_critical:
+-            is_async = True
+-            try:
+-                # this is a test for are we in a async or sync
+-                # thread - will raise RuntimeError if there is
+-                # no current loop
+-                asyncio.get_running_loop()
+-            except RuntimeError:
+-                is_async = False
+-            if not is_async:
+-                # We are in a sync thread, the storage is
+-                # just the plain thread local (i.e, "global within
+-                # this thread" - it doesn't matter where you are
+-                # in a call stack you see the same storage)
+-                yield self._storage
+-            else:
+-                # We are in an async thread - storage is still
+-                # local to this thread, but additionally should
+-                # behave like a context var (is only visible with
+-                # the same async call stack)
+-
+-                # Ensure context exists in the current thread
+-                if not hasattr(self._storage, "cvar"):
+-                    self._storage.cvar = _CVar()
+-
+-                # self._storage is a thread local, so the members
+-                # can't be accessed in another thread (we don't
+-                # need any locks)
+-                yield self._storage.cvar
+-        else:
+-            # Lock for thread_critical=False as other threads
+-            # can access the exact same storage object
+-            with self._thread_lock:
+-                yield self._storage
+-
++    def _lock_storage (self) : # Thread safe access to storage
++        self._thread_lock.acquire()
++        try:
++            yield self._storage
++        finally:
++            self._thread_lock.release()
+     def __getattr__(self, key):
+         with self._lock_storage() as storage:
+             return getattr(storage, key)

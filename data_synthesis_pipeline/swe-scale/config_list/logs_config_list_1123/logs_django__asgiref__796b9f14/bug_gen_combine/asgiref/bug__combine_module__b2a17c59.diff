@@ -1,0 +1,85 @@
+/tmp/PATCH_1_662ed6e9.patch:32: trailing whitespace.
+    
+/tmp/PATCH_1_662ed6e9.patch:41: trailing whitespace.
+    
+/tmp/PATCH_1_662ed6e9.patch:44: trailing whitespace.
+    
+warning: 3 lines add whitespace errors.
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..72f038a 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -33,21 +33,13 @@ class ApplicationCommunicator:
+             self._output_queue = asyncio.Queue()
+         return self._output_queue
+ 
++    @property
+     @property
+     def future(self):
+         if self._future is None:
+-            # Clear context - this ensures that context vars set in the testing scope
+-            # are not "leaked" into the application which would normally begin with
+-            # an empty context. In Python >= 3.11 this could also be written as:
+-            # asyncio.create_task(..., context=contextvars.Context())
+-            self._future = contextvars.Context().run(
+-                asyncio.create_task,
+-                self.application(
+-                    self.scope, self.input_queue.get, self.output_queue.put
+-                ),
+-            )
++            # Create the application task
++            self._future = asyncio.create_task(self._run_application())
+         return self._future
+-
+     async def wait(self, timeout=1):
+         """
+         Waits for the application to stop itself and returns any exceptions.
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..801e322 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -31,25 +31,26 @@ class WsgiToAsgiInstance:
+         self.response_started = False
+         self.response_content_length = None
+ 
+-    async def __call__(self, scope, receive, send):
+-        if scope["type"] != "http":
+-            raise ValueError("WSGI wrapper received a non-HTTP scope")
++    async def __call__ (self, scope, receive, send) :
++        # Store the scope for later use in environ building
+         self.scope = scope
+-        with SpooledTemporaryFile(max_size=65536) as body:
+-            # Alright, wait for the http.request messages
+-            while True:
+-                message = await receive()
+-                if message["type"] != "http.request":
+-                    raise ValueError("WSGI wrapper received a non-HTTP-request message")
+-                body.write(message.get("body", b""))
+-                if not message.get("more_body"):
+-                    break
+-            body.seek(0)
+-            # Wrap send so it can be called from the subthread
+-            self.sync_send = AsyncToSync(send)
+-            # Call the WSGI app
+-            await self.run_wsgi_app(body)
+-
++        self.send = send
++        self.response_started = False
++    
++        # Read the entire request body
++        body = SpooledTemporaryFile(max_size=64 * 1024)
++        more_body = True
++        while more_body:
++            message = await receive()
++            body.write(message.get("body", b""))
++            more_body = message.get("more_body", False)
++        body.seek(0)
++    
++        # Wrap the send method to be synchronous for WSGI
++        self.sync_send = AsyncToSync(send)
++    
++        # Run the WSGI application
++        await self.run_wsgi_app(body)
+     def build_environ(self, scope, body):
+         """
+         Builds a scope and request body into a WSGI environ object.

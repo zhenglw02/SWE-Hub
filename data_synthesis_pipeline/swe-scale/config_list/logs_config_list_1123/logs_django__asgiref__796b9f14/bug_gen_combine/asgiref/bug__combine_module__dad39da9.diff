@@ -1,0 +1,67 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..e545df0 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -310,7 +310,7 @@ class AsyncToSync(Generic[_P, _R]):
+             context[0] = contextvars.copy_context()
+ 
+ 
+-class SyncToAsync(Generic[_P, _R]):
++class SyncToAsync:
+     """
+     Utility class which turns a synchronous callable into an awaitable that
+     runs in a threadpool. It also sets a threadlocal inside the thread so
+@@ -492,7 +492,6 @@ class SyncToAsync(Generic[_P, _R]):
+         else:
+             return func(*args, **kwargs)
+ 
+-
+ @overload
+ def async_to_sync(
+     *,
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..c7ab72d 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -48,25 +48,25 @@ class ApplicationCommunicator:
+             )
+         return self._future
+ 
+-    async def wait(self, timeout=1):
+-        """
+-        Waits for the application to stop itself and returns any exceptions.
++    async def wait (self, timeout=1) :
+         """
++            Waits for the application to stop itself and returns any exceptions.
++            """
+         try:
++            # Wait for the future to complete with a timeout
+             async with async_timeout(timeout):
+-                try:
+-                    await self.future
+-                    self.future.result()
+-                except asyncio.CancelledError:
+-                    pass
+-        finally:
+-            if not self.future.done():
+-                self.future.cancel()
+-                try:
+-                    await self.future
+-                except asyncio.CancelledError:
+-                    pass
+-
++                await self.future
++        except asyncio.TimeoutError:
++            # If we timeout, cancel the task and re-raise
++            self.future.cancel()
++            try:
++                await self.future
++            except asyncio.CancelledError:
++                pass
++            raise
++        else:
++            # If no timeout, return the result (which may raise an exception)
++            return self.future.result()
+     def stop(self, exceptions=True):
+         future = self._future
+         if future is None:

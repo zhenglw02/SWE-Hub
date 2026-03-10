@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__llm__lm_modify__587c9718__0004",
+    "patch": "diff --git a/asgiref/timeout.py b/asgiref/timeout.py\nindex fd5381d..af482bb 100644\n--- a/asgiref/timeout.py\n+++ b/asgiref/timeout.py\n@@ -97,7 +97,7 @@ class timeout:\n             self._loop.call_soon(self._cancel_task)\n             return self\n \n-        self._cancel_at = self._loop.time() + self._timeout\n+        self._cancel_at = self._loop.time() + self._timeout - 1\n         self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)\n         return self\n \n@@ -115,4 +115,4 @@ class timeout:\n     def _cancel_task(self) -> None:\n         if self._task is not None:\n             self._task.cancel()\n-            self._cancelled = True\n+            self._cancelled = True\n\\ No newline at end of file\n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/local.py/_lock_storage/bug__llm__lm_modify__587c9718__0004.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

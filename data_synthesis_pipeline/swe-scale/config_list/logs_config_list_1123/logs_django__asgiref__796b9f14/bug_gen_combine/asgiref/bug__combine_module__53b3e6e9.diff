@@ -1,0 +1,99 @@
+/tmp/PATCH_0_3e759ba8.patch:28: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+/tmp/PATCH_1_820fb506.patch:31: trailing whitespace.
+        
+/tmp/PATCH_1_820fb506.patch:34: trailing whitespace.
+        
+/tmp/PATCH_1_820fb506.patch:38: trailing whitespace.
+                
+/tmp/PATCH_1_820fb506.patch:41: trailing whitespace.
+            
+/tmp/PATCH_1_820fb506.patch:45: trailing whitespace.
+                
+warning: 5 lines add whitespace errors.
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..9cb7925 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -143,24 +143,34 @@ class StatelessServer:
+         if not details["future"].done():
+             details["future"].cancel()
+ 
+-    async def application_checker(self):
+-        """
+-        Goes through the set of current application instance Futures and cleans up
+-        any that are done/prints exceptions for any that errored.
++    async def application_checker (self) :
+         """
++            Goes through the set of current application instance Futures and cleans up
++            any that are done/prints exceptions for any that errored.
++            """
+         while True:
+             await asyncio.sleep(self.application_checker_interval)
+-            for scope_id, details in list(self.application_instances.items()):
+-                if details["future"].done():
+-                    exception = details["future"].exception()
+-                    if exception:
+-                        await self.application_exception(exception, details)
+-                    try:
+-                        del self.application_instances[scope_id]
+-                    except KeyError:
+-                        # Exception handling might have already got here before us. That's fine.
+-                        pass
+-
++        
++            # Create a copy of scope IDs to avoid modification during iteration
++            scope_ids = list(self.application_instances.keys())
++        
++            for scope_id in scope_ids:
++                if scope_id not in self.application_instances:
++                    continue
++                
++                details = self.application_instances[scope_id]
++                future = details["future"]
++            
++                if future.done():
++                    # Clean up the application instance
++                    self.delete_application_instance(scope_id)
++                
++                    # Handle exceptions if the future failed
++                    if future.exception():
++                        await self.application_exception(
++                            future.exception(),
++                            details
++                        )
+     async def application_exception(self, exception, application_details):
+         """
+         Called whenever an application coroutine has an exception.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..9afd6d1 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -290,25 +290,7 @@ class AsyncToSync(Generic[_P, _R]):
+         if current_task is not None and task_context is not None:
+             task_context.append(current_task)
+ 
+-        try:
+-            # If we have an exception, run the function inside the except block
+-            # after raising it so exc_info is correctly populated.
+-            if exc_info[1]:
+-                try:
+-                    raise exc_info[1]
+-                except BaseException:
+-                    result = await awaitable
+-            else:
+-                result = await awaitable
+-        except BaseException as e:
+-            call_result.set_exception(e)
+-        else:
+-            call_result.set_result(result)
+-        finally:
+-            if current_task is not None and task_context is not None:
+-                task_context.remove(current_task)
+-            context[0] = contextvars.copy_context()
+-
++    
+ 
+ class SyncToAsync(Generic[_P, _R]):
+     """

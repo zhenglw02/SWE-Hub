@@ -1,18 +1,21 @@
 # code-data-agent-sdk
 
-A toolkit for synthesizing high-quality code training data using LLM agents. It provides three independent pipelines, each producing a different type of training data from real open-source repositories.
+A toolkit for synthesizing high-quality code training data using LLM agents. It provides four independent pipelines, each producing a different type of training data from real open-source repositories.
 
 > **Technical Report**: [https://arxiv.org/abs/2603.00575](https://arxiv.org/abs/2603.00575)
+
+## English README | [中文文档](README_zh.md)
 
 ## Overview
 
 | Pipeline | What it produces |
 |----------|-----------------|
 | `env_agent` | Reproducible `install_script` + `test_script` for each repo, plus a runnable Docker image |
+| `swe-scale` | Scalable bug synthesis pipeline supporting multiple languages with procedural/LLM-based bug generation and automated validation |
 | `bug_agent` | Subtle bug patches (PASS→FAIL regressions) paired with realistic GitHub-style issue reports |
 | `nl2repo` | Function-level and project-level natural language documentation paired with code patches |
 
-All three pipelines share the `code_data_agent` core SDK, which provides the ReAct agent loop, LLM HTTP client, sandbox abstractions, and tool implementations.
+The `env_agent`, `bug_agent`, and `nl2repo` pipelines share the `code_data_agent` core SDK, which provides the ReAct agent loop, LLM HTTP client, sandbox abstractions, and tool implementations.
 
 ## Prerequisites
 
@@ -301,11 +304,36 @@ code-data-agent-sdk/
     │   │       ├── preprocess.py
     │   │       └── bug_issue.py
     │   └── prompts/
-    └── nl2repo/                      # Pipeline 3: NL documentation
-        ├── agents/                   # DocPart1Agent, DocPart2Agent
-        ├── analyzers/                # Dependency graph, Louvain clustering
-        ├── generators/               # Patch generation, Docker container pool
-        ├── parsers/                  # tree-sitter entity extraction
-        └── pipeline/
-            └── steps/
+    ├── nl2repo/                      # Pipeline 3: NL documentation
+    │   ├── agents/                   # DocPart1Agent, DocPart2Agent
+    │   ├── analyzers/                # Dependency graph, Louvain clustering
+    │   ├── generators/               # Patch generation, Docker container pool
+    │   ├── parsers/                  # tree-sitter entity extraction
+    │   └── pipeline/
+    │       └── steps/
+    └── swe-scale/                    # Pipeline 4: scalable bug synthesis
+        ├── stage_0_register_config/  # Configuration registration
+        ├── stage_1_swe_smith/        # Bug generation (procedural & LLM-based)
+        ├── stage_2_validation/      # Bug validation with test suites
+        ├── stage_3_report_parser/   # Result parsing and P2F detection
+        ├── stage_4_gen_issue/       # GitHub issue generation
+        ├── config_list/              # Repository configurations
+        ├── utils_list/               # Shared utilities (AST modifiers, container utils)
+        └── controller/               # Pipeline orchestration
+```
+
+## Citation
+
+If you use this project in your research, please cite:
+
+```bibtex
+@misc{zeng2026swehubunifiedproductionscalable,
+      title={SWE-Hub: A Unified Production System for Scalable, Executable Software Engineering Tasks}, 
+      author={Yucheng Zeng and Shupeng Li and Daxiang Dong and Ruijie Xu and Zimo Chen and Liwei Zheng and Yuxuan Li and Zhe Zhou and Haotian Zhao and Lun Tian and Heng Xiao and Tianshu Zhu and Longkun Hao and Jianmin Wu},
+      year={2026},
+      eprint={2603.00575},
+      archivePrefix={arXiv},
+      primaryClass={cs.AI},
+      url={https://arxiv.org/abs/2603.00575}, 
+}
 ```

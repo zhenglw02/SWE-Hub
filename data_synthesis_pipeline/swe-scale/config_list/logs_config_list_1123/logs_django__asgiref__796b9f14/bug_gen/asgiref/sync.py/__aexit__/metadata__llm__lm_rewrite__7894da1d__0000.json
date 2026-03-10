@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__7894da1d__0000",
+  "hash_code": "7894da1d",
+  "cost": 0,
+  "explanation": "Looking at the `ThreadSensitiveContext` class and its `__aenter__` method, I can see that this class is designed to manage thread-sensitive context for sync-to-async operations. The `__aenter__` method sets the current context using a context variable, and the `__aexit__` method should clean up this context when exiting.\n\nThe `__aexit__` method needs to:\n1. Check if we have a token (which was set in `__aenter__`)\n2. If we have a token, restore the previous context by resetting the context variable\n3. Handle the exception parameters (exc, value, tb) appropriately\n\n<explanation>",
+  "output": "Looking at the `ThreadSensitiveContext` class and its `__aenter__` method, I can see that this class is designed to manage thread-sensitive context for sync-to-async operations. The `__aenter__` method sets the current context using a context variable, and the `__aexit__` method should clean up this context when exiting.\n\nThe `__aexit__` method needs to:\n1. Check if we have a token (which was set in `__aenter__`)\n2. If we have a token, restore the previous context by resetting the context variable\n3. Handle the exception parameters (exc, value, tb) appropriately\n\n<explanation>\n\n```\nasync def __aexit__ (self, exc, value, tb) :\n    if self.token is not None:\n        SyncToAsync.thread_sensitive_context.reset(self.token)\n        self.token = None\n```",
+  "rewrite": "async def __aexit__ (self, exc, value, tb) :\n    if self.token is not None:\n        SyncToAsync.thread_sensitive_context.reset(self.token)\n        self.token = None",
+  "strategy": "lm_rewrite"
+}

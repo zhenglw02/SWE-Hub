@@ -1,0 +1,9 @@
+{
+  "instance_id": "procedural__func_pm_ctrl_shuffle__83652c49",
+  "hash_code": "83652c49",
+  "cost": 0.0,
+  "explanation": "The lines inside a function may be out of order.",
+  "output": "async def __call__(self, scope, receive, send):\n    self.scope = scope\n    if scope[\"type\"] != \"http\":\n        raise ValueError(\"WSGI wrapper received a non-HTTP scope\")\n    with SpooledTemporaryFile(max_size=65536) as body:\n        # Alright, wait for the http.request messages\n        while True:\n            message = await receive()\n            if message[\"type\"] != \"http.request\":\n                raise ValueError(\"WSGI wrapper received a non-HTTP-request message\")\n            body.write(message.get(\"body\", b\"\"))\n            if not message.get(\"more_body\"):\n                break\n        body.seek(0)\n        # Wrap send so it can be called from the subthread\n        self.sync_send = AsyncToSync(send)\n        # Call the WSGI app\n        await self.run_wsgi_app(body)",
+  "rewrite": "async def __call__(self, scope, receive, send):\n    self.scope = scope\n    if scope[\"type\"] != \"http\":\n        raise ValueError(\"WSGI wrapper received a non-HTTP scope\")\n    with SpooledTemporaryFile(max_size=65536) as body:\n        # Alright, wait for the http.request messages\n        while True:\n            message = await receive()\n            if message[\"type\"] != \"http.request\":\n                raise ValueError(\"WSGI wrapper received a non-HTTP-request message\")\n            body.write(message.get(\"body\", b\"\"))\n            if not message.get(\"more_body\"):\n                break\n        body.seek(0)\n        # Wrap send so it can be called from the subthread\n        self.sync_send = AsyncToSync(send)\n        # Call the WSGI app\n        await self.run_wsgi_app(body)",
+  "strategy": "func_pm_ctrl_shuffle"
+}

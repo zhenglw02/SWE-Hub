@@ -1,0 +1,9 @@
+{
+  "instance_id": "procedural__func_pm_remove_wrapper__0aedd401",
+  "hash_code": "0aedd401",
+  "cost": 0.0,
+  "explanation": "A wrapper block (with, try) has been removed.",
+  "output": "async def main_wrap(\n    self,\n    call_result: \"Future[_R]\",\n    exc_info: \"OptExcInfo\",\n    task_context: \"Optional[List[asyncio.Task[Any]]]\",\n    context: List[contextvars.Context],\n    awaitable: Union[Coroutine[Any, Any, _R], Awaitable[_R]],\n) -> None:\n    \"\"\"\n    Wraps the awaitable with something that puts the result into the\n    result/exception future.\n    \"\"\"\n\n    __traceback_hide__ = True  # noqa: F841\n\n    if context is not None:\n        _restore_context(context[0])\n\n    current_task = asyncio.current_task()\n    if current_task is not None and task_context is not None:\n        task_context.append(current_task)\n\n    ",
+  "rewrite": "async def main_wrap(\n    self,\n    call_result: \"Future[_R]\",\n    exc_info: \"OptExcInfo\",\n    task_context: \"Optional[List[asyncio.Task[Any]]]\",\n    context: List[contextvars.Context],\n    awaitable: Union[Coroutine[Any, Any, _R], Awaitable[_R]],\n) -> None:\n    \"\"\"\n    Wraps the awaitable with something that puts the result into the\n    result/exception future.\n    \"\"\"\n\n    __traceback_hide__ = True  # noqa: F841\n\n    if context is not None:\n        _restore_context(context[0])\n\n    current_task = asyncio.current_task()\n    if current_task is not None and task_context is not None:\n        task_context.append(current_task)\n\n    ",
+  "strategy": "func_pm_remove_wrapper"
+}

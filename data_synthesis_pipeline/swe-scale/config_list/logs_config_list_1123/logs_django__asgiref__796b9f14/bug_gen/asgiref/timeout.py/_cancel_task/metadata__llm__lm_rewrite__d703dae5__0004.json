@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__d703dae5__0004",
+  "hash_code": "d703dae5",
+  "cost": 0,
+  "explanation": "<explanation>\nThe `_cancel_task` method is called when the timeout expires. It should cancel the current task (stored in `self._task`) and set the `_cancelled` flag to True. Since the task might be already completed or cancelled, we should check if it's still running before attempting to cancel it.\n</explanation>",
+  "output": "<explanation>\nThe `_cancel_task` method is called when the timeout expires. It should cancel the current task (stored in `self._task`) and set the `_cancelled` flag to True. Since the task might be already completed or cancelled, we should check if it's still running before attempting to cancel it.\n</explanation>\n\n```\ndef _cancel_task (self) -> None :\n    if self._task is not None and not self._task.done():\n        self._task.cancel()\n    self._cancelled = True\n```",
+  "rewrite": "def _cancel_task (self) -> None :\n    if self._task is not None and not self._task.done():\n        self._task.cancel()\n    self._cancelled = True",
+  "strategy": "lm_rewrite"
+}

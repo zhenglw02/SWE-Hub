@@ -1,0 +1,47 @@
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..bd953b0 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -120,18 +120,31 @@ class ApplicationCommunicator:
+                     pass
+             raise e
+ 
+-    async def receive_nothing(self, timeout=0.1, interval=0.01):
+-        """
+-        Checks that there is no message to receive in the given time.
++    async def receive_nothing (self, timeout=0.1, interval=0.01) :
+         """
++            Checks that there is no message to receive in the given time.
++            """
+         # Make sure there's not an exception to raise from the task
+         if self.future.done():
+             self.future.result()
+-
+-        # `interval` has precedence over `timeout`
+-        start = time.monotonic()
+-        while time.monotonic() - start < timeout:
++    
++        # Calculate end time
++        start_time = time.time()
++        end_time = start_time + timeout
++    
++        while time.time() < end_time:
++            # Check if there's a message available without blocking
+             if not self.output_queue.empty():
+-                return False
+-            await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++                raise AssertionError("Received unexpected message")
++        
++            # Wait for the interval or until timeout, whichever is shorter
++            remaining_time = end_time - time.time()
++            if remaining_time <= 0:
++                break
++            
++            sleep_time = min(interval, remaining_time)
++            await asyncio.sleep(sleep_time)
++    
++        # Double-check one more time after the full timeout
++        if not self.output_queue.empty():
++            raise AssertionError("Received unexpected message")
+\ No newline at end of file

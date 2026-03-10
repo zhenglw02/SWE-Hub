@@ -1,0 +1,20 @@
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..288293b 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -67,7 +67,7 @@ class StatelessServer:
+         Runs the asyncio event loop with our handler loop.
+         """
+ 
+-        class Done(Exception):
++        class Done:
+             pass
+ 
+         async def handle():
+@@ -170,4 +170,4 @@ class StatelessServer:
+             exception,
+             "".join(traceback.format_tb(exception.__traceback__)),
+             f"  {exception}",
+-        )
++        )
+\ No newline at end of file

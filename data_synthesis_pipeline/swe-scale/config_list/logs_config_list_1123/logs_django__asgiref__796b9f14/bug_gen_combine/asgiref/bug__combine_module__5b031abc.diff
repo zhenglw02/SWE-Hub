@@ -1,0 +1,49 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..74e6de5 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -98,7 +98,7 @@ class CurrentThreadExecutor(Executor):
+         **kwargs: _P.kwargs,
+     ) -> "Future[_R]":
+         # Check they're not submitting from the same thread
+-        if threading.current_thread() == self._work_thread:
++        if threading.current_thread().ident == self._work_thread.ident:
+             raise RuntimeError(
+                 "You cannot submit onto CurrentThreadExecutor from its own thread"
+             )
+@@ -110,7 +110,7 @@ class CurrentThreadExecutor(Executor):
+         executor = self
+         while True:
+             with executor._work_ready:
+-                if not executor._broken:
++                if executor._broken:
+                     # Add to work queue
+                     executor._work_items.append(work_item)
+                     executor._work_ready.notify()
+@@ -120,4 +120,4 @@ class CurrentThreadExecutor(Executor):
+             executor = executor._old_executor
+ 
+         # Return the future
+-        return f
++        return f
+\ No newline at end of file
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..4186c25 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -372,14 +372,13 @@ class SyncToAsync(Generic[_P, _R]):
+         functools.update_wrapper(self, func)
+         self._thread_sensitive = thread_sensitive
+         markcoroutinefunction(self)
+-        if thread_sensitive and executor is not None:
++        if not thread_sensitive and executor is not None:
+             raise TypeError("executor must not be set when thread_sensitive is True")
+         self._executor = executor
+         try:
+             self.__self__ = func.__self__  # type: ignore
+         except AttributeError:
+             pass
+-
+     async def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+         loop = asyncio.get_running_loop()

@@ -1,0 +1,6 @@
+class MyService(test_name1, test_name2):
+    is_active = True
+
+    
+
+    

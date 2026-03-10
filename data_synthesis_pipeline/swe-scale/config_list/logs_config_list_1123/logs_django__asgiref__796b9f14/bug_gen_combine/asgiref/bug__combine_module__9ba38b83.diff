@@ -1,0 +1,48 @@
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..add020c 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -76,11 +76,9 @@ class timeout:
+ 
+     @property
+     def remaining(self) -> Optional[float]:
+-        if self._cancel_at is not None:
+-            return max(self._cancel_at - self._loop.time(), 0.0)
+-        else:
++        if self._cancel_at is None:
+             return None
+-
++        return max(0.0, self._cancel_at - self._loop.time())
+     def _do_enter(self) -> "timeout":
+         # Support Tornado 5- without timeout
+         # Details: https://github.com/python/asyncio/issues/392
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..da60a57 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -107,7 +107,7 @@ class WsgiToAsgiInstance:
+         if self.response_started:
+             raise exc_info[1].with_traceback(exc_info[2])
+         # Don't allow re-calling without exc_info
+-        if hasattr(self, "response_start") and exc_info is None:
++        if hasattr(self, "response_start") or exc_info is not None:
+             raise ValueError(
+                 "You cannot call start_response a second time without exc_info"
+             )
+@@ -122,7 +122,7 @@ class WsgiToAsgiInstance:
+         # Extract content-length
+         self.response_content_length = None
+         for name, value in response_headers:
+-            if name.lower() == "content-length":
++            if name.lower() != "content-length":
+                 self.response_content_length = int(value)
+         # Build and send response start message.
+         self.response_start = {
+@@ -130,7 +130,6 @@ class WsgiToAsgiInstance:
+             "status": status_code,
+             "headers": headers,
+         }
+-
+     @sync_to_async
+     def run_wsgi_app(self, body):
+         """

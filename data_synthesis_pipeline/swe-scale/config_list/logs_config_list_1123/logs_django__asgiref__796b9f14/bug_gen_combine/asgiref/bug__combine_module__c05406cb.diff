@@ -1,0 +1,66 @@
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..ba4a583 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -97,29 +97,20 @@ class ApplicationCommunicator:
+         # Give it the message
+         await self.input_queue.put(message)
+ 
+-    async def receive_output(self, timeout=1):
+-        """
+-        Receives a single message from the application, with optional timeout.
++    async def receive_output (self, timeout=1) :
+         """
++            Receives a single message from the application, with optional timeout.
++            """
+         # Make sure there's not an exception to raise from the task
+         if self.future.done():
+             self.future.result()
+-        # Wait and receive the message
++
++        # Get the message with timeout
+         try:
+             async with async_timeout(timeout):
+                 return await self.output_queue.get()
+-        except asyncio.TimeoutError as e:
+-            # See if we have another error to raise inside
+-            if self.future.done():
+-                self.future.result()
+-            else:
+-                self.future.cancel()
+-                try:
+-                    await self.future
+-                except asyncio.CancelledError:
+-                    pass
+-            raise e
+-
++        except asyncio.TimeoutError:
++            raise asyncio.TimeoutError(f"Timeout waiting for message after {timeout} seconds")
+     async def receive_nothing(self, timeout=0.1, interval=0.01):
+         """
+         Checks that there is no message to receive in the given time.
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..5f51339 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -101,17 +101,11 @@ class timeout:
+         self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)
+         return self
+ 
+-    def _do_exit(self, exc_type: Type[BaseException]) -> None:
+-        if exc_type is asyncio.CancelledError and self._cancelled:
+-            self._cancel_handler = None
+-            self._task = None
+-            raise asyncio.TimeoutError
+-        if self._timeout is not None and self._cancel_handler is not None:
++    def _do_exit (self, exc_type: Type[BaseException]) -> None :
++        if self._cancel_handler is not None:
+             self._cancel_handler.cancel()
+             self._cancel_handler = None
+-        self._task = None
+-        return None
+-
++        self._cancel_at = None
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+             self._task.cancel()

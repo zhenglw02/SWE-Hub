@@ -1,0 +1,100 @@
+/tmp/PATCH_1_18906448.patch:23: trailing whitespace.
+    
+/tmp/PATCH_1_18906448.patch:27: trailing whitespace.
+    
+/tmp/PATCH_1_18906448.patch:35: trailing whitespace.
+        
+/tmp/PATCH_1_18906448.patch:40: trailing whitespace.
+            
+/tmp/PATCH_1_18906448.patch:43: trailing whitespace.
+    
+warning: 5 lines add whitespace errors.
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..0794a8a 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -67,17 +67,31 @@ class ApplicationCommunicator:
+                 except asyncio.CancelledError:
+                     pass
+ 
+-    def stop(self, exceptions=True):
+-        future = self._future
+-        if future is None:
++    def stop (self, exceptions=True) :
++        if self._future is None :
+             return
+-
+-        if not future.done():
+-            future.cancel()
+-        elif exceptions:
+-            # Give a chance to raise any exceptions
+-            future.result()
+-
++        if not self._future.done() :
++            self._future.cancel()
++            try:
++                # Create a new event loop if none exists for this thread
++                loop = asyncio.get_event_loop()
++                if loop.is_running():
++                    # If loop is running, we need to run in a separate way
++                    # Since this is a synchronous method, we'll use run_until_complete
++                    # with a wrapper task
++                    async def _cancel_wait():
++                        try:
++                            await self._future
++                        except asyncio.CancelledError:
++                            pass
++                    loop.create_task(_cancel_wait())
++                else:
++                    loop.run_until_complete(self._future)
++            except (RuntimeError, asyncio.CancelledError):
++                # Event loop issues or cancellation complete
++                pass
++        if exceptions and self._future.done():
++            self._future.result()
+     def __del__(self):
+         # Clean up on deletion
+         try:
+@@ -120,18 +134,31 @@ class ApplicationCommunicator:
+                     pass
+             raise e
+ 
+-    async def receive_nothing(self, timeout=0.1, interval=0.01):
+-        """
+-        Checks that there is no message to receive in the given time.
++    async def receive_nothing (self, timeout=0.1, interval=0.01) :
+         """
++            Checks that there is no message to receive in the given time.
++            """
+         # Make sure there's not an exception to raise from the task
+         if self.future.done():
+             self.future.result()
+-
+-        # `interval` has precedence over `timeout`
+-        start = time.monotonic()
+-        while time.monotonic() - start < timeout:
++    
++        # Calculate end time
++        start_time = time.time()
++        end_time = start_time + timeout
++    
++        while time.time() < end_time:
++            # Check if there's a message available without blocking
+             if not self.output_queue.empty():
+-                return False
+-            await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++                raise AssertionError("Received unexpected message")
++        
++            # Wait for the interval or until timeout, whichever is shorter
++            remaining_time = end_time - time.time()
++            if remaining_time <= 0:
++                break
++            
++            sleep_time = min(interval, remaining_time)
++            await asyncio.sleep(sleep_time)
++    
++        # Double-check one more time after the full timeout
++        if not self.output_queue.empty():
++            raise AssertionError("Received unexpected message")
+\ No newline at end of file

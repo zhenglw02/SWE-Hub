@@ -1,0 +1,44 @@
+/tmp/PATCH_1_b1f3729b.patch:14: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..dd8df3f 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -120,12 +120,12 @@ class Local:
+         with self._lock_storage() as storage:
+             return getattr(storage, key)
+ 
+-    def __setattr__(self, key, value):
+-        if key in ("_local", "_storage", "_thread_critical", "_thread_lock"):
++    def __setattr__ (self, key, value) :
++        if key.startswith("_"):
+             return super().__setattr__(key, value)
++    
+         with self._lock_storage() as storage:
+             setattr(storage, key, value)
+-
+     def __delattr__(self, key):
+         with self._lock_storage() as storage:
+             delattr(storage, key)
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..cc1a0b5 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -57,7 +57,7 @@ class WsgiToAsgiInstance:
+         script_name = scope.get("root_path", "").encode("utf8").decode("latin1")
+         path_info = scope["path"].encode("utf8").decode("latin1")
+         if path_info.startswith(script_name):
+-            path_info = path_info[len(script_name) :]
++            path_info = path_info[len(script_name) + 1 :]
+         environ = {
+             "REQUEST_METHOD": scope["method"],
+             "SCRIPT_NAME": script_name,
+@@ -98,7 +98,6 @@ class WsgiToAsgiInstance:
+                 value = environ[corrected_name] + "," + value
+             environ[corrected_name] = value
+         return environ
+-
+     def start_response(self, status, response_headers, exc_info=None):
+         """
+         WSGI start_response callable.

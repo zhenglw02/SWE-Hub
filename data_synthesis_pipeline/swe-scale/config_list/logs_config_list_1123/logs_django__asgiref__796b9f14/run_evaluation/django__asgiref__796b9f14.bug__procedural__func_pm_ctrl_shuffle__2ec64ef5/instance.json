@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__procedural__func_pm_ctrl_shuffle__2ec64ef5",
+    "patch": "diff --git a/asgiref/testing.py b/asgiref/testing.py\nindex d6ccee5..340620c 100644\n--- a/asgiref/testing.py\n+++ b/asgiref/testing.py\n@@ -68,16 +68,15 @@ class ApplicationCommunicator:\n                     pass\n \n     def stop(self, exceptions=True):\n-        future = self._future\n         if future is None:\n             return\n+        future = self._future\n \n         if not future.done():\n             future.cancel()\n         elif exceptions:\n             # Give a chance to raise any exceptions\n             future.result()\n-\n     def __del__(self):\n         # Clean up on deletion\n         try:\n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/testing.py/receive_nothing/bug__procedural__func_pm_ctrl_shuffle__2ec64ef5.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

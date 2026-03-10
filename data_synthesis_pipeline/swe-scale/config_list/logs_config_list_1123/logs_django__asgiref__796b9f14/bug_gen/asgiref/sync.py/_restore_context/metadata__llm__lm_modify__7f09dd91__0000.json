@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_modify__7f09dd91__0000",
+  "hash_code": "7f09dd91",
+  "cost": 0,
+  "explanation": "The bug introduced here is that the function now catches a generic `Exception` instead of specifically catching `LookupError`. This subtle change means that if any other type of exception occurs during the `cvar.get()` call, it will be silently caught and treated the same as a `LookupError`. This could mask underlying issues with context variable access while appearing to handle the missing variable case correctly.\n\nBugged Code:\n```\ndef _restore_context(context: contextvars.Context) -> None:\n    for cvar in context:\n        cvalue = context.get(cvar)\n        try:\n            if cvar.get() != cvalue:\n                cvar.set(cvalue)\n        except Exception:\n            cvar.set(cvalue)\n```",
+  "output": "Explanation:\nThe bug introduced here is that the function now catches a generic `Exception` instead of specifically catching `LookupError`. This subtle change means that if any other type of exception occurs during the `cvar.get()` call, it will be silently caught and treated the same as a `LookupError`. This could mask underlying issues with context variable access while appearing to handle the missing variable case correctly.\n\nBugged Code:\n```\ndef _restore_context(context: contextvars.Context) -> None:\n    for cvar in context:\n        cvalue = context.get(cvar)\n        try:\n            if cvar.get() != cvalue:\n                cvar.set(cvalue)\n        except Exception:\n            cvar.set(cvalue)\n```",
+  "rewrite": "def _restore_context(context: contextvars.Context) -> None:\n    for cvar in context:\n        cvalue = context.get(cvar)\n        try:\n            if cvar.get() != cvalue:\n                cvar.set(cvalue)\n        except Exception:\n            cvar.set(cvalue)",
+  "strategy": "lm_modify"
+}

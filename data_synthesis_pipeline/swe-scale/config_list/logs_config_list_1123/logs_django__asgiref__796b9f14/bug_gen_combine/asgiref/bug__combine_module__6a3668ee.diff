@@ -1,0 +1,98 @@
+/tmp/PATCH_0_d2baf73a.patch:38: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..ccbdeb0 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -268,47 +268,32 @@ class AsyncToSync(Generic[_P, _R]):
+         func = functools.partial(self.__call__, parent)
+         return functools.update_wrapper(func, self.awaitable)
+ 
+-    async def main_wrap(
+-        self,
+-        call_result: "Future[_R]",
+-        exc_info: "OptExcInfo",
+-        task_context: "Optional[List[asyncio.Task[Any]]]",
+-        context: List[contextvars.Context],
+-        awaitable: Union[Coroutine[Any, Any, _R], Awaitable[_R]],
+-    ) -> None:
++    async def main_wrap ( self, call_result: "Future[_R]", exc_info: "OptExcInfo", task_context: "Optional[List[asyncio.Task[Any]]]", context: List[contextvars.Context], awaitable: Union[Coroutine[Any, Any, _R], Awaitable[_R]], ) -> None :
+         """
+-        Wraps the awaitable with something that puts the result into the
+-        result/exception future.
+-        """
+-
+-        __traceback_hide__ = True  # noqa: F841
+-
+-        if context is not None:
+-            _restore_context(context[0])
+-
+-        current_task = asyncio.current_task()
+-        if current_task is not None and task_context is not None:
+-            task_context.append(current_task)
+-
++            Wraps the awaitable with something that puts the result into the
++            result/exception future.
++            """
++        if task_context is not None:
++            # Add this task to the parent task context
++            task_context.append(asyncio.current_task())
++    
+         try:
+-            # If we have an exception, run the function inside the except block
+-            # after raising it so exc_info is correctly populated.
+-            if exc_info[1]:
+-                try:
+-                    raise exc_info[1]
+-                except BaseException:
+-                    result = await awaitable
+-            else:
+-                result = await awaitable
+-        except BaseException as e:
++            # Run the awaitable in the copied context
++            ret = await context[0].run(awaitable)
++        except Exception as e:
++            # Set exception on the future
+             call_result.set_exception(e)
+         else:
+-            call_result.set_result(result)
++            # Set result on the future
++            call_result.set_result(ret)
+         finally:
+-            if current_task is not None and task_context is not None:
+-                task_context.remove(current_task)
+-            context[0] = contextvars.copy_context()
+-
++            if task_context is not None:
++                try:
++                    # Remove this task from the parent task context
++                    task_context.remove(asyncio.current_task())
++                except ValueError:
++                    # Task might have already been removed
++                    pass
+ 
+ class SyncToAsync(Generic[_P, _R]):
+     """
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..4c11cc3 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -102,6 +102,7 @@ class timeout:
+         return self
+ 
+     def _do_exit(self, exc_type: Type[BaseException]) -> None:
++        self._task = None
+         if exc_type is asyncio.CancelledError and self._cancelled:
+             self._cancel_handler = None
+             self._task = None
+@@ -109,9 +110,7 @@ class timeout:
+         if self._timeout is not None and self._cancel_handler is not None:
+             self._cancel_handler.cancel()
+             self._cancel_handler = None
+-        self._task = None
+         return None
+-
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+             self._task.cancel()

@@ -1,0 +1,61 @@
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..b95de81 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -111,15 +111,14 @@ class ApplicationCommunicator:
+         except asyncio.TimeoutError as e:
+             # See if we have another error to raise inside
+             if self.future.done():
+-                self.future.result()
+-            else:
+                 self.future.cancel()
+                 try:
+                     await self.future
+                 except asyncio.CancelledError:
+                     pass
++            else:
++                self.future.result()
+             raise e
+-
+     async def receive_nothing(self, timeout=0.1, interval=0.01):
+         """
+         Checks that there is no message to receive in the given time.
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..f557c9d 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -137,30 +137,23 @@ class WsgiToAsgiInstance:
+         Called in a subthread to run the WSGI app. We encapsulate like
+         this so that the start_response callable is called in the same thread.
+         """
+-        # Translate the scope and incoming request body into a WSGI environ
+         environ = self.build_environ(self.scope, body)
+-        # Run the WSGI app
+         bytes_sent = 0
+         for output in self.wsgi_application(environ, self.start_response):
+-            # If this is the first response, include the response headers
+             if not self.response_started:
+                 self.response_started = True
+                 self.sync_send(self.response_start)
+-            # If the application supplies a Content-Length header
+             if self.response_content_length is not None:
+-                # The server should not transmit more bytes to the client than the header allows
+                 bytes_allowed = self.response_content_length - bytes_sent
+-                if len(output) > bytes_allowed:
++                if len(output) >= bytes_allowed:
+                     output = output[:bytes_allowed]
+             self.sync_send(
+                 {"type": "http.response.body", "body": output, "more_body": True}
+             )
+             bytes_sent += len(output)
+-            # The server should stop iterating over the response when enough data has been sent
+-            if bytes_sent == self.response_content_length:
++            if bytes_sent >= self.response_content_length:
+                 break
+-        # Close connection
+         if not self.response_started:
+             self.response_started = True
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        self.sync_send({"type": "http.response.body"})
+\ No newline at end of file

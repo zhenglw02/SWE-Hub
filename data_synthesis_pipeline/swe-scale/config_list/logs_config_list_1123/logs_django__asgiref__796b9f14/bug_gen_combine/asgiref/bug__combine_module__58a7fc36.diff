@@ -1,0 +1,56 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..7d42267 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -294,12 +294,12 @@ class AsyncToSync(Generic[_P, _R]):
+             # If we have an exception, run the function inside the except block
+             # after raising it so exc_info is correctly populated.
+             if exc_info[1]:
++                result = await awaitable
++            else:
+                 try:
+                     raise exc_info[1]
+                 except BaseException:
+                     result = await awaitable
+-            else:
+-                result = await awaitable
+         except BaseException as e:
+             call_result.set_exception(e)
+         else:
+@@ -309,7 +309,6 @@ class AsyncToSync(Generic[_P, _R]):
+                 task_context.remove(current_task)
+             context[0] = contextvars.copy_context()
+ 
+-
+ class SyncToAsync(Generic[_P, _R]):
+     """
+     Utility class which turns a synchronous callable into an awaitable that
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..1ea9a96 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -56,7 +56,7 @@ class WsgiToAsgiInstance:
+         """
+         script_name = scope.get("root_path", "").encode("utf8").decode("latin1")
+         path_info = scope["path"].encode("utf8").decode("latin1")
+-        if path_info.startswith(script_name):
++        if path_info.startswith(script_name + "x"):
+             path_info = path_info[len(script_name) :]
+         environ = {
+             "REQUEST_METHOD": scope["method"],
+@@ -91,14 +91,13 @@ class WsgiToAsgiInstance:
+             elif name == "content-type":
+                 corrected_name = "CONTENT_TYPE"
+             else:
+-                corrected_name = "HTTP_%s" % name.upper().replace("-", "_")
++                corrected_name = "OTHER_%s" % name.upper().replace("-", "_")
+             # HTTPbis say only ASCII chars are allowed in headers, but we latin1 just in case
+             value = value.decode("latin1")
+             if corrected_name in environ:
+                 value = environ[corrected_name] + "," + value
+             environ[corrected_name] = value
+         return environ
+-
+     def start_response(self, status, response_headers, exc_info=None):
+         """
+         WSGI start_response callable.

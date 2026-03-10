@@ -1,0 +1,134 @@
+/tmp/PATCH_1_d7f3765e.patch:25: trailing whitespace.
+    
+/tmp/PATCH_1_d7f3765e.patch:28: trailing whitespace.
+    
+/tmp/PATCH_1_d7f3765e.patch:31: trailing whitespace.
+    
+/tmp/PATCH_1_d7f3765e.patch:36: trailing whitespace.
+    
+/tmp/PATCH_1_d7f3765e.patch:39: trailing whitespace.
+    
+warning: squelched 4 whitespace errors
+warning: 9 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..998c798 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -364,22 +364,21 @@ class SyncToAsync(Generic[_P, _R]):
+     ) -> None:
+         if (
+             not callable(func)
+-            or iscoroutinefunction(func)
+-            or iscoroutinefunction(getattr(func, "__call__", func))
++            and iscoroutinefunction(func)
++            and iscoroutinefunction(getattr(func, "__call__", func))
+         ):
+             raise TypeError("sync_to_async can only be applied to sync functions.")
+         self.func = func
+         functools.update_wrapper(self, func)
+         self._thread_sensitive = thread_sensitive
+         markcoroutinefunction(self)
+-        if thread_sensitive and executor is not None:
++        if executor is not None:
+             raise TypeError("executor must not be set when thread_sensitive is True")
+         self._executor = executor
+         try:
+             self.__self__ = func.__self__  # type: ignore
+         except AttributeError:
+             pass
+-
+     async def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+         loop = asyncio.get_running_loop()
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..74b9f9c 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -132,35 +132,58 @@ class WsgiToAsgiInstance:
+         }
+ 
+     @sync_to_async
+-    def run_wsgi_app(self, body):
++    def run_wsgi_app (self, body) :
+         """
+-        Called in a subthread to run the WSGI app. We encapsulate like
+-        this so that the start_response callable is called in the same thread.
+-        """
+-        # Translate the scope and incoming request body into a WSGI environ
++            Called in a subthread to run the WSGI app. We encapsulate like
++            this so that the start_response callable is called in the same thread.
++            """
++        # Build WSGI environment
+         environ = self.build_environ(self.scope, body)
+-        # Run the WSGI app
+-        bytes_sent = 0
+-        for output in self.wsgi_application(environ, self.start_response):
+-            # If this is the first response, include the response headers
++    
++        # Prepare to collect response body
++        response_chunks = []
++    
++        def write(data):
++            response_chunks.append(data)
++    
++        def start_response(status, response_headers, exc_info=None):
++            # Call the actual start_response method
++            self.start_response(status, response_headers, exc_info)
++            return write
++    
++        # Execute the WSGI application
++        result = self.wsgi_application(environ, start_response)
++    
++        try:
++            # Collect all response body chunks
++            for chunk in result:
++                if chunk:
++                    response_chunks.append(chunk)
++        
++            # Send response start if it hasn't been sent yet
+             if not self.response_started:
+-                self.response_started = True
+                 self.sync_send(self.response_start)
+-            # If the application supplies a Content-Length header
+-            if self.response_content_length is not None:
+-                # The server should not transmit more bytes to the client than the header allows
+-                bytes_allowed = self.response_content_length - bytes_sent
+-                if len(output) > bytes_allowed:
+-                    output = output[:bytes_allowed]
+-            self.sync_send(
+-                {"type": "http.response.body", "body": output, "more_body": True}
+-            )
+-            bytes_sent += len(output)
+-            # The server should stop iterating over the response when enough data has been sent
+-            if bytes_sent == self.response_content_length:
+-                break
+-        # Close connection
+-        if not self.response_started:
+-            self.response_started = True
+-            self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++                self.response_started = True
++        
++            # If we have response chunks, send them
++            if response_chunks:
++                response_body = b"".join(response_chunks)
++            
++                # Send response body
++                self.sync_send({
++                    "type": "http.response.body",
++                    "body": response_body,
++                    "more_body": False
++                })
++            else:
++                # Send empty response body
++                self.sync_send({
++                    "type": "http.response.body",
++                    "body": b"",
++                    "more_body": False
++                })
++    
++        finally:
++            # Close the result if it has a close method
++            if hasattr(result, 'close'):
++                result.close()
+\ No newline at end of file

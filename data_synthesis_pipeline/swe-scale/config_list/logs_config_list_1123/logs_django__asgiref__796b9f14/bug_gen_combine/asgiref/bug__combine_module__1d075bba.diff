@@ -1,0 +1,41 @@
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..c488f58 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -109,7 +109,6 @@ class ApplicationCommunicator:
+             async with async_timeout(timeout):
+                 return await self.output_queue.get()
+         except asyncio.TimeoutError as e:
+-            # See if we have another error to raise inside
+             if self.future.done():
+                 self.future.result()
+             else:
+@@ -119,7 +118,6 @@ class ApplicationCommunicator:
+                 except asyncio.CancelledError:
+                     pass
+             raise e
+-
+     async def receive_nothing(self, timeout=0.1, interval=0.01):
+         """
+         Checks that there is no message to receive in the given time.
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..688abaf 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -102,7 +102,7 @@ class timeout:
+         return self
+ 
+     def _do_exit(self, exc_type: Type[BaseException]) -> None:
+-        if exc_type is asyncio.CancelledError and self._cancelled:
++        if self._cancelled and exc_type is asyncio.CancelledError:
+             self._cancel_handler = None
+             self._task = None
+             raise asyncio.TimeoutError
+@@ -111,7 +111,6 @@ class timeout:
+             self._cancel_handler = None
+         self._task = None
+         return None
+-
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+             self._task.cancel()

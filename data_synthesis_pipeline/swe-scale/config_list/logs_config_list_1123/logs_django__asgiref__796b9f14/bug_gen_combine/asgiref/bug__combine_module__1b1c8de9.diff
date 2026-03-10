@@ -1,0 +1,109 @@
+/tmp/PATCH_1_9b61f83a.patch:44: trailing whitespace.
+    
+/tmp/PATCH_1_9b61f83a.patch:47: trailing whitespace.
+    
+/tmp/PATCH_1_9b61f83a.patch:50: trailing whitespace.
+    
+/tmp/PATCH_1_9b61f83a.patch:56: trailing whitespace.
+    
+/tmp/PATCH_1_9b61f83a.patch:67: trailing whitespace.
+        
+warning: 5 lines add whitespace errors.
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..2b9469b 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -90,7 +90,7 @@ class Local:
+                 asyncio.get_running_loop()
+             except RuntimeError:
+                 is_async = False
+-            if not is_async:
++            if is_async:
+                 # We are in a sync thread, the storage is
+                 # just the plain thread local (i.e, "global within
+                 # this thread" - it doesn't matter where you are
+@@ -128,4 +128,4 @@ class Local:
+ 
+     def __delattr__(self, key):
+         with self._lock_storage() as storage:
+-            delattr(storage, key)
++            delattr(storage, key)
+\ No newline at end of file
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..3d0f2eb 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -132,35 +132,43 @@ class WsgiToAsgiInstance:
+         }
+ 
+     @sync_to_async
+-    def run_wsgi_app(self, body):
++    def run_wsgi_app (self, body) :
+         """
+-        Called in a subthread to run the WSGI app. We encapsulate like
+-        this so that the start_response callable is called in the same thread.
+-        """
+-        # Translate the scope and incoming request body into a WSGI environ
++            Called in a subthread to run the WSGI app. We encapsulate like
++            this so that the start_response callable is called in the same thread.
++            """
++        # Build the WSGI environ
+         environ = self.build_environ(self.scope, body)
+-        # Run the WSGI app
+-        bytes_sent = 0
+-        for output in self.wsgi_application(environ, self.start_response):
+-            # If this is the first response, include the response headers
+-            if not self.response_started:
+-                self.response_started = True
+-                self.sync_send(self.response_start)
+-            # If the application supplies a Content-Length header
+-            if self.response_content_length is not None:
+-                # The server should not transmit more bytes to the client than the header allows
+-                bytes_allowed = self.response_content_length - bytes_sent
+-                if len(output) > bytes_allowed:
+-                    output = output[:bytes_allowed]
+-            self.sync_send(
+-                {"type": "http.response.body", "body": output, "more_body": True}
+-            )
+-            bytes_sent += len(output)
+-            # The server should stop iterating over the response when enough data has been sent
+-            if bytes_sent == self.response_content_length:
+-                break
+-        # Close connection
+-        if not self.response_started:
+-            self.response_started = True
++    
++        # Prepare to collect the response body
++        response_body = []
++    
++        # Call the WSGI application
++        result = self.wsgi_application(environ, self.start_response)
++    
++        # Send the response start if it was set
++        if hasattr(self, 'response_start'):
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++            self.response_started = True
++    
++        # Iterate through the result and send the body chunks
++        try:
++            for data in result:
++                if data:
++                    response_body.append(data)
++                    self.sync_send({
++                        "type": "http.response.body",
++                        "body": data,
++                        "more_body": True
++                    })
++        
++            # Send the final chunk
++            self.sync_send({
++                "type": "http.response.body",
++                "body": b"",
++                "more_body": False
++            })
++        finally:
++            # Close the result if it has a close method
++            if hasattr(result, 'close'):
++                result.close()
+\ No newline at end of file

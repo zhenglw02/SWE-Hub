@@ -1,0 +1,120 @@
+/tmp/PATCH_1_9368645d.patch:62: trailing whitespace.
+    
+/tmp/PATCH_1_9368645d.patch:66: trailing whitespace.
+    
+/tmp/PATCH_1_9368645d.patch:83: trailing whitespace.
+    
+warning: 3 lines add whitespace errors.
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..2b9469b 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -90,7 +90,7 @@ class Local:
+                 asyncio.get_running_loop()
+             except RuntimeError:
+                 is_async = False
+-            if not is_async:
++            if is_async:
+                 # We are in a sync thread, the storage is
+                 # just the plain thread local (i.e, "global within
+                 # this thread" - it doesn't matter where you are
+@@ -128,4 +128,4 @@ class Local:
+ 
+     def __delattr__(self, key):
+         with self._lock_storage() as storage:
+-            delattr(storage, key)
++            delattr(storage, key)
+\ No newline at end of file
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..3a1bd78 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -26,78 +26,11 @@ class WsgiToAsgiInstance:
+     Per-socket instance of a wrapped WSGI application
+     """
+ 
+-    def __init__(self, wsgi_application):
+-        self.wsgi_application = wsgi_application
+-        self.response_started = False
+-        self.response_content_length = None
+-
+-    async def __call__(self, scope, receive, send):
+-        if scope["type"] != "http":
+-            raise ValueError("WSGI wrapper received a non-HTTP scope")
+-        self.scope = scope
+-        with SpooledTemporaryFile(max_size=65536) as body:
+-            # Alright, wait for the http.request messages
+-            while True:
+-                message = await receive()
+-                if message["type"] != "http.request":
+-                    raise ValueError("WSGI wrapper received a non-HTTP-request message")
+-                body.write(message.get("body", b""))
+-                if not message.get("more_body"):
+-                    break
+-            body.seek(0)
+-            # Wrap send so it can be called from the subthread
+-            self.sync_send = AsyncToSync(send)
+-            # Call the WSGI app
+-            await self.run_wsgi_app(body)
+-
+-    def build_environ(self, scope, body):
+-        """
+-        Builds a scope and request body into a WSGI environ object.
+-        """
+-        script_name = scope.get("root_path", "").encode("utf8").decode("latin1")
+-        path_info = scope["path"].encode("utf8").decode("latin1")
+-        if path_info.startswith(script_name):
+-            path_info = path_info[len(script_name) :]
+-        environ = {
+-            "REQUEST_METHOD": scope["method"],
+-            "SCRIPT_NAME": script_name,
+-            "PATH_INFO": path_info,
+-            "QUERY_STRING": scope["query_string"].decode("ascii"),
+-            "SERVER_PROTOCOL": "HTTP/%s" % scope["http_version"],
+-            "wsgi.version": (1, 0),
+-            "wsgi.url_scheme": scope.get("scheme", "http"),
+-            "wsgi.input": body,
+-            "wsgi.errors": sys.stderr,
+-            "wsgi.multithread": True,
+-            "wsgi.multiprocess": True,
+-            "wsgi.run_once": False,
+-        }
+-        # Get server name and port - required in WSGI, not in ASGI
+-        if "server" in scope:
+-            environ["SERVER_NAME"] = scope["server"][0]
+-            environ["SERVER_PORT"] = str(scope["server"][1])
+-        else:
+-            environ["SERVER_NAME"] = "localhost"
+-            environ["SERVER_PORT"] = "80"
++    
+ 
+-        if scope.get("client") is not None:
+-            environ["REMOTE_ADDR"] = scope["client"][0]
++    
+ 
+-        # Go through headers and make them into environ entries
+-        for name, value in self.scope.get("headers", []):
+-            name = name.decode("latin1")
+-            if name == "content-length":
+-                corrected_name = "CONTENT_LENGTH"
+-            elif name == "content-type":
+-                corrected_name = "CONTENT_TYPE"
+-            else:
+-                corrected_name = "HTTP_%s" % name.upper().replace("-", "_")
+-            # HTTPbis say only ASCII chars are allowed in headers, but we latin1 just in case
+-            value = value.decode("latin1")
+-            if corrected_name in environ:
+-                value = environ[corrected_name] + "," + value
+-            environ[corrected_name] = value
+-        return environ
++    
+ 
+     def start_response(self, status, response_headers, exc_info=None):
+         """
+@@ -163,4 +96,4 @@ class WsgiToAsgiInstance:
+         if not self.response_started:
+             self.response_started = True
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        self.sync_send({"type": "http.response.body"})
+\ No newline at end of file

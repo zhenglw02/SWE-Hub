@@ -1,0 +1,59 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..a6d596b 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -98,16 +98,7 @@ class CurrentThreadExecutor(Executor):
+         **kwargs: _P.kwargs,
+     ) -> "Future[_R]":
+         # Check they're not submitting from the same thread
+-        if threading.current_thread() == self._work_thread:
+-            raise RuntimeError(
+-                "You cannot submit onto CurrentThreadExecutor from its own thread"
+-            )
+         f: "Future[_R]" = Future()
+-        work_item = _WorkItem(f, fn, *args, **kwargs)
+-
+-        # Walk up the CurrentThreadExecutor stack to find the closest one still
+-        # running
+-        executor = self
+         while True:
+             with executor._work_ready:
+                 if not executor._broken:
+@@ -118,6 +109,15 @@ class CurrentThreadExecutor(Executor):
+             if executor._old_executor is None:
+                 raise RuntimeError("CurrentThreadExecutor already quit or is broken")
+             executor = executor._old_executor
++        if threading.current_thread() == self._work_thread:
++            raise RuntimeError(
++                "You cannot submit onto CurrentThreadExecutor from its own thread"
++            )
+ 
++        # running
+         # Return the future
+-        return f
++        # Walk up the CurrentThreadExecutor stack to find the closest one still
++        executor = self
++
++        work_item = _WorkItem(f, fn, *args, **kwargs)
++        return f
+\ No newline at end of file
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..a2ef82b 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -42,14 +42,13 @@ class WsgiToAsgiInstance:
+                 if message["type"] != "http.request":
+                     raise ValueError("WSGI wrapper received a non-HTTP-request message")
+                 body.write(message.get("body", b""))
+-                if not message.get("more_body"):
++                if message.get("more_body"):
+                     break
+             body.seek(0)
+             # Wrap send so it can be called from the subthread
+             self.sync_send = AsyncToSync(send)
+             # Call the WSGI app
+             await self.run_wsgi_app(body)
+-
+     def build_environ(self, scope, body):
+         """
+         Builds a scope and request body into a WSGI environ object.

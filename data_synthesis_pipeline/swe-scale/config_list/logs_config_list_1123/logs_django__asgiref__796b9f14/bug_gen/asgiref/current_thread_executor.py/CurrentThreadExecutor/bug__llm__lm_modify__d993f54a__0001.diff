@@ -1,0 +1,21 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..82e3ce1 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -293,7 +293,7 @@ class AsyncToSync(Generic[_P, _R]):
+         try:
+             # If we have an exception, run the function inside the except block
+             # after raising it so exc_info is correctly populated.
+-            if exc_info[1]:
++            if exc_info[0]:
+                 try:
+                     raise exc_info[1]
+                 except BaseException:
+@@ -309,7 +309,6 @@ class AsyncToSync(Generic[_P, _R]):
+                 task_context.remove(current_task)
+             context[0] = contextvars.copy_context()
+ 
+-
+ class SyncToAsync(Generic[_P, _R]):
+     """
+     Utility class which turns a synchronous callable into an awaitable that

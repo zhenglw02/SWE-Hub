@@ -1,0 +1,63 @@
+/tmp/PATCH_0_bf9f4108.patch:10: trailing whitespace.
+    
+/tmp/PATCH_0_bf9f4108.patch:19: trailing whitespace.
+                
+/tmp/PATCH_0_bf9f4108.patch:29: trailing whitespace.
+        
+warning: 3 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..f2518fc 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -286,7 +286,7 @@ class AsyncToSync(Generic[_P, _R]):
+         if context is not None:
+             _restore_context(context[0])
+ 
+-        current_task = asyncio.current_task()
++    
+         if current_task is not None and task_context is not None:
+             task_context.append(current_task)
+ 
+@@ -297,7 +297,7 @@ class AsyncToSync(Generic[_P, _R]):
+                 try:
+                     raise exc_info[1]
+                 except BaseException:
+-                    result = await awaitable
++                
+             else:
+                 result = await awaitable
+         except BaseException as e:
+@@ -307,8 +307,7 @@ class AsyncToSync(Generic[_P, _R]):
+         finally:
+             if current_task is not None and task_context is not None:
+                 task_context.remove(current_task)
+-            context[0] = contextvars.copy_context()
+-
++        
+ 
+ class SyncToAsync(Generic[_P, _R]):
+     """
+@@ -562,15 +561,7 @@ def sync_to_async(
+     ...
+ 
+ 
+-def sync_to_async(
+-    func: Optional[Callable[_P, _R]] = None,
+-    *,
+-    thread_sensitive: bool = True,
+-    executor: Optional["ThreadPoolExecutor"] = None,
+-) -> Union[
+-    Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]],
+-    Callable[_P, Coroutine[Any, Any, _R]],
+-]:
++def sync_to_async ( func: Optional[Callable[_P, _R]] = None, *, thread_sensitive: bool = True, executor: Optional["ThreadPoolExecutor"] = None, ) -> Union[ Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]], Callable[_P, Coroutine[Any, Any, _R]], ] :
+     if func is None:
+         return lambda f: SyncToAsync(
+             f,
+@@ -581,4 +572,4 @@ def sync_to_async(
+         func,
+         thread_sensitive=thread_sensitive,
+         executor=executor,
+-    )
++    )
+\ No newline at end of file

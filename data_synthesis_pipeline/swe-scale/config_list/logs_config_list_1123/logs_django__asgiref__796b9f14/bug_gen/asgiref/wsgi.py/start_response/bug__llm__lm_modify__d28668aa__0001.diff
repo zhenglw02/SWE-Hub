@@ -1,0 +1,11 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..bba966c 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -120,4 +120,4 @@ class CurrentThreadExecutor(Executor):
+             executor = executor._old_executor
+ 
+         # Return the future
+-        return f
++        return f
+\ No newline at end of file

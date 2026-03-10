@@ -1,0 +1,115 @@
+/tmp/PATCH_1_0ea89b4c.patch:27: trailing whitespace.
+    
+/tmp/PATCH_1_0ea89b4c.patch:46: trailing whitespace.
+            
+/tmp/PATCH_1_0ea89b4c.patch:54: trailing whitespace.
+                
+/tmp/PATCH_1_0ea89b4c.patch:57: trailing whitespace.
+                
+/tmp/PATCH_1_0ea89b4c.patch:60: trailing whitespace.
+        
+warning: 5 lines add whitespace errors.
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..d754a44 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -60,36 +60,36 @@ class CurrentThreadExecutor(Executor):
+         self._broken = False  # synchronized by _work_ready
+         self._old_executor = old_executor
+ 
+-    def run_until_future(self, future: "Future[Any]") -> None:
++    def run_until_future (self, future: "Future[Any]") -> None :
+         """
+-        Runs the code in the work queue until a result is available from the future.
+-        Should be run from the thread the executor is initialised in.
+-        """
+-        # Check we're in the right thread
++            Runs the code in the work queue until a result is available from the future.
++            Should be run from the thread the executor is initialised in.
++            """
++        # Verify we're in the correct thread
+         if threading.current_thread() != self._work_thread:
+-            raise RuntimeError(
+-                "You cannot run CurrentThreadExecutor from a different thread"
+-            )
+-
+-        def done(future: "Future[Any]") -> None:
++            raise RuntimeError("run_until_future called from wrong thread")
++    
++        # Process work items until the future is done
++        while not future.done():
++            # Get the next work item (if any)
++            work_item = None
+             with self._work_ready:
+-                self._broken = True
+-                self._work_ready.notify()
+-
+-        future.add_done_callback(done)
+-        # Keep getting and running work items until the future we're waiting for
+-        # is done and the queue is empty.
+-        while True:
+-            with self._work_ready:
+-                while not self._work_items and not self._broken:
++                # Wait for work items or future completion
++                while not self._broken and not future.done() and len(self._work_items) == 0:
+                     self._work_ready.wait()
+-                if not self._work_items:
++            
++                if self._broken:
+                     break
+-                # Get a work item and run it
+-                work_item = self._work_items.popleft()
+-            work_item.run()
+-            del work_item
+-
++                
++                if future.done():
++                    break
++                
++                if len(self._work_items) > 0:
++                    work_item = self._work_items.popleft()
++        
++            # Execute the work item if we got one
++            if work_item is not None:
++                work_item.run()
+     def submit(
+         self,
+         fn: Callable[_P, _R],
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..bc3f33c 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -137,18 +137,13 @@ class WsgiToAsgiInstance:
+         Called in a subthread to run the WSGI app. We encapsulate like
+         this so that the start_response callable is called in the same thread.
+         """
+-        # Translate the scope and incoming request body into a WSGI environ
+         environ = self.build_environ(self.scope, body)
+-        # Run the WSGI app
+         bytes_sent = 0
+         for output in self.wsgi_application(environ, self.start_response):
+-            # If this is the first response, include the response headers
+             if not self.response_started:
+                 self.response_started = True
+                 self.sync_send(self.response_start)
+-            # If the application supplies a Content-Length header
+             if self.response_content_length is not None:
+-                # The server should not transmit more bytes to the client than the header allows
+                 bytes_allowed = self.response_content_length - bytes_sent
+                 if len(output) > bytes_allowed:
+                     output = output[:bytes_allowed]
+@@ -156,11 +151,9 @@ class WsgiToAsgiInstance:
+                 {"type": "http.response.body", "body": output, "more_body": True}
+             )
+             bytes_sent += len(output)
+-            # The server should stop iterating over the response when enough data has been sent
+-            if bytes_sent == self.response_content_length:
++            if bytes_sent >= self.response_content_length:
+                 break
+-        # Close connection
+         if not self.response_started:
+             self.response_started = True
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        self.sync_send({"type": "http.response.body"})
+\ No newline at end of file

@@ -1,0 +1,84 @@
+/tmp/PATCH_0_43070e8b.patch:23: trailing whitespace.
+    
+/tmp/PATCH_0_43070e8b.patch:29: trailing whitespace.
+        
+warning: 2 lines add whitespace errors.
+/tmp/PATCH_1_a0772119.patch:21: trailing whitespace.
+    
+/tmp/PATCH_1_a0772119.patch:34: trailing whitespace.
+    
+warning: 2 lines add whitespace errors.
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..408c9db 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -119,20 +119,21 @@ class StatelessServer:
+         }
+         return input_queue
+ 
+-    def delete_oldest_application_instance(self):
+-        """
+-        Finds and deletes the oldest application instance
+-        """
+-        oldest_time = min(
+-            details["last_used"] for details in self.application_instances.values()
++    def delete_oldest_application_instance (self) :
++        """
++            Finds and deletes the oldest application instance
++            """
++        if not self.application_instances:
++            return
++    
++        # Find the scope_id with the smallest last_used timestamp
++        oldest_scope_id = min(
++            self.application_instances.keys(),
++            key=lambda scope_id: self.application_instances[scope_id]["last_used"]
+         )
+-        for scope_id, details in self.application_instances.items():
+-            if details["last_used"] == oldest_time:
+-                self.delete_application_instance(scope_id)
+-                # Return to make sure we only delete one in case two have
+-                # the same oldest time
+-                return
+-
++    
++        # Delete the oldest application instance
++        self.delete_application_instance(oldest_scope_id)
+     def delete_application_instance(self, scope_id):
+         """
+         Removes an application instance (makes sure its task is stopped,
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..591e781 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -41,17 +41,19 @@ _P = ParamSpec("_P")
+ _R = TypeVar("_R")
+ 
+ 
+-def _restore_context(context: contextvars.Context) -> None:
+-    # Check for changes in contextvars, and set them to the current
+-    # context for downstream consumers
+-    for cvar in context:
+-        cvalue = context.get(cvar)
+-        try:
+-            if cvar.get() != cvalue:
+-                cvar.set(cvalue)
+-        except LookupError:
+-            cvar.set(cvalue)
+-
++def _restore_context (context: contextvars.Context) -> None : # Check for changes in contextvars, and set them to the current # context for downstream consumers
++    # Get the current context
++    current_context = contextvars.copy_context()
++    
++    # Iterate through all context variables in the saved context
++    for var in context:
++        # Get the value from both contexts
++        saved_value = context.get(var)
++        current_value = current_context.get(var)
++        
++        # If the value has changed in the saved context, update it in the current context
++        if saved_value != current_value:
++            var.set(saved_value)
+ 
+ # Python 3.12 deprecates asyncio.iscoroutinefunction() as an alias for
+ # inspect.iscoroutinefunction(), whilst also removing the _is_coroutine marker.

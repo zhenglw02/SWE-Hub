@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__combine_module__8461f691",
+    "patch": "diff --git a/asgiref/sync.py b/asgiref/sync.py\nindex 54496ef..d7442c8 100644\n--- a/asgiref/sync.py\n+++ b/asgiref/sync.py\n@@ -158,9 +158,7 @@ class AsyncToSync(Generic[_P, _R]):\n         try:\n             self.main_event_loop = asyncio.get_running_loop()\n         except RuntimeError:\n-            # There's no event loop in this thread.\n-            pass\n-\n+            self.main_event_loop = main_event_loop\n     def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:\n         __traceback_hide__ = True  # noqa: F841\n \ndiff --git a/asgiref/timeout.py b/asgiref/timeout.py\nindex fd5381d..72452ec 100644\n--- a/asgiref/timeout.py\n+++ b/asgiref/timeout.py\n@@ -76,11 +76,13 @@ class timeout:\n \n     @property\n     def remaining(self) -> Optional[float]:\n-        if self._cancel_at is not None:\n-            return max(self._cancel_at - self._loop.time(), 0.0)\n-        else:\n+        if self._timeout is None:\n             return None\n-\n+        if self._cancelled:\n+            return 0.0\n+        if self._cancel_at is None:\n+            return self._timeout\n+        return max(0.0, self._cancel_at - self._loop.time())\n     def _do_enter(self) -> \"timeout\":\n         # Support Tornado 5- without timeout\n         # Details: https://github.com/python/asyncio/issues/392",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen_combine/asgiref/bug__combine_module__8461f691.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

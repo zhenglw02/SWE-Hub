@@ -1,0 +1,104 @@
+/tmp/PATCH_1_fb1f6fa8.patch:33: trailing whitespace.
+    
+/tmp/PATCH_1_fb1f6fa8.patch:46: trailing whitespace.
+    
+warning: 2 lines add whitespace errors.
+diff --git a/asgiref/compatibility.py b/asgiref/compatibility.py
+index 3a2a63e..35469ed 100644
+--- a/asgiref/compatibility.py
++++ b/asgiref/compatibility.py
+@@ -3,27 +3,29 @@ import inspect
+ from .sync import iscoroutinefunction
+ 
+ 
+-def is_double_callable(application):
++def is_double_callable (application) :
+     """
+     Tests to see if an application is a legacy-style (double-callable) application.
+     """
+-    # Look for a hint on the object first
+-    if getattr(application, "_asgi_single_callable", False):
++    # Check if the application is callable
++    if not callable(application):
+         return False
+-    if getattr(application, "_asgi_double_callable", False):
+-        return True
+-    # Uninstanted classes are double-callable
+-    if inspect.isclass(application):
+-        return True
+-    # Instanted classes depend on their __call__
+-    if hasattr(application, "__call__"):
+-        # We only check to see if its __call__ is a coroutine function -
+-        # if it's not, it still might be a coroutine function itself.
+-        if iscoroutinefunction(application.__call__):
+-            return False
+-    # Non-classes we just check directly
+-    return not iscoroutinefunction(application)
+-
++    
++    # Try to inspect the signature to see if it takes exactly one argument (scope)
++    try:
++        sig = inspect.signature(application)
++        # Double-callable apps should take exactly one parameter (scope)
++        if len(sig.parameters) == 1:
++            # Call it with a dummy scope to see if it returns a callable
++            dummy_scope = {"type": "http"}
++            instance = application(dummy_scope)
++            return callable(instance)
++    except:
++        # If signature inspection fails, fall back to a simpler check
++        pass
++    
++    # If we can't determine via signature, assume it's single-callable
++    return False
+ 
+ def double_to_single_callable(application):
+     """
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..0c0a2d0 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -80,42 +80,21 @@ class Local:
+ 
+     @contextlib.contextmanager
+     def _lock_storage(self):
+-        # Thread safe access to storage
+         if self._thread_critical:
+             is_async = True
+             try:
+-                # this is a test for are we in a async or sync
+-                # thread - will raise RuntimeError if there is
+-                # no current loop
+                 asyncio.get_running_loop()
+             except RuntimeError:
+                 is_async = False
+             if not is_async:
+-                # We are in a sync thread, the storage is
+-                # just the plain thread local (i.e, "global within
+-                # this thread" - it doesn't matter where you are
+-                # in a call stack you see the same storage)
+                 yield self._storage
+             else:
+-                # We are in an async thread - storage is still
+-                # local to this thread, but additionally should
+-                # behave like a context var (is only visible with
+-                # the same async call stack)
+-
+-                # Ensure context exists in the current thread
+                 if not hasattr(self._storage, "cvar"):
+                     self._storage.cvar = _CVar()
+-
+-                # self._storage is a thread local, so the members
+-                # can't be accessed in another thread (we don't
+-                # need any locks)
+-                yield self._storage.cvar
++                yield self._storage
+         else:
+-            # Lock for thread_critical=False as other threads
+-            # can access the exact same storage object
+             with self._thread_lock:
+                 yield self._storage
+-
+     def __getattr__(self, key):
+         with self._lock_storage() as storage:
+             return getattr(storage, key)

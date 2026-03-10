@@ -1,0 +1,111 @@
+/tmp/PATCH_0_4513815d.patch:34: trailing whitespace.
+    
+/tmp/PATCH_0_4513815d.patch:39: trailing whitespace.
+        
+/tmp/PATCH_0_4513815d.patch:48: trailing whitespace.
+            
+/tmp/PATCH_0_4513815d.patch:56: trailing whitespace.
+            
+/tmp/PATCH_0_4513815d.patch:62: trailing whitespace.
+        
+warning: 5 lines add whitespace errors.
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..164ceee 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -60,36 +60,41 @@ class CurrentThreadExecutor(Executor):
+         self._broken = False  # synchronized by _work_ready
+         self._old_executor = old_executor
+ 
+-    def run_until_future(self, future: "Future[Any]") -> None:
++    def run_until_future (self, future: "Future[Any]") -> None :
+         """
+-        Runs the code in the work queue until a result is available from the future.
+-        Should be run from the thread the executor is initialised in.
+-        """
+-        # Check we're in the right thread
++            Runs the code in the work queue until a result is available from the future.
++            Should be run from the thread the executor is initialised in.
++            """
++        # Check we're in the work thread
+         if threading.current_thread() != self._work_thread:
+-            raise RuntimeError(
+-                "You cannot run CurrentThreadExecutor from a different thread"
+-            )
+-
+-        def done(future: "Future[Any]") -> None:
+-            with self._work_ready:
+-                self._broken = True
+-                self._work_ready.notify()
+-
+-        future.add_done_callback(done)
+-        # Keep getting and running work items until the future we're waiting for
+-        # is done and the queue is empty.
++            raise RuntimeError("run_until_future must be called from the executor's thread")
++    
+         while True:
++            # Check if the future we're waiting for is done
++            if future.done():
++                return
++        
++            # Get next work item (if any)
++            work_item = None
+             with self._work_ready:
+-                while not self._work_items and not self._broken:
+-                    self._work_ready.wait()
++                # Check if we've been broken
++                if self._broken:
++                    return
++            
++                # Wait for work or timeout to check future status again
+                 if not self._work_items:
+-                    break
+-                # Get a work item and run it
++                    # Wait with timeout to periodically check future status
++                    self._work_ready.wait(timeout=0.1)
++                    continue
++            
++                # Get the next work item
+                 work_item = self._work_items.popleft()
+-            work_item.run()
+-            del work_item
+-
++        
++            # If we got a work item, run it
++            if work_item is not None:
++                work_item.run()
++                # Clear reference to help with garbage collection
++                work_item = None
+     def submit(
+         self,
+         fn: Callable[_P, _R],
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..8ea479d 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -164,7 +164,7 @@ class AsyncToSync(Generic[_P, _R]):
+     def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+ 
+-        if not self.force_new_loop and not self.main_event_loop:
++        if not self.force_new_loop and not not self.main_event_loop:
+             # There's no event loop in this thread. Look for the threadlocal if
+             # we're inside SyncToAsync
+             main_event_loop_pid = getattr(
+@@ -247,7 +247,7 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+             if not running_in_main_event_loop:
+                 # Make our own event loop - in a new thread - and run inside that.
+-                loop_executor = ThreadPoolExecutor(max_workers=1)
++                loop_executor = ThreadPoolExecutor(max_workers=0)
+                 loop_future = loop_executor.submit(asyncio.run, new_loop_wrap())
+                 # Run the CurrentThreadExecutor until the future is done.
+                 current_executor.run_until_future(loop_future)
+@@ -260,7 +260,6 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+         # Wait for results from the future.
+         return call_result.result()
+-
+     def __get__(self, parent: Any, objtype: Any) -> Callable[_P, _R]:
+         """
+         Include self for methods

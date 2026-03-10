@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__6bf2cfbd__0004",
+  "hash_code": "6bf2cfbd",
+  "cost": 0,
+  "explanation": "The function `receive_output` needs to receive a single message from the output queue with an optional timeout. It should follow similar error handling patterns as other methods in the class - checking if the future is done first, then attempting to receive from the output queue with the specified timeout.\n\n<explanation>",
+  "output": "The function `receive_output` needs to receive a single message from the output queue with an optional timeout. It should follow similar error handling patterns as other methods in the class - checking if the future is done first, then attempting to receive from the output queue with the specified timeout.\n\n<explanation>\n\n```\nasync def receive_output (self, timeout=1) :\n    \"\"\"\n        Receives a single message from the application, with optional timeout.\n        \"\"\"\n    # Make sure there's not an exception to raise from the task\n    if self.future.done():\n        self.future.result()\n\n    # Get the message with timeout\n    try:\n        async with async_timeout(timeout):\n            return await self.output_queue.get()\n    except asyncio.TimeoutError:\n        raise asyncio.TimeoutError(f\"Timeout waiting for message after {timeout} seconds\")\n```",
+  "rewrite": "async def receive_output (self, timeout=1) :\n    \"\"\"\n        Receives a single message from the application, with optional timeout.\n        \"\"\"\n    # Make sure there's not an exception to raise from the task\n    if self.future.done():\n        self.future.result()\n\n    # Get the message with timeout\n    try:\n        async with async_timeout(timeout):\n            return await self.output_queue.get()\n    except asyncio.TimeoutError:\n        raise asyncio.TimeoutError(f\"Timeout waiting for message after {timeout} seconds\")",
+  "strategy": "lm_rewrite"
+}

@@ -1,0 +1,43 @@
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..52aaa0f 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -111,10 +111,7 @@ class Local:
+                 # need any locks)
+                 yield self._storage.cvar
+         else:
+-            # Lock for thread_critical=False as other threads
+-            # can access the exact same storage object
+-            with self._thread_lock:
+-                yield self._storage
++            yield self._storage
+ 
+     def __getattr__(self, key):
+         with self._lock_storage() as storage:
+@@ -128,4 +125,4 @@ class Local:
+ 
+     def __delattr__(self, key):
+         with self._lock_storage() as storage:
+-            delattr(storage, key)
++            delattr(storage, key)
+\ No newline at end of file
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..8576c02 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -139,7 +139,7 @@ class AsyncToSync(Generic[_P, _R]):
+         ],
+         force_new_loop: bool = False,
+     ):
+-        if not callable(awaitable) or (
++        if not callable(awaitable) and (
+             not iscoroutinefunction(awaitable)
+             and not iscoroutinefunction(getattr(awaitable, "__call__", awaitable))
+         ):
+@@ -160,7 +160,6 @@ class AsyncToSync(Generic[_P, _R]):
+         except RuntimeError:
+             # There's no event loop in this thread.
+             pass
+-
+     def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841

@@ -1,0 +1,9 @@
+{
+  "instance_id": "procedural__func_pm_ctrl_shuffle__97cce40b",
+  "hash_code": "97cce40b",
+  "cost": 0.0,
+  "explanation": "The lines inside a function may be out of order.",
+  "output": "def __setattr__(self, key: str, value: Any) -> None:\n    storage_object[key] = value\n\n    storage_object = self._data.get({}).copy()\n    if key == \"_data\":\n        return super().__setattr__(key, value)\n    self._data.set(storage_object)",
+  "rewrite": "def __setattr__(self, key: str, value: Any) -> None:\n    storage_object[key] = value\n\n    storage_object = self._data.get({}).copy()\n    if key == \"_data\":\n        return super().__setattr__(key, value)\n    self._data.set(storage_object)",
+  "strategy": "func_pm_ctrl_shuffle"
+}

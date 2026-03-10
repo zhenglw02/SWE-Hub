@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__d703dae5__0001",
+  "hash_code": "d703dae5",
+  "cost": 0,
+  "explanation": "The `_cancel_task` method is responsible for cancelling the async task when the timeout period expires. It needs to set the `_cancelled` flag to True and then cancel the task if it exists and hasn't already been completed.",
+  "output": "The `_cancel_task` method is responsible for cancelling the async task when the timeout period expires. It needs to set the `_cancelled` flag to True and then cancel the task if it exists and hasn't already been completed.\n\n```\ndef _cancel_task (self) -> None :\n    if not self._cancelled:\n        self._cancelled = True\n        if self._task is not None and not self._task.done():\n            self._task.cancel()\n```",
+  "rewrite": "def _cancel_task (self) -> None :\n    if not self._cancelled:\n        self._cancelled = True\n        if self._task is not None and not self._task.done():\n            self._task.cancel()",
+  "strategy": "lm_rewrite"
+}

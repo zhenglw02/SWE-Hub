@@ -1,0 +1,85 @@
+/tmp/PATCH_1_31639725.patch:30: trailing whitespace.
+    
+/tmp/PATCH_1_31639725.patch:33: trailing whitespace.
+    
+/tmp/PATCH_1_31639725.patch:42: trailing whitespace.
+    
+warning: 3 lines add whitespace errors.
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..13daf79 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -98,12 +98,13 @@ class StatelessServer:
+             self.application_instances[scope_id]["last_used"] = time.time()
+             return self.application_instances[scope_id]["input_queue"]
+         # See if we need to delete an old one
+-        while len(self.application_instances) > self.max_applications:
++        while len(self.application_instances) >= self.max_applications:
+             self.delete_oldest_application_instance()
+         # Make an instance of the application
+         input_queue = asyncio.Queue()
+         application_instance = guarantee_single_callable(self.application)
+         # Run it, and stash the future for later checking
++        last_used = time.time()
+         future = asyncio.ensure_future(
+             application_instance(
+                 scope=scope,
+@@ -115,10 +116,9 @@ class StatelessServer:
+             "input_queue": input_queue,
+             "future": future,
+             "scope": scope,
+-            "last_used": time.time(),
++            "last_used": last_used,
+         }
+         return input_queue
+-
+     def delete_oldest_application_instance(self):
+         """
+         Finds and deletes the oldest application instance
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..5db15de 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -31,25 +31,24 @@ class WsgiToAsgiInstance:
+         self.response_started = False
+         self.response_content_length = None
+ 
+-    async def __call__(self, scope, receive, send):
+-        if scope["type"] != "http":
+-            raise ValueError("WSGI wrapper received a non-HTTP scope")
++    async def __call__ (self, scope, receive, send) :
++        # Store the scope for later use
+         self.scope = scope
+-        with SpooledTemporaryFile(max_size=65536) as body:
+-            # Alright, wait for the http.request messages
+-            while True:
+-                message = await receive()
+-                if message["type"] != "http.request":
+-                    raise ValueError("WSGI wrapper received a non-HTTP-request message")
+-                body.write(message.get("body", b""))
+-                if not message.get("more_body"):
+-                    break
+-            body.seek(0)
+-            # Wrap send so it can be called from the subthread
+-            self.sync_send = AsyncToSync(send)
+-            # Call the WSGI app
+-            await self.run_wsgi_app(body)
+-
++    
++        # Create a synchronous wrapper for the async send function
++        self.sync_send = AsyncToSync(send)
++    
++        # Collect the request body
++        body_file = SpooledTemporaryFile(max_size=64 * 1024)
++        more_body = True
++        while more_body:
++            message = await receive()
++            body_file.write(message.get("body", b""))
++            more_body = message.get("more_body", False)
++        body_file.seek(0)
++    
++        # Run the WSGI application
++        await self.run_wsgi_app(body_file)
+     def build_environ(self, scope, body):
+         """
+         Builds a scope and request body into a WSGI environ object.

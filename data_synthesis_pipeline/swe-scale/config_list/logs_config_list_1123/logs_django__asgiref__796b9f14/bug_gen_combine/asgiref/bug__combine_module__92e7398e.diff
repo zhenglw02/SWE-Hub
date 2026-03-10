@@ -1,0 +1,61 @@
+diff --git a/asgiref/compatibility.py b/asgiref/compatibility.py
+index 3a2a63e..bcfd38e 100644
+--- a/asgiref/compatibility.py
++++ b/asgiref/compatibility.py
+@@ -7,24 +7,17 @@ def is_double_callable(application):
+     """
+     Tests to see if an application is a legacy-style (double-callable) application.
+     """
+-    # Look for a hint on the object first
+     if getattr(application, "_asgi_single_callable", False):
+         return False
+     if getattr(application, "_asgi_double_callable", False):
+         return True
+-    # Uninstanted classes are double-callable
+     if inspect.isclass(application):
+-        return True
+-    # Instanted classes depend on their __call__
++        return False
+     if hasattr(application, "__call__"):
+-        # We only check to see if its __call__ is a coroutine function -
+-        # if it's not, it still might be a coroutine function itself.
+         if iscoroutinefunction(application.__call__):
+             return False
+-    # Non-classes we just check directly
+     return not iscoroutinefunction(application)
+ 
+-
+ def double_to_single_callable(application):
+     """
+     Transforms a double-callable ASGI application into a single-callable one.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..54456cc 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -283,11 +283,11 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+         __traceback_hide__ = True  # noqa: F841
+ 
+-        if context is not None:
++        if context is None:
+             _restore_context(context[0])
+ 
+         current_task = asyncio.current_task()
+-        if current_task is not None and task_context is not None:
++        if current_task is None and task_context is not None:
+             task_context.append(current_task)
+ 
+         try:
+@@ -305,11 +305,10 @@ class AsyncToSync(Generic[_P, _R]):
+         else:
+             call_result.set_result(result)
+         finally:
+-            if current_task is not None and task_context is not None:
++            if current_task is None and task_context is not None:
+                 task_context.remove(current_task)
+             context[0] = contextvars.copy_context()
+ 
+-
+ class SyncToAsync(Generic[_P, _R]):
+     """
+     Utility class which turns a synchronous callable into an awaitable that

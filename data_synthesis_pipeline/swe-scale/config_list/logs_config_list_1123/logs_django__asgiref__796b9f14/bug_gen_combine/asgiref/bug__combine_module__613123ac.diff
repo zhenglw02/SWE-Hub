@@ -1,0 +1,83 @@
+/tmp/PATCH_0_a994ab3f.patch:46: trailing whitespace.
+        
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..f3ba70c 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -28,25 +28,29 @@ class timeout:
+     loop - asyncio compatible event loop
+     """
+ 
+-    def __init__(
+-        self,
+-        timeout: Optional[float],
+-        *,
+-        loop: Optional[asyncio.AbstractEventLoop] = None,
+-    ) -> None:
+-        self._timeout = timeout
+-        if loop is None:
+-            loop = asyncio.get_running_loop()
+-        else:
+-            warnings.warn(
+-                """The loop argument to timeout() is deprecated.""", DeprecationWarning
+-            )
+-        self._loop = loop
+-        self._task = None  # type: Optional[asyncio.Task[Any]]
+-        self._cancelled = False
+-        self._cancel_handler = None  # type: Optional[asyncio.Handle]
+-        self._cancel_at = None  # type: Optional[float]
+-
++    def __init__ ( self, timeout: Optional[float], *, loop: Optional[asyncio.AbstractEventLoop] = None, ) -> None :
++            self._timeout = timeout
++            if loop is None:
++                self._loop = asyncio.get_event_loop()
++            else:
++                self._loop = loop
++                # Warn if loop is passed and we can detect it's deprecated
++                try:
++                    # This warning was introduced in Python 3.10
++                    warnings.warn(
++                        "The loop argument is deprecated since Python 3.8, "
++                        "and scheduled for removal in Python 3.12.",
++                        DeprecationWarning,
++                        stacklevel=2,
++                    )
++                except (AttributeError, NameError):
++                    # warnings might not be available or version differs
++                    pass
++        
++            self._task = None
++            self._cancel_at = None
++            self._cancel_handler = None
++            self._cancelled = False
+     def __enter__(self) -> "timeout":
+         return self._do_enter()
+ 
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..940cba6 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -91,7 +91,7 @@ class WsgiToAsgiInstance:
+             elif name == "content-type":
+                 corrected_name = "CONTENT_TYPE"
+             else:
+-                corrected_name = "HTTP_%s" % name.upper().replace("-", "_")
++                corrected_name = "HTTP_%s" % name.upper().replace("-", "")
+             # HTTPbis say only ASCII chars are allowed in headers, but we latin1 just in case
+             value = value.decode("latin1")
+             if corrected_name in environ:
+@@ -157,10 +157,10 @@ class WsgiToAsgiInstance:
+             )
+             bytes_sent += len(output)
+             # The server should stop iterating over the response when enough data has been sent
+-            if bytes_sent == self.response_content_length:
++            if bytes_sent >= self.response_content_length:
+                 break
+         # Close connection
+         if not self.response_started:
+             self.response_started = True
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        self.sync_send({"type": "http.response.body"})
+\ No newline at end of file

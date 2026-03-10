@@ -1,0 +1,83 @@
+/tmp/PATCH_0_c7bc306c.patch:23: trailing whitespace.
+    
+/tmp/PATCH_0_c7bc306c.patch:25: trailing whitespace.
+            exceptions: If True, raises any exceptions from the future; if False, 
+/tmp/PATCH_0_c7bc306c.patch:43: trailing whitespace.
+    
+warning: 3 lines add whitespace errors.
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..842f6f3 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -67,17 +67,37 @@ class ApplicationCommunicator:
+                 except asyncio.CancelledError:
+                     pass
+ 
+-    def stop(self, exceptions=True):
+-        future = self._future
+-        if future is None:
+-            return
+-
+-        if not future.done():
+-            future.cancel()
+-        elif exceptions:
+-            # Give a chance to raise any exceptions
+-            future.result()
+-
++    def stop (self, exceptions=True) :
++        """
++        Stops the application communicator by cancelling the running future.
++    
++        Args:
++            exceptions: If True, raises any exceptions from the future; if False, 
++                       suppresses exceptions.
++        """
++        if self._future is not None and not self._future.done():
++            # Cancel the future
++            self._future.cancel()
++            try:
++                # Wait for cancellation to complete
++                loop = asyncio.get_event_loop()
++                if loop.is_running():
++                    # If event loop is running, create a task to await the future
++                    loop.create_task(self._future)
++                else:
++                    # If event loop is not running, run until complete
++                    loop.run_until_complete(self._future)
++            except (RuntimeError, asyncio.CancelledError):
++                # Event loop might be closed or already stopped
++                pass
++    
++        # If exceptions is True and future is done with an exception, re-raise it
++        if exceptions and self._future is not None and self._future.done():
++            try:
++                self._future.result()
++            except asyncio.CancelledError:
++                # Don't re-raise cancellation errors
++                pass
+     def __del__(self):
+         # Clean up on deletion
+         try:
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..c29e7af 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -32,9 +32,9 @@ class WsgiToAsgiInstance:
+         self.response_content_length = None
+ 
+     async def __call__(self, scope, receive, send):
++        self.scope = scope
+         if scope["type"] != "http":
+             raise ValueError("WSGI wrapper received a non-HTTP scope")
+-        self.scope = scope
+         with SpooledTemporaryFile(max_size=65536) as body:
+             # Alright, wait for the http.request messages
+             while True:
+@@ -49,7 +49,6 @@ class WsgiToAsgiInstance:
+             self.sync_send = AsyncToSync(send)
+             # Call the WSGI app
+             await self.run_wsgi_app(body)
+-
+     def build_environ(self, scope, body):
+         """
+         Builds a scope and request body into a WSGI environ object.

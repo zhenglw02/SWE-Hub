@@ -1,18 +1,21 @@
 # code-data-agent-sdk
 
-基于 LLM Agent 的高质量代码训练数据合成工具包。提供三条独立流水线，分别从真实开源仓库中生成不同类型的训练数据。
+基于 LLM Agent 的高质量代码训练数据合成工具包。提供四条独立流水线，分别从真实开源仓库中生成不同类型的训练数据。
 
 > **技术报告**：[https://arxiv.org/abs/2603.00575](https://arxiv.org/abs/2603.00575)
+
+## 中文文档 | [English README](README.md)
 
 ## 概览
 
 | 流水线 | 产出数据 |
 |--------|----------|
 | `env_agent` | 每个仓库可复现的 `install_script` + `test_script`，以及可直接运行的 Docker 镜像 |
+| `swe-scale` | 可扩展 Bug 合成流水线，支持多种语言，使用程序化/LLM 两种策略生成 Bug 并自动验证 |
 | `bug_agent` | 微小 Bug 补丁（PASS→FAIL 测试回归）与模拟真实用户视角的 GitHub Issue 报告配对数据 |
 | `nl2repo` | 函数级与项目级自然语言文档，与代码补丁配对 |
 
-三条流水线共用 `code_data_agent` 核心 SDK，SDK 提供 ReAct Agent 循环、LLM HTTP 客户端、沙箱抽象层和工具实现。
+`env_agent`、`bug_agent` 和 `nl2repo` 三条流水线共用 `code_data_agent` 核心 SDK，SDK 提供 ReAct Agent 循环、LLM HTTP 客户端、沙箱抽象层和工具实现。
 
 ## 环境要求
 
@@ -301,11 +304,20 @@ code-data-agent-sdk/
     │   │       ├── preprocess.py
     │   │       └── bug_issue.py
     │   └── prompts/
-    └── nl2repo/                      # 流水线三：NL 文档生成
-        ├── agents/                   # DocPart1Agent、DocPart2Agent
-        ├── analyzers/                # 依赖图、Louvain 聚类
-        ├── generators/               # 补丁生成、Docker 容器池
-        ├── parsers/                  # tree-sitter 实体提取
-        └── pipeline/
-            └── steps/
+    ├── nl2repo/                      # 流水线三：NL 文档生成
+    │   ├── agents/                   # DocPart1Agent、DocPart2Agent
+    │   ├── analyzers/                # 依赖图、Louvain 聚类
+    │   ├── generators/               # 补丁生成、Docker 容器池
+    │   ├── parsers/                  # tree-sitter 实体提取
+    │   └── pipeline/
+    │       └── steps/
+    └── swe-scale/                    # 流水线四：可扩展 Bug 合成
+        ├── stage_0_register_config/  # 配置注册
+        ├── stage_1_swe_smith/        # Bug 生成（程序化 & LLM-based）
+        ├── stage_2_validation/      # Bug 验证（运行测试套件）
+        ├── stage_3_report_parser/   # 结果解析 & P2F 检测
+        ├── stage_4_gen_issue/       # GitHub Issue 生成
+        ├── config_list/              # 仓库配置
+        ├── utils_list/               # 共享工具（AST 修饰器、容器工具）
+        └── controller/               # 流水线编排
 ```

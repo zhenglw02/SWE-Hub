@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__combine_module__012b4c3a",
+    "patch": "diff --git a/asgiref/testing.py b/asgiref/testing.py\nindex d6ccee5..5e69400 100644\n--- a/asgiref/testing.py\n+++ b/asgiref/testing.py\n@@ -28,11 +28,10 @@ class ApplicationCommunicator:\n         return self._input_queue\n \n     @property\n-    def output_queue(self):\n+    def output_queue (self) :\n         if self._output_queue is None:\n             self._output_queue = asyncio.Queue()\n         return self._output_queue\n-\n     @property\n     def future(self):\n         if self._future is None:\n@@ -130,8 +129,8 @@ class ApplicationCommunicator:\n \n         # `interval` has precedence over `timeout`\n         start = time.monotonic()\n-        while time.monotonic() - start < timeout:\n+        while time.monotonic() - start >= timeout:\n             if not self.output_queue.empty():\n                 return False\n             await asyncio.sleep(interval)\n-        return self.output_queue.empty()\n+        return self.output_queue.empty()\n\\ No newline at end of file",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen_combine/asgiref/bug__combine_module__012b4c3a.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

@@ -1,0 +1,53 @@
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..7153828 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -144,10 +144,6 @@ class StatelessServer:
+             details["future"].cancel()
+ 
+     async def application_checker(self):
+-        """
+-        Goes through the set of current application instance Futures and cleans up
+-        any that are done/prints exceptions for any that errored.
+-        """
+         while True:
+             await asyncio.sleep(self.application_checker_interval)
+             for scope_id, details in list(self.application_instances.items()):
+@@ -155,12 +151,11 @@ class StatelessServer:
+                     exception = details["future"].exception()
+                     if exception:
+                         await self.application_exception(exception, details)
+-                    try:
+-                        del self.application_instances[scope_id]
+-                    except KeyError:
+-                        # Exception handling might have already got here before us. That's fine.
+-                        pass
+-
++                    if exception:
++                        try:
++                            del self.application_instances[scope_id]
++                        except KeyError:
++                            pass
+     async def application_exception(self, exception, application_details):
+         """
+         Called whenever an application coroutine has an exception.
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..76b0976 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -102,7 +102,7 @@ class timeout:
+         return self
+ 
+     def _do_exit(self, exc_type: Type[BaseException]) -> None:
+-        if exc_type is asyncio.CancelledError and self._cancelled:
++        if self._task is not None and self._task.cancelled():
+             self._cancel_handler = None
+             self._task = None
+             raise asyncio.TimeoutError
+@@ -115,4 +115,4 @@ class timeout:
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+             self._task.cancel()
+-            self._cancelled = True
++            self._cancelled = True
+\ No newline at end of file

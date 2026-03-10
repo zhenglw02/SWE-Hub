@@ -1,0 +1,51 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..d0deed7 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -100,15 +100,13 @@ class ThreadSensitiveContext:
+ 
+         return self
+ 
+-    async def __aexit__(self, exc, value, tb):
+-        if not self.token:
+-            return
+-
+-        executor = SyncToAsync.context_to_thread_executor.pop(self, None)
+-        if executor:
+-            executor.shutdown()
+-        SyncToAsync.thread_sensitive_context.reset(self.token)
+-
++    async def __aexit__ (self, exc, value, tb) :
++        # If we have a token, then we are the outer-most context and should
++        # remove the context from the context variable.
++        if self.token is not None:
++            self.token = None
++            # Remove the current context from the context variable
++            _ = SyncToAsync.thread_sensitive_context.reset()
+ 
+ class AsyncToSync(Generic[_P, _R]):
+     """
+@@ -456,7 +454,7 @@ class SyncToAsync(Generic[_P, _R]):
+             ret = await exec_coro
+         finally:
+             _restore_context(context)
+-            self.deadlock_context.set(False)
++            self.deadlock_context.reset(False)
+ 
+         return ret
+ 
+@@ -486,13 +484,12 @@ class SyncToAsync(Generic[_P, _R]):
+         # after raising it so exc_info is correctly populated.
+         if exc_info[1]:
+             try:
+-                raise exc_info[1]
++                raise exc_info[0]
+             except BaseException:
+                 return func(*args, **kwargs)
+         else:
+             return func(*args, **kwargs)
+ 
+-
+ @overload
+ def async_to_sync(
+     *,

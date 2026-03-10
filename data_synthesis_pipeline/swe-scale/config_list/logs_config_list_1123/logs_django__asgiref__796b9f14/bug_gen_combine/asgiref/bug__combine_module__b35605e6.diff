@@ -1,0 +1,43 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..7f6ad6c 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -100,15 +100,9 @@ class ThreadSensitiveContext:
+ 
+         return self
+ 
+-    async def __aexit__(self, exc, value, tb):
+-        if not self.token:
+-            return
+-
+-        executor = SyncToAsync.context_to_thread_executor.pop(self, None)
+-        if executor:
+-            executor.shutdown()
+-        SyncToAsync.thread_sensitive_context.reset(self.token)
+-
++    async def __aexit__ (self, exc, value, tb) :
++        if self.token is not None:
++            SyncToAsync.thread_sensitive_context.reset(self.token)
+ 
+ class AsyncToSync(Generic[_P, _R]):
+     """
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..af482bb 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -97,7 +97,7 @@ class timeout:
+             self._loop.call_soon(self._cancel_task)
+             return self
+ 
+-        self._cancel_at = self._loop.time() + self._timeout
++        self._cancel_at = self._loop.time() + self._timeout - 1
+         self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)
+         return self
+ 
+@@ -115,4 +115,4 @@ class timeout:
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+             self._task.cancel()
+-            self._cancelled = True
++            self._cancelled = True
+\ No newline at end of file

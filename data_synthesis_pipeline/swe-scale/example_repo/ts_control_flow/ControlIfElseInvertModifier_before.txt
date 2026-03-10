@@ -1,0 +1,26 @@
+function testControlFlow(x: number, a: number, b: number): string | undefined {
+
+  // 目标: ControlIfElifInvertModifier
+  if (x > 0) {
+    return "Positive";
+  } else if (x === 0) {
+    return "Zero";
+  } else {
+    return "Negative";
+  }
+
+  // 目标: ControlIfElseInvertModifier
+  if (a > b) {
+    let result_a = a - b;
+    return "A > B";
+  } else {
+    let result_b = b - a;
+    return "B >= A";
+  }
+
+  // 目标: ControlShuffleLinesModifier
+  let line1 = "first statement";
+  let line2 = "second statement";
+  let line3 = "third statement";
+  console.log(line1, line2, line3);
+}

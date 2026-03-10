@@ -1,0 +1,53 @@
+function processCalculations(a, b, c) {
+    let result;
+    
+    // 目标: FlipOperator (>, <, <=, >=)
+    if (b > a) {
+        result = b - a; // 目标: ChangeModifier (+/-), SwapOperands
+        console.log("A is greater");
+    } else if (b < a) {
+        result = b / a; // 目标: ChangeModifier (*, /, %), SwapOperands
+        console.log("A is smaller");
+    } 
+    
+    // 目标: FlipOperator (&&, ||)
+    if (b && a) {
+        result = b * a;
+        console.log("Both A and B are truthy");
+    } else if (b || a) {
+        result = b | a; // 目标: ChangeModifier (&, |, ^), SwapOperands
+        console.log("Either A or B is truthy");
+    } else {
+        result = a - b;
+        console.log("A, B, or both are falsy");
+    }
+    
+    // 目标: FlipOperator (===, !==)
+    if (0 === result) {
+        console.log("Result is zero");
+    }
+
+    // 目标: BreakChainsModifier, SwapOperands, ChangeModifier
+    // 解析为 (a + b) + c
+    let chainResult = c + a + b; 
+    
+    // 目标: ChangeConstantsModifier (修改 5)
+    result = 5 + chainResult; 
+    
+    // 目标: ChangeConstantsModifier (修改 10)
+    let count = 10 * result;
+    
+    // 目标: ChangeConstantsModifier (修改十六进制 0xFF)
+    let flags = 0xFF & count; 
+
+    // 更多常量修改测试
+    if (20 > count) {      // 目标: ChangeConstantsModifier (修改 20)
+        return 0;        // 目标: ChangeConstantsModifier (修改 0)
+    }
+    
+    let items = [1, 2, 3];   // 目标: ChangeConstantsModifier (修改 1, 2, 或 3)
+    let permissions = 0o755; // 目标: ChangeConstantsModifier (修改八进制)
+    let binaryMask = 0b1010; // 目标: ChangeConstantsModifier (修改二进制)
+
+    return result;
+}

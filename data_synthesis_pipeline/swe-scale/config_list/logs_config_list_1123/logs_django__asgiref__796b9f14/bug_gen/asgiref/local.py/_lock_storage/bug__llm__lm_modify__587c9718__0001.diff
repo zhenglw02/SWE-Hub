@@ -1,0 +1,37 @@
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..eb46d09 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -82,14 +82,15 @@ class Local:
+     def _lock_storage(self):
+         # Thread safe access to storage
+         if self._thread_critical:
+-            is_async = True
++            is_async = False
+             try:
+                 # this is a test for are we in a async or sync
+                 # thread - will raise RuntimeError if there is
+                 # no current loop
+                 asyncio.get_running_loop()
++                is_async = True
+             except RuntimeError:
+-                is_async = False
++                pass
+             if not is_async:
+                 # We are in a sync thread, the storage is
+                 # just the plain thread local (i.e, "global within
+@@ -121,11 +122,11 @@ class Local:
+             return getattr(storage, key)
+ 
+     def __setattr__(self, key, value):
+-        if key in ("_local", "_storage", "_thread_critical", "_thread_lock"):
++        if key in ("_local", "_storage", "_thread_critical", "_thread_lock", "_dummy"):
+             return super().__setattr__(key, value)
+         with self._lock_storage() as storage:
+             setattr(storage, key, value)
+ 
+     def __delattr__(self, key):
+         with self._lock_storage() as storage:
+-            delattr(storage, key)
++            delattr(storage, key)
+\ No newline at end of file

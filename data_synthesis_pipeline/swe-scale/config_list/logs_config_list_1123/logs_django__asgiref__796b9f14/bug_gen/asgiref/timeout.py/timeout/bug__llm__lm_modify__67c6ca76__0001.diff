@@ -1,0 +1,38 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..21cade4 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -164,7 +164,7 @@ class AsyncToSync(Generic[_P, _R]):
+     def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+ 
+-        if not self.force_new_loop and not self.main_event_loop:
++        if not self.main_event_loop and not self.force_new_loop:
+             # There's no event loop in this thread. Look for the threadlocal if
+             # we're inside SyncToAsync
+             main_event_loop_pid = getattr(
+@@ -283,13 +283,13 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+         __traceback_hide__ = True  # noqa: F841
+ 
+-        if context is not None:
+-            _restore_context(context[0])
+-
+         current_task = asyncio.current_task()
+         if current_task is not None and task_context is not None:
+             task_context.append(current_task)
+ 
++        if context is not None:
++            _restore_context(context[0])
++
+         try:
+             # If we have an exception, run the function inside the except block
+             # after raising it so exc_info is correctly populated.
+@@ -309,7 +309,6 @@ class AsyncToSync(Generic[_P, _R]):
+                 task_context.remove(current_task)
+             context[0] = contextvars.copy_context()
+ 
+-
+ class SyncToAsync(Generic[_P, _R]):
+     """
+     Utility class which turns a synchronous callable into an awaitable that

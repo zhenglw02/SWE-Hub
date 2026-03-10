@@ -1,0 +1,131 @@
+/tmp/PATCH_0_257e4b9d.patch:23: trailing whitespace.
+    
+/tmp/PATCH_0_257e4b9d.patch:28: trailing whitespace.
+    
+/tmp/PATCH_0_257e4b9d.patch:40: trailing whitespace.
+    
+/tmp/PATCH_0_257e4b9d.patch:58: trailing whitespace.
+    
+/tmp/PATCH_0_257e4b9d.patch:68: trailing whitespace.
+    
+warning: 5 lines add whitespace errors.
+/tmp/PATCH_1_916c4530.patch:23: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..000632e 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -28,14 +28,17 @@ class _CVar:
+         storage_object[key] = value
+         self._data.set(storage_object)
+ 
+-    def __delattr__(self, key: str) -> None:
+-        storage_object = self._data.get({}).copy()
+-        if key in storage_object:
+-            del storage_object[key]
+-            self._data.set(storage_object)
+-        else:
+-            raise AttributeError(f"{self!r} object has no attribute {key!r}")
++    def __delattr__ (self, key: str) -> None :
++        if key == "_data":
++            return super().__delattr__(key)
+ 
++        storage_object = self._data.get({})
++        if key not in storage_object:
++            raise AttributeError(f"{self!r} object has no attribute {key!r}")
++    
++        storage_object = storage_object.copy()
++        del storage_object[key]
++        self._data.set(storage_object)
+ 
+ class Local:
+     """Local storage for async tasks.
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..d513d10 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -90,35 +90,67 @@ class StatelessServer:
+ 
+     ### Application instance management
+ 
+-    def get_or_create_application_instance(self, scope_id, scope):
+-        """
+-        Creates an application instance and returns its queue.
++    def get_or_create_application_instance (self, scope_id, scope) :
+         """
++            Creates an application instance and returns its queue.
++            """
++        # Check if we already have this application instance
+         if scope_id in self.application_instances:
++            # Update last used time and return existing queue
+             self.application_instances[scope_id]["last_used"] = time.time()
+             return self.application_instances[scope_id]["input_queue"]
+-        # See if we need to delete an old one
+-        while len(self.application_instances) > self.max_applications:
++    
++        # If we're at capacity, delete the oldest instance
++        if len(self.application_instances) >= self.max_applications:
+             self.delete_oldest_application_instance()
+-        # Make an instance of the application
++    
++        # Create input queue for the new application instance
+         input_queue = asyncio.Queue()
+-        application_instance = guarantee_single_callable(self.application)
+-        # Run it, and stash the future for later checking
+-        future = asyncio.ensure_future(
+-            application_instance(
+-                scope=scope,
+-                receive=input_queue.get,
+-                send=lambda message: self.application_send(scope, message),
+-            ),
+-        )
++    
++        # Create the application coroutine
++        async def application_coroutine():
++            # Get the single callable application
++            application = guarantee_single_callable(self.application)
++            try:
++                # Run the application with the scope and send/receive interface
++                await application(
++                    scope,
++                    self.receive_wrapper(input_queue),
++                    self.send_wrapper(scope),
++                )
++            except asyncio.CancelledError:
++                # Task was cancelled, this is normal
++                pass
++            except Exception:
++                # Let the exception propagate to the application checker
++                raise
++    
++        # Create and store the application instance
++        future = asyncio.ensure_future(application_coroutine())
+         self.application_instances[scope_id] = {
+             "input_queue": input_queue,
+-            "future": future,
+             "scope": scope,
+             "last_used": time.time(),
++            "future": future,
+         }
++    
+         return input_queue
+ 
++    def receive_wrapper(self, input_queue):
++        """
++        Creates a receive function for the application.
++        """
++        async def receive():
++            return await input_queue.get()
++        return receive
++
++    def send_wrapper(self, scope):
++        """
++        Creates a send function for the application.
++        """
++        async def send(message):
++            await self.application_send(scope, message)
++        return send
+     def delete_oldest_application_instance(self):
+         """
+         Finds and deletes the oldest application instance

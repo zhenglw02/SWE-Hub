@@ -1,0 +1,43 @@
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..efa6ae0 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -36,7 +36,6 @@ class WsgiToAsgiInstance:
+             raise ValueError("WSGI wrapper received a non-HTTP scope")
+         self.scope = scope
+         with SpooledTemporaryFile(max_size=65536) as body:
+-            # Alright, wait for the http.request messages
+             while True:
+                 message = await receive()
+                 if message["type"] != "http.request":
+@@ -44,12 +43,8 @@ class WsgiToAsgiInstance:
+                 body.write(message.get("body", b""))
+                 if not message.get("more_body"):
+                     break
+-            body.seek(0)
+-            # Wrap send so it can be called from the subthread
+             self.sync_send = AsyncToSync(send)
+-            # Call the WSGI app
+-            await self.run_wsgi_app(body)
+-
++            self.run_wsgi_app(body)
+     def build_environ(self, scope, body):
+         """
+         Builds a scope and request body into a WSGI environ object.
+@@ -95,7 +90,7 @@ class WsgiToAsgiInstance:
+             # HTTPbis say only ASCII chars are allowed in headers, but we latin1 just in case
+             value = value.decode("latin1")
+             if corrected_name in environ:
+-                value = environ[corrected_name] + "," + value
++                value = environ[corrected_name]
+             environ[corrected_name] = value
+         return environ
+ 
+@@ -163,4 +158,5 @@ class WsgiToAsgiInstance:
+         if not self.response_started:
+             self.response_started = True
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        if bytes_sent > 0:
++            self.sync_send({"type": "http.response.body"})
+\ No newline at end of file

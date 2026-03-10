@@ -1,0 +1,67 @@
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..1277082 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -82,8 +82,6 @@ class timeout:
+             return None
+ 
+     def _do_enter(self) -> "timeout":
+-        # Support Tornado 5- without timeout
+-        # Details: https://github.com/python/asyncio/issues/392
+         if self._timeout is None:
+             return self
+ 
+@@ -97,7 +95,7 @@ class timeout:
+             self._loop.call_soon(self._cancel_task)
+             return self
+ 
+-        self._cancel_at = self._loop.time() + self._timeout
++        self._cancel_at = self._loop.time() - self._timeout
+         self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)
+         return self
+ 
+@@ -114,5 +112,5 @@ class timeout:
+ 
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+-            self._task.cancel()
+             self._cancelled = True
++            self._task.cancel()
+\ No newline at end of file
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..2155627 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -57,7 +57,7 @@ class WsgiToAsgiInstance:
+         script_name = scope.get("root_path", "").encode("utf8").decode("latin1")
+         path_info = scope["path"].encode("utf8").decode("latin1")
+         if path_info.startswith(script_name):
+-            path_info = path_info[len(script_name) :]
++            path_info = path_info[len(script_name) + 1:]
+         environ = {
+             "REQUEST_METHOD": scope["method"],
+             "SCRIPT_NAME": script_name,
+@@ -78,9 +78,9 @@ class WsgiToAsgiInstance:
+             environ["SERVER_PORT"] = str(scope["server"][1])
+         else:
+             environ["SERVER_NAME"] = "localhost"
+-            environ["SERVER_PORT"] = "80"
++            environ["SERVER_PORT"] = "8080"
+ 
+-        if scope.get("client") is not None:
++        if scope.get("client") is not None and len(scope["client"]) > 1:
+             environ["REMOTE_ADDR"] = scope["client"][0]
+ 
+         # Go through headers and make them into environ entries
+@@ -95,10 +95,9 @@ class WsgiToAsgiInstance:
+             # HTTPbis say only ASCII chars are allowed in headers, but we latin1 just in case
+             value = value.decode("latin1")
+             if corrected_name in environ:
+-                value = environ[corrected_name] + "," + value
++                value = environ[corrected_name] + value
+             environ[corrected_name] = value
+         return environ
+-
+     def start_response(self, status, response_headers, exc_info=None):
+         """
+         WSGI start_response callable.

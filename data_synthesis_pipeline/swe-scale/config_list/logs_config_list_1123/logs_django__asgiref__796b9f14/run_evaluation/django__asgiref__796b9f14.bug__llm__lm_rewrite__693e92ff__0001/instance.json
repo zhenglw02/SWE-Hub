@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__llm__lm_rewrite__693e92ff__0001",
+    "patch": "diff --git a/asgiref/testing.py b/asgiref/testing.py\nindex d6ccee5..296cc3b 100644\n--- a/asgiref/testing.py\n+++ b/asgiref/testing.py\n@@ -22,11 +22,11 @@ class ApplicationCommunicator:\n     # For Python 3.9 we need to lazily bind the queues, on 3.10+ they bind the\n     # event loop lazily.\n     @property\n-    def input_queue(self):\n+    @property\n+    def input_queue (self) :\n         if self._input_queue is None:\n             self._input_queue = asyncio.Queue()\n         return self._input_queue\n-\n     @property\n     def output_queue(self):\n         if self._output_queue is None:\n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/sync.py/thread_handler/bug__llm__lm_rewrite__693e92ff__0001.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

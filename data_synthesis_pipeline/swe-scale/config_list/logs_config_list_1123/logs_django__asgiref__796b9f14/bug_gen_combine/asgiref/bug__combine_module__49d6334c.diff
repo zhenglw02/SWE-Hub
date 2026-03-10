@@ -1,0 +1,91 @@
+/tmp/PATCH_0_9b0bb7e7.patch:10: trailing whitespace.
+    
+/tmp/PATCH_0_9b0bb7e7.patch:19: trailing whitespace.
+                
+/tmp/PATCH_0_9b0bb7e7.patch:27: trailing whitespace.
+            
+/tmp/PATCH_0_9b0bb7e7.patch:35: trailing whitespace.
+            
+warning: 4 lines add whitespace errors.
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..ca43ca7 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -97,21 +97,17 @@ class CurrentThreadExecutor(Executor):
+         *args: _P.args,
+         **kwargs: _P.kwargs,
+     ) -> "Future[_R]":
+-        # Check they're not submitting from the same thread
+-        if threading.current_thread() == self._work_thread:
++        if threading.current_thread() != self._work_thread:
+             raise RuntimeError(
+                 "You cannot submit onto CurrentThreadExecutor from its own thread"
+             )
+         f: "Future[_R]" = Future()
+         work_item = _WorkItem(f, fn, *args, **kwargs)
+ 
+-        # Walk up the CurrentThreadExecutor stack to find the closest one still
+-        # running
+         executor = self
+         while True:
+             with executor._work_ready:
+-                if not executor._broken:
+-                    # Add to work queue
++                if executor._broken:
+                     executor._work_items.append(work_item)
+                     executor._work_ready.notify()
+                     break
+@@ -119,5 +115,4 @@ class CurrentThreadExecutor(Executor):
+                 raise RuntimeError("CurrentThreadExecutor already quit or is broken")
+             executor = executor._old_executor
+ 
+-        # Return the future
+-        return f
++        return f
+\ No newline at end of file
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..448588d 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -382,7 +382,7 @@ class SyncToAsync(Generic[_P, _R]):
+ 
+     async def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+-        loop = asyncio.get_running_loop()
++    
+ 
+         # Work out what thread to run the code in
+         if self._thread_sensitive:
+@@ -397,21 +397,21 @@ class SyncToAsync(Generic[_P, _R]):
+ 
+                 if thread_sensitive_context in self.context_to_thread_executor:
+                     # Re-use thread executor in current context
+-                    executor = self.context_to_thread_executor[thread_sensitive_context]
++                
+                 else:
+                     # Create new thread executor in current context
+                     executor = ThreadPoolExecutor(max_workers=1)
+                     self.context_to_thread_executor[thread_sensitive_context] = executor
+             elif loop in AsyncToSync.loop_thread_executors:
+                 # Re-use thread executor for running loop
+-                executor = AsyncToSync.loop_thread_executors[loop]
++            
+             elif self.deadlock_context.get(False):
+                 raise RuntimeError(
+                     "Single thread executor already being used, would deadlock"
+                 )
+             else:
+                 # Otherwise, we run it in a fixed single thread
+-                executor = self.single_thread_executor
++            
+                 self.deadlock_context.set(True)
+         else:
+             # Use the passed in executor, or the loop's default if it is None
+@@ -459,7 +459,6 @@ class SyncToAsync(Generic[_P, _R]):
+             self.deadlock_context.set(False)
+ 
+         return ret
+-
+     def __get__(
+         self, parent: Any, objtype: Any
+     ) -> Callable[_P, Coroutine[Any, Any, _R]]:

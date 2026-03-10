@@ -1,0 +1,205 @@
+/tmp/PATCH_1_7ee3426a.patch:30: trailing whitespace.
+        
+/tmp/PATCH_1_7ee3426a.patch:96: trailing whitespace.
+        
+/tmp/PATCH_1_7ee3426a.patch:101: trailing whitespace.
+        
+/tmp/PATCH_1_7ee3426a.patch:118: trailing whitespace.
+    
+/tmp/PATCH_1_7ee3426a.patch:123: trailing whitespace.
+        
+warning: squelched 2 whitespace errors
+warning: 7 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..8df111b 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -47,12 +47,10 @@ def _restore_context(context: contextvars.Context) -> None:
+     for cvar in context:
+         cvalue = context.get(cvar)
+         try:
+-            if cvar.get() != cvalue:
+-                cvar.set(cvalue)
++            cvar.set(cvalue)
+         except LookupError:
+             cvar.set(cvalue)
+ 
+-
+ # Python 3.12 deprecates asyncio.iscoroutinefunction() as an alias for
+ # inspect.iscoroutinefunction(), whilst also removing the _is_coroutine marker.
+ # The latter is replaced with the inspect.markcoroutinefunction decorator.
+@@ -161,106 +159,77 @@ class AsyncToSync(Generic[_P, _R]):
+             # There's no event loop in this thread.
+             pass
+ 
+-    def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+-        __traceback_hide__ = True  # noqa: F841
+-
+-        if not self.force_new_loop and not self.main_event_loop:
+-            # There's no event loop in this thread. Look for the threadlocal if
+-            # we're inside SyncToAsync
+-            main_event_loop_pid = getattr(
+-                SyncToAsync.threadlocal, "main_event_loop_pid", None
+-            )
+-            # We make sure the parent loop is from the same process - if
+-            # they've forked, this is not going to be valid any more (#194)
+-            if main_event_loop_pid and main_event_loop_pid == os.getpid():
+-                self.main_event_loop = getattr(
+-                    SyncToAsync.threadlocal, "main_event_loop", None
++    def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R :
++        # If there is a running event loop in this thread, use it
++        if not self.force_new_loop and self.main_event_loop and self.main_event_loop.is_running():
++            # We are inside a running event loop
++            call_result = Future()
++            task_context: List[asyncio.Task[Any]] = []
++            context = [contextvars.copy_context()]
++        
++            # Create a task to run the async function
++            task = self.main_event_loop.create_task(
++                self.main_wrap(
++                    call_result,
++                    (None, None, None),
++                    task_context,
++                    context,
++                    self.awaitable(*args, **kwargs),
+                 )
+-
+-        # You can't call AsyncToSync from a thread with a running event loop
+-        try:
+-            asyncio.get_running_loop()
+-        except RuntimeError:
+-            pass
+-        else:
+-            raise RuntimeError(
+-                "You cannot use AsyncToSync in the same thread as an async event loop - "
+-                "just await the async function directly."
+-            )
+-
+-        # Make a future for the return information
+-        call_result: "Future[_R]" = Future()
+-
+-        # Make a CurrentThreadExecutor we'll use to idle in this thread - we
+-        # need one for every sync frame, even if there's one above us in the
+-        # same thread.
+-        old_executor = getattr(self.executors, "current", None)
+-        current_executor = CurrentThreadExecutor(old_executor)
+-        self.executors.current = current_executor
+-
+-        # Wrapping context in list so it can be reassigned from within
+-        # `main_wrap`.
+-        context = [contextvars.copy_context()]
+-
+-        # Get task context so that parent task knows which task to propagate
+-        # an asyncio.CancelledError to.
+-        task_context = getattr(SyncToAsync.threadlocal, "task_context", None)
+-
+-        # Use call_soon_threadsafe to schedule a synchronous callback on the
+-        # main event loop's thread if it's there, otherwise make a new loop
+-        # in this thread.
+-        try:
+-            awaitable = self.main_wrap(
+-                call_result,
+-                sys.exc_info(),
+-                task_context,
+-                context,
+-                # prepare an awaitable which can be passed as is to self.main_wrap,
+-                # so that `args` and `kwargs` don't need to be
+-                # destructured when passed to self.main_wrap
+-                # (which is required by `ParamSpec`)
+-                # as that may cause overlapping arguments
+-                self.awaitable(*args, **kwargs),
+             )
+-
+-            async def new_loop_wrap() -> None:
+-                loop = asyncio.get_running_loop()
+-                self.loop_thread_executors[loop] = current_executor
+-                try:
+-                    await awaitable
+-                finally:
+-                    del self.loop_thread_executors[loop]
+-
+-            if self.main_event_loop is not None:
++        
++            # Store the executor in the context for SyncToAsync to find
++            if not hasattr(AsyncToSync.executors, "current"):
++                AsyncToSync.executors.current = CurrentThreadExecutor(self.main_event_loop)
++                AsyncToSync.loop_thread_executors[self.main_event_loop] = AsyncToSync.executors.current
++        
++            # Wait for the future to complete
++            try:
++                return call_result.result()
++            finally:
++                # Clean up the executor if we created one
++                if not task_context:
++                    if hasattr(AsyncToSync.executors, "current"):
++                        del AsyncToSync.executors.current
++                    AsyncToSync.loop_thread_executors.pop(self.main_event_loop, None)
++                # Cancel the task if it's not done
++                if not task.done():
++                    task.cancel()
++                    try:
++                        self.main_event_loop.run_until_complete(task)
++                    except asyncio.CancelledError:
++                        pass
++    
++        else:
++            # We need to run in a new loop in a new thread
++            result = None
++            exception: Optional[BaseException] = None
++        
++            # Target function for the new thread
++            def run_in_new_loop():
++                nonlocal result, exception
+                 try:
+-                    self.main_event_loop.call_soon_threadsafe(
+-                        self.main_event_loop.create_task, awaitable
+-                    )
+-                except RuntimeError:
+-                    running_in_main_event_loop = False
+-                else:
+-                    running_in_main_event_loop = True
+-                    # Run the CurrentThreadExecutor until the future is done.
+-                    current_executor.run_until_future(call_result)
+-            else:
+-                running_in_main_event_loop = False
+-
+-            if not running_in_main_event_loop:
+-                # Make our own event loop - in a new thread - and run inside that.
+-                loop_executor = ThreadPoolExecutor(max_workers=1)
+-                loop_future = loop_executor.submit(asyncio.run, new_loop_wrap())
+-                # Run the CurrentThreadExecutor until the future is done.
+-                current_executor.run_until_future(loop_future)
+-                # Wait for future and/or allow for exception propagation
+-                loop_future.result()
+-        finally:
+-            _restore_context(context[0])
+-            # Restore old current thread executor state
+-            self.executors.current = old_executor
+-
+-        # Wait for results from the future.
+-        return call_result.result()
+-
++                    # Create a new event loop
++                    loop = asyncio.new_event_loop()
++                    asyncio.set_event_loop(loop)
++                    try:
++                        # Run the async function
++                        future = asyncio.ensure_future(self.awaitable(*args, **kwargs))
++                        result = loop.run_until_complete(future)
++                    finally:
++                        loop.close()
++                except BaseException as e:
++                    exception = e
++        
++            # Create and start the thread
++            thread = threading.Thread(target=run_in_new_loop)
++            thread.start()
++            thread.join()
++        
++            # Propagate exceptions or return result
++            if exception:
++                raise exception
++            return result
+     def __get__(self, parent: Any, objtype: Any) -> Callable[_P, _R]:
+         """
+         Include self for methods

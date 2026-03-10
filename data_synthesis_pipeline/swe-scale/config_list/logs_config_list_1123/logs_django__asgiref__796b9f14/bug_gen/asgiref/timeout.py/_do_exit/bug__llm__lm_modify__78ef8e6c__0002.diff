@@ -1,0 +1,21 @@
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..351ec2a 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -155,12 +155,10 @@ class StatelessServer:
+                     exception = details["future"].exception()
+                     if exception:
+                         await self.application_exception(exception, details)
+-                    try:
+-                        del self.application_instances[scope_id]
+-                    except KeyError:
+-                        # Exception handling might have already got here before us. That's fine.
+-                        pass
+-
++                try:
++                    del self.application_instances[scope_id]
++                except KeyError:
++                    pass
+     async def application_exception(self, exception, application_details):
+         """
+         Called whenever an application coroutine has an exception.

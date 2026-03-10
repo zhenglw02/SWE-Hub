@@ -1,0 +1,72 @@
+/tmp/PATCH_0_94118886.patch:21: trailing whitespace.
+    
+/tmp/PATCH_0_94118886.patch:34: trailing whitespace.
+    
+warning: 2 lines add whitespace errors.
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..408c9db 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -119,20 +119,21 @@ class StatelessServer:
+         }
+         return input_queue
+ 
+-    def delete_oldest_application_instance(self):
+-        """
+-        Finds and deletes the oldest application instance
+-        """
+-        oldest_time = min(
+-            details["last_used"] for details in self.application_instances.values()
++    def delete_oldest_application_instance (self) :
++        """
++            Finds and deletes the oldest application instance
++            """
++        if not self.application_instances:
++            return
++    
++        # Find the scope_id with the smallest last_used timestamp
++        oldest_scope_id = min(
++            self.application_instances.keys(),
++            key=lambda scope_id: self.application_instances[scope_id]["last_used"]
+         )
+-        for scope_id, details in self.application_instances.items():
+-            if details["last_used"] == oldest_time:
+-                self.delete_application_instance(scope_id)
+-                # Return to make sure we only delete one in case two have
+-                # the same oldest time
+-                return
+-
++    
++        # Delete the oldest application instance
++        self.delete_application_instance(oldest_scope_id)
+     def delete_application_instance(self, scope_id):
+         """
+         Removes an application instance (makes sure its task is stopped,
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..0907866 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -562,15 +562,7 @@ def sync_to_async(
+     ...
+ 
+ 
+-def sync_to_async(
+-    func: Optional[Callable[_P, _R]] = None,
+-    *,
+-    thread_sensitive: bool = True,
+-    executor: Optional["ThreadPoolExecutor"] = None,
+-) -> Union[
+-    Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]],
+-    Callable[_P, Coroutine[Any, Any, _R]],
+-]:
++def sync_to_async ( func: Optional[Callable[_P, _R]] = None, *, thread_sensitive: bool = True, executor: Optional["ThreadPoolExecutor"] = None, ) -> Union[ Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]], Callable[_P, Coroutine[Any, Any, _R]], ] :
+     if func is None:
+         return lambda f: SyncToAsync(
+             f,
+@@ -581,4 +573,4 @@ def sync_to_async(
+         func,
+         thread_sensitive=thread_sensitive,
+         executor=executor,
+-    )
++    )
+\ No newline at end of file

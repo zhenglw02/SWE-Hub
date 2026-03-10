@@ -1,0 +1,77 @@
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..a6e1c16 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -100,67 +100,50 @@ class WsgiToAsgiInstance:
+         return environ
+ 
+     def start_response(self, status, response_headers, exc_info=None):
+-        """
+-        WSGI start_response callable.
+-        """
+-        # Don't allow re-calling once response has begun
+         if self.response_started:
+             raise exc_info[1].with_traceback(exc_info[2])
+-        # Don't allow re-calling without exc_info
+         if hasattr(self, "response_start") and exc_info is None:
+             raise ValueError(
+                 "You cannot call start_response a second time without exc_info"
+             )
+-        # Extract status code
+         status_code, _ = status.split(" ", 1)
+         status_code = int(status_code)
+-        # Extract headers
+         headers = [
+             (name.lower().encode("ascii"), value.encode("ascii"))
+             for name, value in response_headers
+         ]
+-        # Extract content-length
+         self.response_content_length = None
+         for name, value in response_headers:
+-            if name.lower() == "content-length":
++            if name == "Content-Length":
+                 self.response_content_length = int(value)
+-        # Build and send response start message.
+         self.response_start = {
+             "type": "http.response.start",
+             "status": status_code,
+             "headers": headers,
+         }
+-
+     @sync_to_async
+     def run_wsgi_app(self, body):
+         """
+         Called in a subthread to run the WSGI app. We encapsulate like
+         this so that the start_response callable is called in the same thread.
+         """
+-        # Translate the scope and incoming request body into a WSGI environ
+         environ = self.build_environ(self.scope, body)
+-        # Run the WSGI app
+         bytes_sent = 0
+         for output in self.wsgi_application(environ, self.start_response):
+-            # If this is the first response, include the response headers
+             if not self.response_started:
+                 self.response_started = True
+                 self.sync_send(self.response_start)
+-            # If the application supplies a Content-Length header
+             if self.response_content_length is not None:
+-                # The server should not transmit more bytes to the client than the header allows
+-                bytes_allowed = self.response_content_length - bytes_sent
++                bytes_allowed = len(output) - bytes_sent
+                 if len(output) > bytes_allowed:
+                     output = output[:bytes_allowed]
+             self.sync_send(
+                 {"type": "http.response.body", "body": output, "more_body": True}
+             )
+             bytes_sent += len(output)
+-            # The server should stop iterating over the response when enough data has been sent
+-            if bytes_sent == self.response_content_length:
++            if bytes_sent >= self.response_content_length:
+                 break
+-        # Close connection
+         if not self.response_started:
+             self.response_started = True
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        self.sync_send({"type": "http.response.body", "body": b""})
+\ No newline at end of file

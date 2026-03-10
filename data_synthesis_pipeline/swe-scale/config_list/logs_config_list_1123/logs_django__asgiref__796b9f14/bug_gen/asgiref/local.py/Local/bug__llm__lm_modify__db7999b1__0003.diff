@@ -1,0 +1,74 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..c8979d9 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -384,37 +384,28 @@ class SyncToAsync(Generic[_P, _R]):
+         __traceback_hide__ = True  # noqa: F841
+         loop = asyncio.get_running_loop()
+ 
+-        # Work out what thread to run the code in
+         if self._thread_sensitive:
+             current_thread_executor = getattr(AsyncToSync.executors, "current", None)
+             if current_thread_executor:
+-                # If we have a parent sync thread above somewhere, use that
+                 executor = current_thread_executor
+             elif self.thread_sensitive_context.get(None):
+-                # If we have a way of retrieving the current context, attempt
+-                # to use a per-context thread pool executor
+                 thread_sensitive_context = self.thread_sensitive_context.get()
+ 
+                 if thread_sensitive_context in self.context_to_thread_executor:
+-                    # Re-use thread executor in current context
+                     executor = self.context_to_thread_executor[thread_sensitive_context]
+                 else:
+-                    # Create new thread executor in current context
+                     executor = ThreadPoolExecutor(max_workers=1)
+                     self.context_to_thread_executor[thread_sensitive_context] = executor
+             elif loop in AsyncToSync.loop_thread_executors:
+-                # Re-use thread executor for running loop
+                 executor = AsyncToSync.loop_thread_executors[loop]
+-            elif self.deadlock_context.get(False):
++            elif self.deadlock_context.get(True):
+                 raise RuntimeError(
+                     "Single thread executor already being used, would deadlock"
+                 )
+             else:
+-                # Otherwise, we run it in a fixed single thread
+                 executor = self.single_thread_executor
+                 self.deadlock_context.set(True)
+         else:
+-            # Use the passed in executor, or the loop's default if it is None
+             executor = self._executor
+ 
+         context = contextvars.copy_context()
+@@ -422,7 +413,6 @@ class SyncToAsync(Generic[_P, _R]):
+         func = context.run
+         task_context: List[asyncio.Task[Any]] = []
+ 
+-        # Run the code in the right thread
+         exec_coro = loop.run_in_executor(
+             executor,
+             functools.partial(
+@@ -448,18 +438,16 @@ class SyncToAsync(Generic[_P, _R]):
+                 except asyncio.CancelledError:
+                     pass
+             except IndexError:
+-                pass
+-            if exec_coro.done():
+-                raise
+-            if cancel_parent:
+-                exec_coro.cancel()
++                if exec_coro.done():
++                    raise
++                if cancel_parent:
++                    exec_coro.cancel()
+             ret = await exec_coro
+         finally:
+             _restore_context(context)
+             self.deadlock_context.set(False)
+ 
+         return ret
+-
+     def __get__(
+         self, parent: Any, objtype: Any
+     ) -> Callable[_P, Coroutine[Any, Any, _R]]:

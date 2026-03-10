@@ -1,0 +1,47 @@
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..a34938f 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -48,25 +48,26 @@ class ApplicationCommunicator:
+             )
+         return self._future
+ 
+-    async def wait(self, timeout=1):
+-        """
+-        Waits for the application to stop itself and returns any exceptions.
++    async def wait (self, timeout=1) :
+         """
++            Waits for the application to stop itself and returns any exceptions.
++            """
+         try:
+             async with async_timeout(timeout):
+-                try:
+-                    await self.future
+-                    self.future.result()
+-                except asyncio.CancelledError:
+-                    pass
+-        finally:
+-            if not self.future.done():
+-                self.future.cancel()
+-                try:
+-                    await self.future
+-                except asyncio.CancelledError:
+-                    pass
+-
++                await self.future
++        except asyncio.TimeoutError:
++            # Cancel the future on timeout
++            self.future.cancel()
++            try:
++                await self.future
++            except asyncio.CancelledError:
++                pass
++            raise
++        except Exception as e:
++            # If the future completed with an exception, return it
++            return e
++        # If the future completed successfully, return None
++        return None
+     def stop(self, exceptions=True):
+         future = self._future
+         if future is None:

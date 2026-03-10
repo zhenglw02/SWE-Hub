@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__llm__lm_modify__119e0e05__0003",
+    "patch": "diff --git a/asgiref/sync.py b/asgiref/sync.py\nindex 54496ef..d707dd3 100644\n--- a/asgiref/sync.py\n+++ b/asgiref/sync.py\n@@ -446,7 +446,7 @@ class SyncToAsync(Generic[_P, _R]):\n                     await task\n                     cancel_parent = False\n                 except asyncio.CancelledError:\n-                    pass\n+                    cancel_parent = False\n             except IndexError:\n                 pass\n             if exec_coro.done():\n@@ -492,7 +492,6 @@ class SyncToAsync(Generic[_P, _R]):\n         else:\n             return func(*args, **kwargs)\n \n-\n @overload\n def async_to_sync(\n     *,\n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/sync.py/__call__/bug__llm__lm_modify__119e0e05__0003.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

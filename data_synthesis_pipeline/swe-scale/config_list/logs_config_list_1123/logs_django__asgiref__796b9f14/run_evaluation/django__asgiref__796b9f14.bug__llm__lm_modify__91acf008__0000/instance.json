@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__llm__lm_modify__91acf008__0000",
+    "patch": "diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py\nindex b9868e3..8d080ad 100644\n--- a/asgiref/wsgi.py\n+++ b/asgiref/wsgi.py\n@@ -95,7 +95,7 @@ class WsgiToAsgiInstance:\n             # HTTPbis say only ASCII chars are allowed in headers, but we latin1 just in case\n             value = value.decode(\"latin1\")\n             if corrected_name in environ:\n-                value = environ[corrected_name] + \",\" + value\n+                value = environ[corrected_name]\n             environ[corrected_name] = value\n         return environ\n \n@@ -163,4 +163,5 @@ class WsgiToAsgiInstance:\n         if not self.response_started:\n             self.response_started = True\n             self.sync_send(self.response_start)\n-        self.sync_send({\"type\": \"http.response.body\"})\n+        if bytes_sent > 0:\n+            self.sync_send({\"type\": \"http.response.body\"})\n\\ No newline at end of file\n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/sync.py/__call__/bug__llm__lm_modify__91acf008__0000.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

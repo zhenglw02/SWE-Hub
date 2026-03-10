@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__3e9cd661__0000",
+  "hash_code": "3e9cd661",
+  "cost": 0,
+  "explanation": "The `remaining` function should return the time left before the timeout expires. If the timeout is None (disabled), it should return None. If the timeout has already expired, it should return 0 or a negative value. The calculation should be based on the current loop time and the scheduled cancellation time.",
+  "output": "The `remaining` function should return the time left before the timeout expires. If the timeout is None (disabled), it should return None. If the timeout has already expired, it should return 0 or a negative value. The calculation should be based on the current loop time and the scheduled cancellation time.\n\n```\ndef remaining (self) -> Optional[float] :\n    if self._timeout is None:\n        return None\n    if self._cancel_at is None:\n        return 0.0\n    return max(0.0, self._cancel_at - self._loop.time())\n```",
+  "rewrite": "def remaining (self) -> Optional[float] :\n    if self._timeout is None:\n        return None\n    if self._cancel_at is None:\n        return 0.0\n    return max(0.0, self._cancel_at - self._loop.time())",
+  "strategy": "lm_rewrite"
+}

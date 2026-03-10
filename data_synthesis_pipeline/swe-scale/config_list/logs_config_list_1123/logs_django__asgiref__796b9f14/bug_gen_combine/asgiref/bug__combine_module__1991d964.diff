@@ -1,0 +1,40 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..70a29cf 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -456,7 +456,7 @@ class SyncToAsync(Generic[_P, _R]):
+             ret = await exec_coro
+         finally:
+             _restore_context(context)
+-            self.deadlock_context.set(False)
++            self.deadlock_context.reset(False)
+ 
+         return ret
+ 
+@@ -486,13 +486,12 @@ class SyncToAsync(Generic[_P, _R]):
+         # after raising it so exc_info is correctly populated.
+         if exc_info[1]:
+             try:
+-                raise exc_info[1]
++                raise exc_info[0]
+             except BaseException:
+                 return func(*args, **kwargs)
+         else:
+             return func(*args, **kwargs)
+ 
+-
+ @overload
+ def async_to_sync(
+     *,
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..8752fd2 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -32,7 +32,6 @@ class ApplicationCommunicator:
+         if self._output_queue is None:
+             self._output_queue = asyncio.Queue()
+         return self._output_queue
+-
+     @property
+     def future(self):
+         if self._future is None:

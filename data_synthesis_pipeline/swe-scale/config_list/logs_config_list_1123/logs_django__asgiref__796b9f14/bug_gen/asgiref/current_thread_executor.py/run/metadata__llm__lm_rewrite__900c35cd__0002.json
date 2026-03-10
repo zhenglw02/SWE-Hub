@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__900c35cd__0002",
+  "hash_code": "900c35cd",
+  "cost": 0,
+  "explanation": "Looking at the code, I need to implement the `run` method in the `_WorkItem` class. This method should execute the function with its arguments and set the result or exception on the future.\n\n<explanation>",
+  "output": "Looking at the code, I need to implement the `run` method in the `_WorkItem` class. This method should execute the function with its arguments and set the result or exception on the future.\n\n<explanation>\n```\ndef run (self) -> None :\n    if not self.future.set_running_or_notify_cancel():\n        return\n    \n    try:\n        result = self.fn(*self.args, **self.kwargs)\n    except BaseException as e:\n        self.future.set_exception(e)\n    else:\n        self.future.set_result(result)\n```",
+  "rewrite": "def run (self) -> None :\n    if not self.future.set_running_or_notify_cancel():\n        return\n    \n    try:\n        result = self.fn(*self.args, **self.kwargs)\n    except BaseException as e:\n        self.future.set_exception(e)\n    else:\n        self.future.set_result(result)",
+  "strategy": "lm_rewrite"
+}

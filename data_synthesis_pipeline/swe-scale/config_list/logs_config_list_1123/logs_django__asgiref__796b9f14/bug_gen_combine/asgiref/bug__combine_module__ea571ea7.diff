@@ -1,0 +1,105 @@
+/tmp/PATCH_0_5269c6d3.patch:33: trailing whitespace.
+    
+/tmp/PATCH_0_5269c6d3.patch:46: trailing whitespace.
+    
+warning: 2 lines add whitespace errors.
+/tmp/PATCH_1_0bbd9fa6.patch:34: trailing whitespace.
+        
+/tmp/PATCH_1_0bbd9fa6.patch:38: trailing whitespace.
+        
+warning: 2 lines add whitespace errors.
+diff --git a/asgiref/compatibility.py b/asgiref/compatibility.py
+index 3a2a63e..35469ed 100644
+--- a/asgiref/compatibility.py
++++ b/asgiref/compatibility.py
+@@ -3,27 +3,29 @@ import inspect
+ from .sync import iscoroutinefunction
+ 
+ 
+-def is_double_callable(application):
++def is_double_callable (application) :
+     """
+     Tests to see if an application is a legacy-style (double-callable) application.
+     """
+-    # Look for a hint on the object first
+-    if getattr(application, "_asgi_single_callable", False):
++    # Check if the application is callable
++    if not callable(application):
+         return False
+-    if getattr(application, "_asgi_double_callable", False):
+-        return True
+-    # Uninstanted classes are double-callable
+-    if inspect.isclass(application):
+-        return True
+-    # Instanted classes depend on their __call__
+-    if hasattr(application, "__call__"):
+-        # We only check to see if its __call__ is a coroutine function -
+-        # if it's not, it still might be a coroutine function itself.
+-        if iscoroutinefunction(application.__call__):
+-            return False
+-    # Non-classes we just check directly
+-    return not iscoroutinefunction(application)
+-
++    
++    # Try to inspect the signature to see if it takes exactly one argument (scope)
++    try:
++        sig = inspect.signature(application)
++        # Double-callable apps should take exactly one parameter (scope)
++        if len(sig.parameters) == 1:
++            # Call it with a dummy scope to see if it returns a callable
++            dummy_scope = {"type": "http"}
++            instance = application(dummy_scope)
++            return callable(instance)
++    except:
++        # If signature inspection fails, fall back to a simpler check
++        pass
++    
++    # If we can't determine via signature, assume it's single-callable
++    return False
+ 
+ def double_to_single_callable(application):
+     """
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..c3ca654 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -120,18 +120,30 @@ class ApplicationCommunicator:
+                     pass
+             raise e
+ 
+-    async def receive_nothing(self, timeout=0.1, interval=0.01):
+-        """
+-        Checks that there is no message to receive in the given time.
++    async def receive_nothing (self, timeout=0.1, interval=0.01) :
+         """
++            Checks that there is no message to receive in the given time.
++            """
+         # Make sure there's not an exception to raise from the task
+         if self.future.done():
+             self.future.result()
+ 
+-        # `interval` has precedence over `timeout`
+-        start = time.monotonic()
+-        while time.monotonic() - start < timeout:
++        # Track how long we've been waiting
++        start_time = time.time()
++        elapsed = 0
++
++        # Keep checking until timeout is reached
++        while elapsed < timeout:
++            # Check if there's a message available without blocking
+             if not self.output_queue.empty():
+-                return False
++                # If we find a message, raise an AssertionError
++                raise AssertionError("Received unexpected message")
++        
++            # Wait for the specified interval before checking again
+             await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++        
++            # Update elapsed time
++            elapsed = time.time() - start_time
++
++        # If we reach here, no message was received during the timeout period
++        return
+\ No newline at end of file

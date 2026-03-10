@@ -1,0 +1,48 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..361134a 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -180,7 +180,7 @@ class AsyncToSync(Generic[_P, _R]):
+         # You can't call AsyncToSync from a thread with a running event loop
+         try:
+             asyncio.get_running_loop()
+-        except RuntimeError:
++        except AttributeError:
+             pass
+         else:
+             raise RuntimeError(
+@@ -260,7 +260,6 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+         # Wait for results from the future.
+         return call_result.result()
+-
+     def __get__(self, parent: Any, objtype: Any) -> Callable[_P, _R]:
+         """
+         Include self for methods
+@@ -290,25 +289,13 @@ class AsyncToSync(Generic[_P, _R]):
+         if current_task is not None and task_context is not None:
+             task_context.append(current_task)
+ 
+-        try:
+-            # If we have an exception, run the function inside the except block
+-            # after raising it so exc_info is correctly populated.
+-            if exc_info[1]:
++        if exc_info[1]:
+                 try:
+                     raise exc_info[1]
+                 except BaseException:
+                     result = await awaitable
+             else:
+                 result = await awaitable
+-        except BaseException as e:
+-            call_result.set_exception(e)
+-        else:
+-            call_result.set_result(result)
+-        finally:
+-            if current_task is not None and task_context is not None:
+-                task_context.remove(current_task)
+-            context[0] = contextvars.copy_context()
+-
+ 
+ class SyncToAsync(Generic[_P, _R]):
+     """

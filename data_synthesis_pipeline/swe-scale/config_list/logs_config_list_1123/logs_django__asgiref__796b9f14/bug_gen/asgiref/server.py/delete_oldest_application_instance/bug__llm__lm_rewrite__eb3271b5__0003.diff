@@ -1,0 +1,47 @@
+diff --git a/asgiref/compatibility.py b/asgiref/compatibility.py
+index 3a2a63e..9938b87 100644
+--- a/asgiref/compatibility.py
++++ b/asgiref/compatibility.py
+@@ -3,27 +3,25 @@ import inspect
+ from .sync import iscoroutinefunction
+ 
+ 
+-def is_double_callable(application):
++def is_double_callable (application) :
+     """
+     Tests to see if an application is a legacy-style (double-callable) application.
+     """
+-    # Look for a hint on the object first
+-    if getattr(application, "_asgi_single_callable", False):
++    # First, verify the application is callable at all
++    if not callable(application):
++        return False
++    
++    # Create a minimal test scope that would be valid for ASGI
++    test_scope = {"type": "http", "protocol": "http/1.1"}
++    
++    try:
++        # Call the application with the test scope
++        result = application(test_scope)
++        # Check if the result is callable (indicating double-callable pattern)
++        return callable(result)
++    except (TypeError, Exception):
++        # If calling fails or raises an exception, it's not a valid double-callable
+         return False
+-    if getattr(application, "_asgi_double_callable", False):
+-        return True
+-    # Uninstanted classes are double-callable
+-    if inspect.isclass(application):
+-        return True
+-    # Instanted classes depend on their __call__
+-    if hasattr(application, "__call__"):
+-        # We only check to see if its __call__ is a coroutine function -
+-        # if it's not, it still might be a coroutine function itself.
+-        if iscoroutinefunction(application.__call__):
+-            return False
+-    # Non-classes we just check directly
+-    return not iscoroutinefunction(application)
+-
+ 
+ def double_to_single_callable(application):
+     """

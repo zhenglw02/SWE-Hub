@@ -1,0 +1,81 @@
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..066a5a5 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -97,13 +97,10 @@ class StatelessServer:
+         if scope_id in self.application_instances:
+             self.application_instances[scope_id]["last_used"] = time.time()
+             return self.application_instances[scope_id]["input_queue"]
+-        # See if we need to delete an old one
+-        while len(self.application_instances) > self.max_applications:
++        while len(self.application_instances) >= self.max_applications:
+             self.delete_oldest_application_instance()
+-        # Make an instance of the application
+         input_queue = asyncio.Queue()
+         application_instance = guarantee_single_callable(self.application)
+-        # Run it, and stash the future for later checking
+         future = asyncio.ensure_future(
+             application_instance(
+                 scope=scope,
+@@ -129,8 +126,6 @@ class StatelessServer:
+         for scope_id, details in self.application_instances.items():
+             if details["last_used"] == oldest_time:
+                 self.delete_application_instance(scope_id)
+-                # Return to make sure we only delete one in case two have
+-                # the same oldest time
+                 return
+ 
+     def delete_application_instance(self, scope_id):
+@@ -158,7 +153,6 @@ class StatelessServer:
+                     try:
+                         del self.application_instances[scope_id]
+                     except KeyError:
+-                        # Exception handling might have already got here before us. That's fine.
+                         pass
+ 
+     async def application_exception(self, exception, application_details):
+@@ -170,4 +164,4 @@ class StatelessServer:
+             exception,
+             "".join(traceback.format_tb(exception.__traceback__)),
+             f"  {exception}",
+-        )
++        )
+\ No newline at end of file
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..bc3f33c 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -137,18 +137,13 @@ class WsgiToAsgiInstance:
+         Called in a subthread to run the WSGI app. We encapsulate like
+         this so that the start_response callable is called in the same thread.
+         """
+-        # Translate the scope and incoming request body into a WSGI environ
+         environ = self.build_environ(self.scope, body)
+-        # Run the WSGI app
+         bytes_sent = 0
+         for output in self.wsgi_application(environ, self.start_response):
+-            # If this is the first response, include the response headers
+             if not self.response_started:
+                 self.response_started = True
+                 self.sync_send(self.response_start)
+-            # If the application supplies a Content-Length header
+             if self.response_content_length is not None:
+-                # The server should not transmit more bytes to the client than the header allows
+                 bytes_allowed = self.response_content_length - bytes_sent
+                 if len(output) > bytes_allowed:
+                     output = output[:bytes_allowed]
+@@ -156,11 +151,9 @@ class WsgiToAsgiInstance:
+                 {"type": "http.response.body", "body": output, "more_body": True}
+             )
+             bytes_sent += len(output)
+-            # The server should stop iterating over the response when enough data has been sent
+-            if bytes_sent == self.response_content_length:
++            if bytes_sent >= self.response_content_length:
+                 break
+-        # Close connection
+         if not self.response_started:
+             self.response_started = True
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        self.sync_send({"type": "http.response.body"})
+\ No newline at end of file

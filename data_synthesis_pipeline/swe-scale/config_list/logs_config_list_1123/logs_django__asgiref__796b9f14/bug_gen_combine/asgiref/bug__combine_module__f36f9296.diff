@@ -1,0 +1,96 @@
+/tmp/PATCH_1_48531b3d.patch:11: trailing whitespace.
+    
+/tmp/PATCH_1_48531b3d.patch:12: trailing whitespace.
+    
+/tmp/PATCH_1_48531b3d.patch:21: trailing whitespace.
+        
+/tmp/PATCH_1_48531b3d.patch:30: trailing whitespace.
+            
+/tmp/PATCH_1_48531b3d.patch:35: trailing whitespace.
+        
+warning: 5 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..02a1fef 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -131,36 +131,10 @@ class AsyncToSync(Generic[_P, _R]):
+     # inside create_task, we'll look it up here from the running event loop.
+     loop_thread_executors: "Dict[asyncio.AbstractEventLoop, CurrentThreadExecutor]" = {}
+ 
+-    def __init__(
+-        self,
+-        awaitable: Union[
+-            Callable[_P, Coroutine[Any, Any, _R]],
+-            Callable[_P, Awaitable[_R]],
+-        ],
+-        force_new_loop: bool = False,
+-    ):
+-        if not callable(awaitable) or (
+-            not iscoroutinefunction(awaitable)
+-            and not iscoroutinefunction(getattr(awaitable, "__call__", awaitable))
+-        ):
+-            # Python does not have very reliable detection of async functions
+-            # (lots of false negatives) so this is just a warning.
+-            warnings.warn(
+-                "async_to_sync was passed a non-async-marked callable", stacklevel=2
+-            )
++    def __init__ ( self, awaitable: Union[ Callable[_P, Coroutine[Any, Any, _R]], Callable[_P, Awaitable[_R]], ], force_new_loop: bool = False, ) :
+         self.awaitable = awaitable
+-        try:
+-            self.__self__ = self.awaitable.__self__  # type: ignore[union-attr]
+-        except AttributeError:
+-            pass
+         self.force_new_loop = force_new_loop
+         self.main_event_loop = None
+-        try:
+-            self.main_event_loop = asyncio.get_running_loop()
+-        except RuntimeError:
+-            # There's no event loop in this thread.
+-            pass
+-
+     def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+ 
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..b7438d2 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -54,8 +54,8 @@ class WsgiToAsgiInstance:
+         """
+         Builds a scope and request body into a WSGI environ object.
+         """
+-        script_name = scope.get("root_path", "").encode("utf8").decode("latin1")
+-        path_info = scope["path"].encode("utf8").decode("latin1")
++    
++    
+         if path_info.startswith(script_name):
+             path_info = path_info[len(script_name) :]
+         environ = {
+@@ -77,7 +77,7 @@ class WsgiToAsgiInstance:
+             environ["SERVER_NAME"] = scope["server"][0]
+             environ["SERVER_PORT"] = str(scope["server"][1])
+         else:
+-            environ["SERVER_NAME"] = "localhost"
++        
+             environ["SERVER_PORT"] = "80"
+ 
+         if scope.get("client") is not None:
+@@ -89,16 +89,15 @@ class WsgiToAsgiInstance:
+             if name == "content-length":
+                 corrected_name = "CONTENT_LENGTH"
+             elif name == "content-type":
+-                corrected_name = "CONTENT_TYPE"
++            
+             else:
+                 corrected_name = "HTTP_%s" % name.upper().replace("-", "_")
+             # HTTPbis say only ASCII chars are allowed in headers, but we latin1 just in case
+-            value = value.decode("latin1")
++        
+             if corrected_name in environ:
+                 value = environ[corrected_name] + "," + value
+             environ[corrected_name] = value
+         return environ
+-
+     def start_response(self, status, response_headers, exc_info=None):
+         """
+         WSGI start_response callable.

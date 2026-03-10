@@ -1,0 +1,82 @@
+/tmp/PATCH_1_b723c7ad.patch:31: trailing whitespace.
+        
+/tmp/PATCH_1_b723c7ad.patch:34: trailing whitespace.
+        
+/tmp/PATCH_1_b723c7ad.patch:37: trailing whitespace.
+            
+/tmp/PATCH_1_b723c7ad.patch:42: trailing whitespace.
+                
+/tmp/PATCH_1_b723c7ad.patch:45: trailing whitespace.
+        
+warning: 5 lines add whitespace errors.
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..21fc65c 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -143,24 +143,31 @@ class StatelessServer:
+         if not details["future"].done():
+             details["future"].cancel()
+ 
+-    async def application_checker(self):
+-        """
+-        Goes through the set of current application instance Futures and cleans up
+-        any that are done/prints exceptions for any that errored.
++    async def application_checker (self) :
+         """
++            Goes through the set of current application instance Futures and cleans up
++            any that are done/prints exceptions for any that errored.
++            """
+         while True:
+             await asyncio.sleep(self.application_checker_interval)
+-            for scope_id, details in list(self.application_instances.items()):
+-                if details["future"].done():
+-                    exception = details["future"].exception()
+-                    if exception:
+-                        await self.application_exception(exception, details)
+-                    try:
+-                        del self.application_instances[scope_id]
+-                    except KeyError:
+-                        # Exception handling might have already got here before us. That's fine.
+-                        pass
+-
++        
++            # Create a list of scopes to remove to avoid modifying dict during iteration
++            scopes_to_remove = []
++        
++            for scope_id, details in self.application_instances.items():
++                future = details["future"]
++            
++                if future.done():
++                    # Check if the future completed with an exception
++                    if future.exception():
++                        await self.application_exception(future.exception(), details)
++                
++                    # Mark this scope for removal
++                    scopes_to_remove.append(scope_id)
++        
++            # Remove all completed application instances
++            for scope_id in scopes_to_remove:
++                self.delete_application_instance(scope_id)
+     async def application_exception(self, exception, application_details):
+         """
+         Called whenever an application coroutine has an exception.
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..76b0976 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -102,7 +102,7 @@ class timeout:
+         return self
+ 
+     def _do_exit(self, exc_type: Type[BaseException]) -> None:
+-        if exc_type is asyncio.CancelledError and self._cancelled:
++        if self._task is not None and self._task.cancelled():
+             self._cancel_handler = None
+             self._task = None
+             raise asyncio.TimeoutError
+@@ -115,4 +115,4 @@ class timeout:
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+             self._task.cancel()
+-            self._cancelled = True
++            self._cancelled = True
+\ No newline at end of file

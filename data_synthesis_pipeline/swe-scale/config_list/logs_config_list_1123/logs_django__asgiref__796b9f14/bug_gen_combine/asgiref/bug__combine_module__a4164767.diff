@@ -1,0 +1,79 @@
+/tmp/PATCH_1_0b51313a.patch:11: trailing whitespace.
+    
+/tmp/PATCH_1_0b51313a.patch:16: trailing whitespace.
+    
+/tmp/PATCH_1_0b51313a.patch:26: trailing whitespace.
+        
+warning: 3 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..f7519e3 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -283,12 +283,10 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+         __traceback_hide__ = True  # noqa: F841
+ 
+-        if context is not None:
+-            _restore_context(context[0])
++    
+ 
+         current_task = asyncio.current_task()
+-        if current_task is not None and task_context is not None:
+-            task_context.append(current_task)
++    
+ 
+         try:
+             # If we have an exception, run the function inside the except block
+@@ -305,11 +303,9 @@ class AsyncToSync(Generic[_P, _R]):
+         else:
+             call_result.set_result(result)
+         finally:
+-            if current_task is not None and task_context is not None:
+-                task_context.remove(current_task)
++        
+             context[0] = contextvars.copy_context()
+ 
+-
+ class SyncToAsync(Generic[_P, _R]):
+     """
+     Utility class which turns a synchronous callable into an awaitable that
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..ad2d96f 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -97,29 +97,17 @@ class ApplicationCommunicator:
+         # Give it the message
+         await self.input_queue.put(message)
+ 
+-    async def receive_output(self, timeout=1):
+-        """
+-        Receives a single message from the application, with optional timeout.
++    async def receive_output (self, timeout=1) :
+         """
++            Receives a single message from the application, with optional timeout.
++            """
+         # Make sure there's not an exception to raise from the task
+         if self.future.done():
+             self.future.result()
+-        # Wait and receive the message
+-        try:
+-            async with async_timeout(timeout):
+-                return await self.output_queue.get()
+-        except asyncio.TimeoutError as e:
+-            # See if we have another error to raise inside
+-            if self.future.done():
+-                self.future.result()
+-            else:
+-                self.future.cancel()
+-                try:
+-                    await self.future
+-                except asyncio.CancelledError:
+-                    pass
+-            raise e
+ 
++        # Wait for message with timeout
++        async with async_timeout(timeout):
++            return await self.output_queue.get()
+     async def receive_nothing(self, timeout=0.1, interval=0.01):
+         """
+         Checks that there is no message to receive in the given time.

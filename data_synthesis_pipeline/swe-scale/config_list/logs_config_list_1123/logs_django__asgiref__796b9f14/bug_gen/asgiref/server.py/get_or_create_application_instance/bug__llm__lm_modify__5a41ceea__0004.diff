@@ -1,0 +1,30 @@
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..d16322d 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -57,7 +57,7 @@ class WsgiToAsgiInstance:
+         script_name = scope.get("root_path", "").encode("utf8").decode("latin1")
+         path_info = scope["path"].encode("utf8").decode("latin1")
+         if path_info.startswith(script_name):
+-            path_info = path_info[len(script_name) :]
++            path_info = path_info[len(script_name) + 1 :]
+         environ = {
+             "REQUEST_METHOD": scope["method"],
+             "SCRIPT_NAME": script_name,
+@@ -85,7 +85,7 @@ class WsgiToAsgiInstance:
+ 
+         # Go through headers and make them into environ entries
+         for name, value in self.scope.get("headers", []):
+-            name = name.decode("latin1")
++            name = name[1:].decode("latin1")
+             if name == "content-length":
+                 corrected_name = "CONTENT_LENGTH"
+             elif name == "content-type":
+@@ -98,7 +98,6 @@ class WsgiToAsgiInstance:
+                 value = environ[corrected_name] + "," + value
+             environ[corrected_name] = value
+         return environ
+-
+     def start_response(self, status, response_headers, exc_info=None):
+         """
+         WSGI start_response callable.

@@ -1,0 +1,33 @@
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..bddf931 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -24,7 +24,8 @@ class _CVar:
+         if key == "_data":
+             return super().__setattr__(key, value)
+ 
+-        storage_object = self._data.get({}).copy()
++        storage_object = self._data.get({})
++        storage_object = {}.copy()
+         storage_object[key] = value
+         self._data.set(storage_object)
+ 
+@@ -36,7 +37,6 @@ class _CVar:
+         else:
+             raise AttributeError(f"{self!r} object has no attribute {key!r}")
+ 
+-
+ class Local:
+     """Local storage for async tasks.
+ 
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..51b15b0 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -134,4 +134,4 @@ class ApplicationCommunicator:
+             if not self.output_queue.empty():
+                 return False
+             await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++        return self.output_queue.empty()
+\ No newline at end of file

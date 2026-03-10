@@ -1,0 +1,15 @@
+{
+    "instance_id": "combine_module__22d3fb7c",
+    "hash_code": "22d3fb7c",
+    "cost": 0,
+    "strategy": "combine_module",
+    "patch_files": [
+        "bug__llm__lm_modify__81c2e5b9__0004",
+        "bug__procedural__func_pm_remove_assign__e0eb1452"
+    ],
+    "patch_path": [
+        "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/server.py/application_checker/bug__llm__lm_modify__81c2e5b9__0004.diff",
+        "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/wsgi.py/run_wsgi_app/bug__procedural__func_pm_remove_assign__e0eb1452.diff"
+    ],
+    "num_patch_files": 2
+}

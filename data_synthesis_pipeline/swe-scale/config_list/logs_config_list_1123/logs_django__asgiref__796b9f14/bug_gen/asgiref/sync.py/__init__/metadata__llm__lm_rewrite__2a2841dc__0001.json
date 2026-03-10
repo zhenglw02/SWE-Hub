@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__2a2841dc__0001",
+  "hash_code": "2a2841dc",
+  "cost": 0,
+  "explanation": "",
+  "output": "```python\ndef __init__(self, func: Callable[_P, _R], thread_sensitive: bool = True, executor: Optional[\"ThreadPoolExecutor\"] = None) -> None:\n    if not callable(func):\n        raise TypeError(\"func must be callable\")\n    \n    if thread_sensitive and executor is not None:\n        raise TypeError(\"executor must not be set when thread_sensitive is True\")\n    \n    self.func = func\n    self._thread_sensitive = thread_sensitive\n    self._executor = executor\n    functools.update_wrapper(self, func)\n```\n\nThe implementation does the following:\n1. Validates that `func` is callable\n2. Checks that `executor` is not provided when `thread_sensitive=True` (as they're mutually exclusive)\n3. Stores the function and parameters as instance attributes\n4. Uses `functools.update_wrapper` to preserve the original function's metadata (name, docstring, etc.)\n\nThis follows the pattern used elsewhere in the codebase for similar wrapper classes.",
+  "rewrite": "def __init__(self, func: Callable[_P, _R], thread_sensitive: bool = True, executor: Optional[\"ThreadPoolExecutor\"] = None) -> None:\n    if not callable(func):\n        raise TypeError(\"func must be callable\")\n    \n    if thread_sensitive and executor is not None:\n        raise TypeError(\"executor must not be set when thread_sensitive is True\")\n    \n    self.func = func\n    self._thread_sensitive = thread_sensitive\n    self._executor = executor\n    functools.update_wrapper(self, func)",
+  "strategy": "lm_rewrite"
+}

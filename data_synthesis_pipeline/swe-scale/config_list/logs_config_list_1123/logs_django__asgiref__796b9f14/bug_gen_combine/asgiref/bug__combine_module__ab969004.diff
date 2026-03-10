@@ -1,0 +1,161 @@
+/tmp/PATCH_0_aa25aee5.patch:41: trailing whitespace.
+    
+/tmp/PATCH_0_aa25aee5.patch:44: trailing whitespace.
+    
+/tmp/PATCH_0_aa25aee5.patch:47: trailing whitespace.
+    
+/tmp/PATCH_0_aa25aee5.patch:57: trailing whitespace.
+    
+/tmp/PATCH_0_aa25aee5.patch:67: trailing whitespace.
+        
+warning: 5 lines add whitespace errors.
+/tmp/PATCH_1_3ae98bff.patch:17: trailing whitespace.
+    
+/tmp/PATCH_1_3ae98bff.patch:24: trailing whitespace.
+        
+/tmp/PATCH_1_3ae98bff.patch:29: trailing whitespace.
+            
+/tmp/PATCH_1_3ae98bff.patch:35: trailing whitespace.
+            
+/tmp/PATCH_1_3ae98bff.patch:49: trailing whitespace.
+                
+warning: 5 lines add whitespace errors.
+diff --git a/asgiref/compatibility.py b/asgiref/compatibility.py
+index 3a2a63e..ef3c3d8 100644
+--- a/asgiref/compatibility.py
++++ b/asgiref/compatibility.py
+@@ -7,23 +7,42 @@ def is_double_callable(application):
+     """
+     Tests to see if an application is a legacy-style (double-callable) application.
+     """
+-    # Look for a hint on the object first
+-    if getattr(application, "_asgi_single_callable", False):
++    if not callable(application):
+         return False
+-    if getattr(application, "_asgi_double_callable", False):
+-        return True
+-    # Uninstanted classes are double-callable
+-    if inspect.isclass(application):
++    
++    # Check if the application is double-callable by examining its signature
++    try:
++        sig = inspect.signature(application)
++        # Double callable should take exactly one parameter (scope)
++        if len(sig.parameters) != 1:
++            return False
++        
++        # The application should return a callable that takes (receive, send)
++        scope_instance = application({})
++        if not callable(scope_instance):
++            return False
++            
++        # Check if the returned callable is coroutine function or regular function
++        # that takes two parameters (receive, send)
++        sig_instance = inspect.signature(scope_instance)
++        if len(sig_instance.parameters) != 2:
++            return False
++            
+         return True
+-    # Instanted classes depend on their __call__
+-    if hasattr(application, "__call__"):
+-        # We only check to see if its __call__ is a coroutine function -
+-        # if it's not, it still might be a coroutine function itself.
+-        if iscoroutinefunction(application.__call__):
++    except (TypeError, ValueError):
++        # If signature inspection fails, try a simpler approach
++        try:
++            # Try to call with empty scope and see if it returns a callable
++            instance = application({})
++            if not callable(instance):
++                return False
++                
++            # Try to inspect the instance signature indirectly
++            if hasattr(instance, '__call__'):
++                return True
++            return False
++        except:
+             return False
+-    # Non-classes we just check directly
+-    return not iscoroutinefunction(application)
+-
+ 
+ def double_to_single_callable(application):
+     """
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..8392e95 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -132,35 +132,46 @@ class WsgiToAsgiInstance:
+         }
+ 
+     @sync_to_async
+-    def run_wsgi_app(self, body):
++    def run_wsgi_app (self, body) :
+         """
+         Called in a subthread to run the WSGI app. We encapsulate like
+         this so that the start_response callable is called in the same thread.
+         """
+-        # Translate the scope and incoming request body into a WSGI environ
++        # Build the WSGI environment
+         environ = self.build_environ(self.scope, body)
+-        # Run the WSGI app
+-        bytes_sent = 0
+-        for output in self.wsgi_application(environ, self.start_response):
+-            # If this is the first response, include the response headers
+-            if not self.response_started:
+-                self.response_started = True
+-                self.sync_send(self.response_start)
+-            # If the application supplies a Content-Length header
+-            if self.response_content_length is not None:
+-                # The server should not transmit more bytes to the client than the header allows
+-                bytes_allowed = self.response_content_length - bytes_sent
+-                if len(output) > bytes_allowed:
+-                    output = output[:bytes_allowed]
+-            self.sync_send(
+-                {"type": "http.response.body", "body": output, "more_body": True}
+-            )
+-            bytes_sent += len(output)
+-            # The server should stop iterating over the response when enough data has been sent
+-            if bytes_sent == self.response_content_length:
+-                break
+-        # Close connection
+-        if not self.response_started:
+-            self.response_started = True
++    
++        # Initialize response body
++        response_body = []
++    
++        # Call the WSGI application
++        result = self.wsgi_application(environ, self.start_response)
++    
++        # Try to send the response start message
++        try:
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        except:
++            # If sending fails, try to close the result if possible
++            if hasattr(result, 'close'):
++                result.close()
++            raise
++    
++        # Send the response body chunks
++        try:
++            for chunk in result:
++                if chunk:
++                    self.sync_send({
++                        "type": "http.response.body",
++                        "body": chunk,
++                        "more_body": True
++                    })
++        
++            # Send the final chunk with more_body=False
++            self.sync_send({
++                "type": "http.response.body",
++                "body": b"",
++                "more_body": False
++            })
++        finally:
++            # Close the result if it has a close method
++            if hasattr(result, 'close'):
++                result.close()
+\ No newline at end of file

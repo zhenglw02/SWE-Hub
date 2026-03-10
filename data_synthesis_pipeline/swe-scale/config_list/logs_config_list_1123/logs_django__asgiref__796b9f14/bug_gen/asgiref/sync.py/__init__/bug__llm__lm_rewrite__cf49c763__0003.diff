@@ -1,0 +1,39 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..75bcd38 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -562,23 +562,18 @@ def sync_to_async(
+     ...
+ 
+ 
+-def sync_to_async(
+-    func: Optional[Callable[_P, _R]] = None,
+-    *,
+-    thread_sensitive: bool = True,
+-    executor: Optional["ThreadPoolExecutor"] = None,
+-) -> Union[
+-    Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]],
+-    Callable[_P, Coroutine[Any, Any, _R]],
+-]:
++def sync_to_async ( func: Optional[Callable[_P, _R]] = None, *, thread_sensitive: bool = True, executor: Optional["ThreadPoolExecutor"] = None, ) -> Union[ Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]], Callable[_P, Coroutine[Any, Any, _R]], ] :
+     if func is None:
+-        return lambda f: SyncToAsync(
+-            f,
+-            thread_sensitive=thread_sensitive,
+-            executor=executor,
+-        )
++        def decorator(func: Callable[_P, _R]) -> Callable[_P, Coroutine[Any, Any, _R]]:
++            return SyncToAsync(
++                func,
++                thread_sensitive=thread_sensitive,
++                executor=executor,
++            )
++        return decorator
++    
+     return SyncToAsync(
+         func,
+         thread_sensitive=thread_sensitive,
+         executor=executor,
+-    )
++    )
+\ No newline at end of file

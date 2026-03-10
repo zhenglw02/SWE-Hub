@@ -1,0 +1,49 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..3cd181c 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -209,8 +209,7 @@ class AsyncToSync(Generic[_P, _R]):
+         # Use call_soon_threadsafe to schedule a synchronous callback on the
+         # main event loop's thread if it's there, otherwise make a new loop
+         # in this thread.
+-        try:
+-            awaitable = self.main_wrap(
++        awaitable = self.main_wrap(
+                 call_result,
+                 sys.exc_info(),
+                 task_context,
+@@ -253,14 +252,6 @@ class AsyncToSync(Generic[_P, _R]):
+                 current_executor.run_until_future(loop_future)
+                 # Wait for future and/or allow for exception propagation
+                 loop_future.result()
+-        finally:
+-            _restore_context(context[0])
+-            # Restore old current thread executor state
+-            self.executors.current = old_executor
+-
+-        # Wait for results from the future.
+-        return call_result.result()
+-
+     def __get__(self, parent: Any, objtype: Any) -> Callable[_P, _R]:
+         """
+         Include self for methods
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..c488f58 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -109,7 +109,6 @@ class ApplicationCommunicator:
+             async with async_timeout(timeout):
+                 return await self.output_queue.get()
+         except asyncio.TimeoutError as e:
+-            # See if we have another error to raise inside
+             if self.future.done():
+                 self.future.result()
+             else:
+@@ -119,7 +118,6 @@ class ApplicationCommunicator:
+                 except asyncio.CancelledError:
+                     pass
+             raise e
+-
+     async def receive_nothing(self, timeout=0.1, interval=0.01):
+         """
+         Checks that there is no message to receive in the given time.

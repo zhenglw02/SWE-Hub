@@ -1,0 +1,105 @@
+/tmp/PATCH_0_4c80f473.patch:20: trailing whitespace.
+    
+/tmp/PATCH_0_4c80f473.patch:25: trailing whitespace.
+    
+/tmp/PATCH_0_4c80f473.patch:28: trailing whitespace.
+    
+/tmp/PATCH_0_4c80f473.patch:39: trailing whitespace.
+    
+/tmp/PATCH_0_4c80f473.patch:50: trailing whitespace.
+    
+warning: squelched 2 whitespace errors
+warning: 7 lines add whitespace errors.
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..62c62e1 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -92,33 +92,47 @@ class StatelessServer:
+ 
+     def get_or_create_application_instance(self, scope_id, scope):
+         """
+-        Creates an application instance and returns its queue.
+-        """
++            Creates an application instance and returns its queue.
++            """
++        # Check if instance already exists
+         if scope_id in self.application_instances:
++            # Update last_used timestamp and return existing queue
+             self.application_instances[scope_id]["last_used"] = time.time()
+             return self.application_instances[scope_id]["input_queue"]
+-        # See if we need to delete an old one
+-        while len(self.application_instances) > self.max_applications:
++    
++        # If we're at maximum capacity, delete the oldest instance
++        if len(self.application_instances) >= self.max_applications:
+             self.delete_oldest_application_instance()
+-        # Make an instance of the application
++    
++        # Create input queue for the new application instance
+         input_queue = asyncio.Queue()
++    
++        # Create the application coroutine
+         application_instance = guarantee_single_callable(self.application)
+-        # Run it, and stash the future for later checking
+-        future = asyncio.ensure_future(
+-            application_instance(
+-                scope=scope,
+-                receive=input_queue.get,
+-                send=lambda message: self.application_send(scope, message),
+-            ),
+-        )
++    
++        # Create the future for this application instance
++        async def application_wrapper():
++            try:
++                await application_instance(scope, input_queue.get, self.application_send)
++            except asyncio.CancelledError:
++                # Clean cancellation, no need to log
++                pass
++            except Exception:
++                # Let the application_checker handle logging the exception
++                raise
++    
++        future = asyncio.ensure_future(application_wrapper())
++    
++        # Store the application instance details
+         self.application_instances[scope_id] = {
+             "input_queue": input_queue,
+             "future": future,
+-            "scope": scope,
+             "last_used": time.time(),
++            "scope": scope,
+         }
++    
++        # Return the input queue for sending messages to this application instance
+         return input_queue
+-
+     def delete_oldest_application_instance(self):
+         """
+         Finds and deletes the oldest application instance
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..c548641 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -36,7 +36,6 @@ class WsgiToAsgiInstance:
+             raise ValueError("WSGI wrapper received a non-HTTP scope")
+         self.scope = scope
+         with SpooledTemporaryFile(max_size=65536) as body:
+-            # Alright, wait for the http.request messages
+             while True:
+                 message = await receive()
+                 if message["type"] != "http.request":
+@@ -44,12 +43,8 @@ class WsgiToAsgiInstance:
+                 body.write(message.get("body", b""))
+                 if not message.get("more_body"):
+                     break
+-            body.seek(0)
+-            # Wrap send so it can be called from the subthread
+             self.sync_send = AsyncToSync(send)
+-            # Call the WSGI app
+-            await self.run_wsgi_app(body)
+-
++            self.run_wsgi_app(body)
+     def build_environ(self, scope, body):
+         """
+         Builds a scope and request body into a WSGI environ object.

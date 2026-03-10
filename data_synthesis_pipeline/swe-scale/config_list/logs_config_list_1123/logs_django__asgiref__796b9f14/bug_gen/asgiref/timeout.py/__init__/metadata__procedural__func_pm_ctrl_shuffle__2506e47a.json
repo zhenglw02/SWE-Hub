@@ -1,0 +1,9 @@
+{
+  "instance_id": "procedural__func_pm_ctrl_shuffle__2506e47a",
+  "hash_code": "2506e47a",
+  "cost": 0.0,
+  "explanation": "The lines inside a function may be out of order.",
+  "output": "def __init__(\n    self,\n    timeout: Optional[float],\n    *,\n    loop: Optional[asyncio.AbstractEventLoop] = None,\n) -> None:\n    self._timeout = timeout\n    # type: Optional[asyncio.Task[Any]]\n    if loop is None:\n        loop = asyncio.get_running_loop()\n    else:\n        warnings.warn(\n            \"\"\"The loop argument to timeout() is deprecated.\"\"\", DeprecationWarning\n        )\n    self._cancel_handler = None  # type: Optional[asyncio.Handle]\n    self._loop = loop\n    self._cancelled = False  self._task = None\n    self._cancel_at = None  # type: Optional[float]",
+  "rewrite": "def __init__(\n    self,\n    timeout: Optional[float],\n    *,\n    loop: Optional[asyncio.AbstractEventLoop] = None,\n) -> None:\n    self._timeout = timeout\n    # type: Optional[asyncio.Task[Any]]\n    if loop is None:\n        loop = asyncio.get_running_loop()\n    else:\n        warnings.warn(\n            \"\"\"The loop argument to timeout() is deprecated.\"\"\", DeprecationWarning\n        )\n    self._cancel_handler = None  # type: Optional[asyncio.Handle]\n    self._loop = loop\n    self._cancelled = False  self._task = None\n    self._cancel_at = None  # type: Optional[float]",
+  "strategy": "func_pm_ctrl_shuffle"
+}

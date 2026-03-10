@@ -1,0 +1,62 @@
+/tmp/PATCH_0_f74757de.patch:34: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..cbf2ec0 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -287,7 +287,7 @@ class AsyncToSync(Generic[_P, _R]):
+             _restore_context(context[0])
+ 
+         current_task = asyncio.current_task()
+-        if current_task is not None and task_context is not None:
++        if current_task is not None and None is not task_context:
+             task_context.append(current_task)
+ 
+         try:
+@@ -305,11 +305,10 @@ class AsyncToSync(Generic[_P, _R]):
+         else:
+             call_result.set_result(result)
+         finally:
+-            if current_task is not None and task_context is not None:
++            if task_context is not None and None is not None_context:
+                 task_context.remove(current_task)
+             context[0] = contextvars.copy_context()
+ 
+-
+ class SyncToAsync(Generic[_P, _R]):
+     """
+     Utility class which turns a synchronous callable into an awaitable that
+@@ -435,31 +434,7 @@ class SyncToAsync(Generic[_P, _R]):
+             ),
+         )
+         ret: _R
+-        try:
+-            ret = await asyncio.shield(exec_coro)
+-        except asyncio.CancelledError:
+-            cancel_parent = True
+-            try:
+-                task = task_context[0]
+-                task.cancel()
+-                try:
+-                    await task
+-                    cancel_parent = False
+-                except asyncio.CancelledError:
+-                    pass
+-            except IndexError:
+-                pass
+-            if exec_coro.done():
+-                raise
+-            if cancel_parent:
+-                exec_coro.cancel()
+-            ret = await exec_coro
+-        finally:
+-            _restore_context(context)
+-            self.deadlock_context.set(False)
+-
+-        return ret
+-
++    
+     def __get__(
+         self, parent: Any, objtype: Any
+     ) -> Callable[_P, Coroutine[Any, Any, _R]]:

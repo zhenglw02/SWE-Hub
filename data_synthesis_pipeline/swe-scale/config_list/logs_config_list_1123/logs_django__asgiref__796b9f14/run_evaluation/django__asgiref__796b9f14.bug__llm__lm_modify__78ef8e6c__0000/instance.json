@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__llm__lm_modify__78ef8e6c__0000",
+    "patch": "diff --git a/asgiref/testing.py b/asgiref/testing.py\nindex d6ccee5..1ac9281 100644\n--- a/asgiref/testing.py\n+++ b/asgiref/testing.py\n@@ -124,14 +124,12 @@ class ApplicationCommunicator:\n         \"\"\"\n         Checks that there is no message to receive in the given time.\n         \"\"\"\n-        # Make sure there's not an exception to raise from the task\n         if self.future.done():\n             self.future.result()\n \n-        # `interval` has precedence over `timeout`\n         start = time.monotonic()\n         while time.monotonic() - start < timeout:\n+            await asyncio.sleep(interval)\n             if not self.output_queue.empty():\n                 return False\n-            await asyncio.sleep(interval)\n-        return self.output_queue.empty()\n+        return self.output_queue.empty()\n\\ No newline at end of file\n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/timeout.py/_do_exit/bug__llm__lm_modify__78ef8e6c__0000.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

@@ -1,0 +1,42 @@
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..34a1467 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -124,14 +124,12 @@ class ApplicationCommunicator:
+         """
+         Checks that there is no message to receive in the given time.
+         """
+-        # Make sure there's not an exception to raise from the task
+         if self.future.done():
+             self.future.result()
+ 
+-        # `interval` has precedence over `timeout`
+         start = time.monotonic()
+         while time.monotonic() - start < timeout:
+             if not self.output_queue.empty():
+                 return False
+             await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++        return not self.output_queue.empty()
+\ No newline at end of file
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..98d405f 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -42,6 +42,8 @@ class WsgiToAsgiInstance:
+                 if message["type"] != "http.request":
+                     raise ValueError("WSGI wrapper received a non-HTTP-request message")
+                 body.write(message.get("body", b""))
++                if body.tell() > 65536:
++                    break
+                 if not message.get("more_body"):
+                     break
+             body.seek(0)
+@@ -49,7 +51,6 @@ class WsgiToAsgiInstance:
+             self.sync_send = AsyncToSync(send)
+             # Call the WSGI app
+             await self.run_wsgi_app(body)
+-
+     def build_environ(self, scope, body):
+         """
+         Builds a scope and request body into a WSGI environ object.

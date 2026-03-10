@@ -1,0 +1,32 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..fe7ba7f 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -386,6 +386,9 @@ class SyncToAsync(Generic[_P, _R]):
+ 
+         # Work out what thread to run the code in
+         if self._thread_sensitive:
++            executor = self._executor
++        else:
++            # Use the passed in executor, or the loop's default if it is None
+             current_thread_executor = getattr(AsyncToSync.executors, "current", None)
+             if current_thread_executor:
+                 # If we have a parent sync thread above somewhere, use that
+@@ -413,9 +416,6 @@ class SyncToAsync(Generic[_P, _R]):
+                 # Otherwise, we run it in a fixed single thread
+                 executor = self.single_thread_executor
+                 self.deadlock_context.set(True)
+-        else:
+-            # Use the passed in executor, or the loop's default if it is None
+-            executor = self._executor
+ 
+         context = contextvars.copy_context()
+         child = functools.partial(self.func, *args, **kwargs)
+@@ -459,7 +459,6 @@ class SyncToAsync(Generic[_P, _R]):
+             self.deadlock_context.set(False)
+ 
+         return ret
+-
+     def __get__(
+         self, parent: Any, objtype: Any
+     ) -> Callable[_P, Coroutine[Any, Any, _R]]:

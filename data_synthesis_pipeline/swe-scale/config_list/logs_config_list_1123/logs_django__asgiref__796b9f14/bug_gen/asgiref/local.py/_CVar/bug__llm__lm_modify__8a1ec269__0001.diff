@@ -1,0 +1,32 @@
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..9ba63b3 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -144,10 +144,6 @@ class StatelessServer:
+             details["future"].cancel()
+ 
+     async def application_checker(self):
+-        """
+-        Goes through the set of current application instance Futures and cleans up
+-        any that are done/prints exceptions for any that errored.
+-        """
+         while True:
+             await asyncio.sleep(self.application_checker_interval)
+             for scope_id, details in list(self.application_instances.items()):
+@@ -155,12 +151,10 @@ class StatelessServer:
+                     exception = details["future"].exception()
+                     if exception:
+                         await self.application_exception(exception, details)
+-                    try:
+-                        del self.application_instances[scope_id]
+-                    except KeyError:
+-                        # Exception handling might have already got here before us. That's fine.
+-                        pass
+-
++                try:
++                    del self.application_instances[scope_id]
++                except KeyError:
++                    pass
+     async def application_exception(self, exception, application_details):
+         """
+         Called whenever an application coroutine has an exception.

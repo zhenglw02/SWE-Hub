@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__9b8a7439__0002",
+  "hash_code": "9b8a7439",
+  "cost": 0,
+  "explanation": "The `output_queue` property should mirror the implementation of the `input_queue` property. Both are designed to lazily initialize their respective queues when first accessed. The `input_queue` property checks if `_input_queue` is None and creates a new `asyncio.Queue()` if it is. Similarly, `output_queue` should check if `_output_queue` is None and initialize it with a new `asyncio.Queue()`.",
+  "output": "The `output_queue` property should mirror the implementation of the `input_queue` property. Both are designed to lazily initialize their respective queues when first accessed. The `input_queue` property checks if `_input_queue` is None and creates a new `asyncio.Queue()` if it is. Similarly, `output_queue` should check if `_output_queue` is None and initialize it with a new `asyncio.Queue()`.\n\n```\n@property\ndef output_queue(self):\n    if self._output_queue is None:\n        self._output_queue = asyncio.Queue()\n    return self._output_queue\n```",
+  "rewrite": "@property\ndef output_queue(self):\n    if self._output_queue is None:\n        self._output_queue = asyncio.Queue()\n    return self._output_queue",
+  "strategy": "lm_rewrite"
+}

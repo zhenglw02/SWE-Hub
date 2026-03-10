@@ -1,0 +1,83 @@
+/tmp/PATCH_0_4c223c2f.patch:17: trailing whitespace.
+            self.__self__ = self.awaitable.__self__  
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..9f8ba92 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -80,42 +80,21 @@ class Local:
+ 
+     @contextlib.contextmanager
+     def _lock_storage(self):
+-        # Thread safe access to storage
+         if self._thread_critical:
+             is_async = True
+             try:
+-                # this is a test for are we in a async or sync
+-                # thread - will raise RuntimeError if there is
+-                # no current loop
+                 asyncio.get_running_loop()
+             except RuntimeError:
+                 is_async = False
+             if not is_async:
+-                # We are in a sync thread, the storage is
+-                # just the plain thread local (i.e, "global within
+-                # this thread" - it doesn't matter where you are
+-                # in a call stack you see the same storage)
+-                yield self._storage
++                yield self._storage.cvar
+             else:
+-                # We are in an async thread - storage is still
+-                # local to this thread, but additionally should
+-                # behave like a context var (is only visible with
+-                # the same async call stack)
+-
+-                # Ensure context exists in the current thread
+                 if not hasattr(self._storage, "cvar"):
+                     self._storage.cvar = _CVar()
+-
+-                # self._storage is a thread local, so the members
+-                # can't be accessed in another thread (we don't
+-                # need any locks)
+                 yield self._storage.cvar
+         else:
+-            # Lock for thread_critical=False as other threads
+-            # can access the exact same storage object
+             with self._thread_lock:
+                 yield self._storage
+-
+     def __getattr__(self, key):
+         with self._lock_storage() as storage:
+             return getattr(storage, key)
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..3fad38d 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -143,24 +143,20 @@ class AsyncToSync(Generic[_P, _R]):
+             not iscoroutinefunction(awaitable)
+             and not iscoroutinefunction(getattr(awaitable, "__call__", awaitable))
+         ):
+-            # Python does not have very reliable detection of async functions
+-            # (lots of false negatives) so this is just a warning.
+             warnings.warn(
+                 "async_to_sync was passed a non-async-marked callable", stacklevel=2
+             )
+         self.awaitable = awaitable
+         try:
+-            self.__self__ = self.awaitable.__self__  # type: ignore[union-attr]
++            self.__self__ = self.awaitable.__self__  
+         except AttributeError:
+-            pass
++            self.__self__ = None
+         self.force_new_loop = force_new_loop
+-        self.main_event_loop = None
++        self.main_event_loop = asyncio.get_running_loop()
+         try:
+-            self.main_event_loop = asyncio.get_running_loop()
++            pass
+         except RuntimeError:
+-            # There's no event loop in this thread.
+             pass
+-
+     def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841

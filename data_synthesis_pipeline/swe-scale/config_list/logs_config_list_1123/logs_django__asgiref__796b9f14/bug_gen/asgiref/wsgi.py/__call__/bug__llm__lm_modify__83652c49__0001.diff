@@ -1,0 +1,30 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..03683ca 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -402,7 +402,7 @@ class SyncToAsync(Generic[_P, _R]):
+                     # Create new thread executor in current context
+                     executor = ThreadPoolExecutor(max_workers=1)
+                     self.context_to_thread_executor[thread_sensitive_context] = executor
+-            elif loop in AsyncToSync.loop_thread_executors:
++            elif loop not in AsyncToSync.loop_thread_executors:
+                 # Re-use thread executor for running loop
+                 executor = AsyncToSync.loop_thread_executors[loop]
+             elif self.deadlock_context.get(False):
+@@ -438,7 +438,7 @@ class SyncToAsync(Generic[_P, _R]):
+         try:
+             ret = await asyncio.shield(exec_coro)
+         except asyncio.CancelledError:
+-            cancel_parent = True
++            cancel_parent = False
+             try:
+                 task = task_context[0]
+                 task.cancel()
+@@ -459,7 +459,6 @@ class SyncToAsync(Generic[_P, _R]):
+             self.deadlock_context.set(False)
+ 
+         return ret
+-
+     def __get__(
+         self, parent: Any, objtype: Any
+     ) -> Callable[_P, Coroutine[Any, Any, _R]]:

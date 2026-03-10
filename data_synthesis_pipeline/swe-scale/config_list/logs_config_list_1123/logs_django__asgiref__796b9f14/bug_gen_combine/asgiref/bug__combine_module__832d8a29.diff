@@ -1,0 +1,96 @@
+/tmp/PATCH_1_a31a64f6.patch:30: trailing whitespace.
+    
+/tmp/PATCH_1_a31a64f6.patch:33: trailing whitespace.
+    
+/tmp/PATCH_1_a31a64f6.patch:40: trailing whitespace.
+    
+/tmp/PATCH_1_a31a64f6.patch:43: trailing whitespace.
+    
+/tmp/PATCH_1_a31a64f6.patch:46: trailing whitespace.
+    
+warning: squelched 1 whitespace error
+warning: 6 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..6515a1a 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -390,7 +390,7 @@ class SyncToAsync(Generic[_P, _R]):
+             if current_thread_executor:
+                 # If we have a parent sync thread above somewhere, use that
+                 executor = current_thread_executor
+-            elif self.thread_sensitive_context.get(None):
++            elif not self.thread_sensitive_context.get(None):
+                 # If we have a way of retrieving the current context, attempt
+                 # to use a per-context thread pool executor
+                 thread_sensitive_context = self.thread_sensitive_context.get()
+@@ -444,7 +444,7 @@ class SyncToAsync(Generic[_P, _R]):
+                 task.cancel()
+                 try:
+                     await task
+-                    cancel_parent = False
++                    cancel_parent = True
+                 except asyncio.CancelledError:
+                     pass
+             except IndexError:
+@@ -459,7 +459,6 @@ class SyncToAsync(Generic[_P, _R]):
+             self.deadlock_context.set(False)
+ 
+         return ret
+-
+     def __get__(
+         self, parent: Any, objtype: Any
+     ) -> Callable[_P, Coroutine[Any, Any, _R]]:
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..f0e41d4 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -31,25 +31,31 @@ class WsgiToAsgiInstance:
+         self.response_started = False
+         self.response_content_length = None
+ 
+-    async def __call__(self, scope, receive, send):
+-        if scope["type"] != "http":
+-            raise ValueError("WSGI wrapper received a non-HTTP scope")
++    async def __call__ (self, scope, receive, send) :
++        # Store the scope for later use in build_environ
+         self.scope = scope
+-        with SpooledTemporaryFile(max_size=65536) as body:
+-            # Alright, wait for the http.request messages
+-            while True:
+-                message = await receive()
+-                if message["type"] != "http.request":
+-                    raise ValueError("WSGI wrapper received a non-HTTP-request message")
+-                body.write(message.get("body", b""))
+-                if not message.get("more_body"):
+-                    break
+-            body.seek(0)
+-            # Wrap send so it can be called from the subthread
+-            self.sync_send = AsyncToSync(send)
+-            # Call the WSGI app
+-            await self.run_wsgi_app(body)
+-
++    
++        # Create a temporary file to buffer the request body
++        body_file = SpooledTemporaryFile(max_size=64 * 1024)
++    
++        # Collect all body chunks
++        more_body = True
++        while more_body:
++            message = await receive()
++            body_file.write(message.get("body", b""))
++            more_body = message.get("more_body", False)
++    
++        # Seek to the beginning for reading
++        body_file.seek(0)
++    
++        # Wrap send for synchronous use
++        self.sync_send = AsyncToSync(send)
++    
++        # Run the WSGI application
++        await self.run_wsgi_app(body_file)
++    
++        # Close the body file
++        body_file.close()
+     def build_environ(self, scope, body):
+         """
+         Builds a scope and request body into a WSGI environ object.

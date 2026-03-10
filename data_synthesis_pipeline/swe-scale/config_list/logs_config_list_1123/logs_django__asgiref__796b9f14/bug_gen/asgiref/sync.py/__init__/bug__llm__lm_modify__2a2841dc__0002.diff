@@ -1,0 +1,29 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..24be9c1 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -83,7 +83,7 @@ class CurrentThreadExecutor(Executor):
+             with self._work_ready:
+                 while not self._work_items and not self._broken:
+                     self._work_ready.wait()
+-                if not self._work_items:
++                if self._work_items:
+                     break
+                 # Get a work item and run it
+                 work_item = self._work_items.popleft()
+@@ -110,7 +110,7 @@ class CurrentThreadExecutor(Executor):
+         executor = self
+         while True:
+             with executor._work_ready:
+-                if not executor._broken:
++                if executor._broken:
+                     # Add to work queue
+                     executor._work_items.append(work_item)
+                     executor._work_ready.notify()
+@@ -120,4 +120,4 @@ class CurrentThreadExecutor(Executor):
+             executor = executor._old_executor
+ 
+         # Return the future
+-        return f
++        return f
+\ No newline at end of file

@@ -1,0 +1,61 @@
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..ebd1fcd 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -143,24 +143,25 @@ class StatelessServer:
+         if not details["future"].done():
+             details["future"].cancel()
+ 
+-    async def application_checker(self):
+-        """
+-        Goes through the set of current application instance Futures and cleans up
+-        any that are done/prints exceptions for any that errored.
++    async def application_checker (self) :
+         """
++            Goes through the set of current application instance Futures and cleans up
++            any that are done/prints exceptions for any that errored.
++            """
+         while True:
+             await asyncio.sleep(self.application_checker_interval)
+-            for scope_id, details in list(self.application_instances.items()):
+-                if details["future"].done():
+-                    exception = details["future"].exception()
+-                    if exception:
+-                        await self.application_exception(exception, details)
+-                    try:
+-                        del self.application_instances[scope_id]
+-                    except KeyError:
+-                        # Exception handling might have already got here before us. That's fine.
+-                        pass
+-
++            scope_ids_to_remove = []
++            for scope_id, details in self.application_instances.items():
++                future = details["future"]
++                if future.done():
++                    scope_ids_to_remove.append(scope_id)
++                    if future.exception() is not None:
++                        await self.application_exception(
++                            future.exception(),
++                            details,
++                        )
++            for scope_id in scope_ids_to_remove:
++                self.delete_application_instance(scope_id)
+     async def application_exception(self, exception, application_details):
+         """
+         Called whenever an application coroutine has an exception.
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..531aedf 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -95,10 +95,9 @@ class WsgiToAsgiInstance:
+             # HTTPbis say only ASCII chars are allowed in headers, but we latin1 just in case
+             value = value.decode("latin1")
+             if corrected_name in environ:
+-                value = environ[corrected_name] + "," + value
++                value = environ[corrected_name] + value
+             environ[corrected_name] = value
+         return environ
+-
+     def start_response(self, status, response_headers, exc_info=None):
+         """
+         WSGI start_response callable.

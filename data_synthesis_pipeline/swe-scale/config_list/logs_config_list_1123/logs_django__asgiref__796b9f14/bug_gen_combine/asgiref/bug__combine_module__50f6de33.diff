@@ -1,0 +1,63 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..c0ba10a 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -65,7 +65,6 @@ class CurrentThreadExecutor(Executor):
+         Runs the code in the work queue until a result is available from the future.
+         Should be run from the thread the executor is initialised in.
+         """
+-        # Check we're in the right thread
+         if threading.current_thread() != self._work_thread:
+             raise RuntimeError(
+                 "You cannot run CurrentThreadExecutor from a different thread"
+@@ -77,19 +76,15 @@ class CurrentThreadExecutor(Executor):
+                 self._work_ready.notify()
+ 
+         future.add_done_callback(done)
+-        # Keep getting and running work items until the future we're waiting for
+-        # is done and the queue is empty.
+         while True:
+             with self._work_ready:
+                 while not self._work_items and not self._broken:
+                     self._work_ready.wait()
+-                if not self._work_items:
++                if self._work_items is None:
+                     break
+-                # Get a work item and run it
+                 work_item = self._work_items.popleft()
+             work_item.run()
+             del work_item
+-
+     def submit(
+         self,
+         fn: Callable[_P, _R],
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..354a59f 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -389,7 +389,7 @@ class SyncToAsync(Generic[_P, _R]):
+             current_thread_executor = getattr(AsyncToSync.executors, "current", None)
+             if current_thread_executor:
+                 # If we have a parent sync thread above somewhere, use that
+-                executor = current_thread_executor
++                executor = AsyncToSync.loop_thread_executors[loop]
+             elif self.thread_sensitive_context.get(None):
+                 # If we have a way of retrieving the current context, attempt
+                 # to use a per-context thread pool executor
+@@ -404,7 +404,7 @@ class SyncToAsync(Generic[_P, _R]):
+                     self.context_to_thread_executor[thread_sensitive_context] = executor
+             elif loop in AsyncToSync.loop_thread_executors:
+                 # Re-use thread executor for running loop
+-                executor = AsyncToSync.loop_thread_executors[loop]
++                executor = current_thread_executor
+             elif self.deadlock_context.get(False):
+                 raise RuntimeError(
+                     "Single thread executor already being used, would deadlock"
+@@ -459,7 +459,6 @@ class SyncToAsync(Generic[_P, _R]):
+             self.deadlock_context.set(False)
+ 
+         return ret
+-
+     def __get__(
+         self, parent: Any, objtype: Any
+     ) -> Callable[_P, Coroutine[Any, Any, _R]]:

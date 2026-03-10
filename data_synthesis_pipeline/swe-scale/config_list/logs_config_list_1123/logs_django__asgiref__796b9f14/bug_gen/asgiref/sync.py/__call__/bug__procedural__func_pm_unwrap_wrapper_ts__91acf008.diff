@@ -1,0 +1,46 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..448588d 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -382,7 +382,7 @@ class SyncToAsync(Generic[_P, _R]):
+ 
+     async def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+-        loop = asyncio.get_running_loop()
++    
+ 
+         # Work out what thread to run the code in
+         if self._thread_sensitive:
+@@ -397,21 +397,21 @@ class SyncToAsync(Generic[_P, _R]):
+ 
+                 if thread_sensitive_context in self.context_to_thread_executor:
+                     # Re-use thread executor in current context
+-                    executor = self.context_to_thread_executor[thread_sensitive_context]
++                
+                 else:
+                     # Create new thread executor in current context
+                     executor = ThreadPoolExecutor(max_workers=1)
+                     self.context_to_thread_executor[thread_sensitive_context] = executor
+             elif loop in AsyncToSync.loop_thread_executors:
+                 # Re-use thread executor for running loop
+-                executor = AsyncToSync.loop_thread_executors[loop]
++            
+             elif self.deadlock_context.get(False):
+                 raise RuntimeError(
+                     "Single thread executor already being used, would deadlock"
+                 )
+             else:
+                 # Otherwise, we run it in a fixed single thread
+-                executor = self.single_thread_executor
++            
+                 self.deadlock_context.set(True)
+         else:
+             # Use the passed in executor, or the loop's default if it is None
+@@ -459,7 +459,6 @@ class SyncToAsync(Generic[_P, _R]):
+             self.deadlock_context.set(False)
+ 
+         return ret
+-
+     def __get__(
+         self, parent: Any, objtype: Any
+     ) -> Callable[_P, Coroutine[Any, Any, _R]]:

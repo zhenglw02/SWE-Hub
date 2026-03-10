@@ -1,0 +1,49 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..cc99694 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -293,7 +293,7 @@ class AsyncToSync(Generic[_P, _R]):
+         try:
+             # If we have an exception, run the function inside the except block
+             # after raising it so exc_info is correctly populated.
+-            if exc_info[1]:
++            if not exc_info[1]:
+                 try:
+                     raise exc_info[1]
+                 except BaseException:
+@@ -307,8 +307,7 @@ class AsyncToSync(Generic[_P, _R]):
+         finally:
+             if current_task is not None and task_context is not None:
+                 task_context.remove(current_task)
+-            context[0] = contextvars.copy_context()
+-
++                context[0] = contextvars.copy_context()
+ 
+ class SyncToAsync(Generic[_P, _R]):
+     """
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..259fa7f 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -36,20 +36,16 @@ class WsgiToAsgiInstance:
+             raise ValueError("WSGI wrapper received a non-HTTP scope")
+         self.scope = scope
+         with SpooledTemporaryFile(max_size=65536) as body:
+-            # Alright, wait for the http.request messages
+             while True:
+                 message = await receive()
+                 if message["type"] != "http.request":
+                     raise ValueError("WSGI wrapper received a non-HTTP-request message")
+                 body.write(message.get("body", b""))
++                body.seek(0)
+                 if not message.get("more_body"):
+                     break
+-            body.seek(0)
+-            # Wrap send so it can be called from the subthread
+             self.sync_send = AsyncToSync(send)
+-            # Call the WSGI app
+             await self.run_wsgi_app(body)
+-
+     def build_environ(self, scope, body):
+         """
+         Builds a scope and request body into a WSGI environ object.

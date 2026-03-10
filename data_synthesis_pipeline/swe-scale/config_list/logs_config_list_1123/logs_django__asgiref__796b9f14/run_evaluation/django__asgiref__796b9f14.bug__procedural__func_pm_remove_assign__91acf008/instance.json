@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__procedural__func_pm_remove_assign__91acf008",
+    "patch": "diff --git a/asgiref/sync.py b/asgiref/sync.py\nindex 54496ef..642367a 100644\n--- a/asgiref/sync.py\n+++ b/asgiref/sync.py\n@@ -449,8 +449,7 @@ class SyncToAsync(Generic[_P, _R]):\n                     pass\n             except IndexError:\n                 pass\n-            if exec_coro.done():\n-                raise\n+        \n             if cancel_parent:\n                 exec_coro.cancel()\n             ret = await exec_coro\n@@ -459,7 +458,6 @@ class SyncToAsync(Generic[_P, _R]):\n             self.deadlock_context.set(False)\n \n         return ret\n-\n     def __get__(\n         self, parent: Any, objtype: Any\n     ) -> Callable[_P, Coroutine[Any, Any, _R]]:\n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/sync.py/__call__/bug__procedural__func_pm_remove_assign__91acf008.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

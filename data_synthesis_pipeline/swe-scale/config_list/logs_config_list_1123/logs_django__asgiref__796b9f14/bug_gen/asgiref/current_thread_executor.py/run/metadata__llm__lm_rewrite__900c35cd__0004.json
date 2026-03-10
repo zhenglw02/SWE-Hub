@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__900c35cd__0004",
+  "hash_code": "900c35cd",
+  "cost": 0,
+  "explanation": "The `run` method in the `_WorkItem` class is responsible for executing the function with its arguments and setting the result on the Future. Here's the implementation:",
+  "output": "The `run` method in the `_WorkItem` class is responsible for executing the function with its arguments and setting the result on the Future. Here's the implementation:\n\n```python\n    def run (self) -> None :\n        if not self.future.set_running_or_notify_cancel():\n            return\n        try:\n            result = self.fn(*self.args, **self.kwargs)\n        except BaseException as e:\n            self.future.set_exception(e)\n        else:\n            self.future.set_result(result)\n```\n\nThis implementation:\n1. First checks if the Future can be set to running state using `set_running_or_notify_cancel()`. If it returns False, the Future was cancelled and we should return early.\n2. Executes the function with the provided arguments and keyword arguments.\n3. If an exception occurs during execution, it sets the exception on the Future.\n4. If the function executes successfully, it sets the result on the Future.",
+  "rewrite": "def run (self) -> None :\n        if not self.future.set_running_or_notify_cancel():\n            return\n        try:\n            result = self.fn(*self.args, **self.kwargs)\n        except BaseException as e:\n            self.future.set_exception(e)\n        else:\n            self.future.set_result(result)",
+  "strategy": "lm_rewrite"
+}

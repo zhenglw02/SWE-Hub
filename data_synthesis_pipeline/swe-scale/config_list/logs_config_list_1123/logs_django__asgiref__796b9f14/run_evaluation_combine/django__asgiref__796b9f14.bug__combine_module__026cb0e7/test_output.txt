@@ -1,0 +1,140 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.11, pytest-8.4.2, pluggy-1.6.0 -- /opt/miniconda3/envs/testbed/bin/python
+cachedir: .pytest_cache
+rootdir: /testbed
+configfile: setup.cfg
+testpaths: tests
+plugins: xdist-3.8.0, asyncio-1.2.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+created: 10/10 workers
+10 workers [83 items]
+
+scheduling tests via LoadScopeScheduling
+
+tests/test_compatibility.py::test_is_double_callable 
+tests/test_local.py::test_local_task 
+tests/test_wsgi.py::test_basic_wsgi 
+tests/test_server.py::test_stateless_server 
+tests/test_sync.py::test_sync_to_async 
+tests/test_garbage_collection.py::test_thread_critical_Local_remove_all_reference_cycles 
+tests/test_sync.py::ASGITest::test_wrapped_case_is_collected 
+tests/test_testing.py::test_receive_nothing 
+tests/test_sync_contextvars.py::test_thread_sensitive_with_context_different 
+[gw3] [  1%] PASSED tests/test_compatibility.py::test_is_double_callable 
+tests/test_compatibility.py::test_double_to_single_signature 
+[gw2] [  2%] PASSED tests/test_wsgi.py::test_basic_wsgi 
+[gw4] [  3%] PASSED tests/test_sync_contextvars.py::test_thread_sensitive_with_context_different 
+[gw0] [  4%] FAILED tests/test_sync.py::test_sync_to_async 
+[gw3] [  6%] PASSED tests/test_compatibility.py::test_double_to_single_signature 
+tests/test_compatibility.py::test_double_to_single_communicator 
+[gw3] [  7%] PASSED tests/test_compatibility.py::test_double_to_single_communicator 
+[gw5] [  8%] PASSED tests/test_server.py::test_stateless_server 
+tests/test_server.py::test_server_delete_instance 
+tests/test_sync_contextvars.py::test_sync_to_async_contextvars 
+tests/test_wsgi.py::test_script_name 
+[gw2] [  9%] PASSED tests/test_wsgi.py::test_script_name 
+tests/test_sync.py::test_sync_to_async_fail_non_function 
+[gw0] [ 10%] PASSED tests/test_sync.py::test_sync_to_async_fail_non_function 
+tests/test_sync.py::test_sync_to_async_fail_async 
+[gw8] [ 12%] PASSED tests/test_sync.py::ASGITest::test_wrapped_case_is_collected 
+[gw1] [ 13%] PASSED tests/test_local.py::test_local_task 
+[gw0] [ 14%] PASSED tests/test_sync.py::test_sync_to_async_fail_async 
+tests/test_wsgi.py::test_wsgi_path_encoding 
+tests/test_sync.py::test_async_to_sync_fail_partial 
+[gw0] [ 15%] PASSED tests/test_sync.py::test_async_to_sync_fail_partial 
+tests/test_sync.py::test_sync_to_async_raises_typeerror_for_async_callable_instance 
+[gw0] [ 16%] PASSED tests/test_sync.py::test_sync_to_async_raises_typeerror_for_async_callable_instance 
+tests/test_sync.py::test_sync_to_async_decorator 
+[gw0] [ 18%] FAILED tests/test_sync.py::test_sync_to_async_decorator 
+tests/test_sync.py::test_nested_sync_to_async_retains_wrapped_function_attributes 
+[gw2] [ 19%] PASSED tests/test_wsgi.py::test_wsgi_path_encoding 
+tests/test_wsgi.py::test_wsgi_empty_body 
+[gw2] [ 20%] PASSED tests/test_wsgi.py::test_wsgi_empty_body 
+tests/test_wsgi.py::test_wsgi_clamped_body 
+[gw2] [ 21%] PASSED tests/test_wsgi.py::test_wsgi_clamped_body 
+tests/test_wsgi.py::test_wsgi_stops_iterating_after_content_length_bytes 
+[gw2] [ 22%] PASSED tests/test_wsgi.py::test_wsgi_stops_iterating_after_content_length_bytes 
+tests/test_wsgi.py::test_wsgi_multiple_start_response 
+[gw0] [ 24%] PASSED tests/test_sync.py::test_nested_sync_to_async_retains_wrapped_function_attributes 
+tests/test_sync.py::test_sync_to_async_method_decorator 
+[gw4] [ 25%] FAILED tests/test_sync_contextvars.py::test_sync_to_async_contextvars 
+tests/test_sync_contextvars.py::test_async_to_sync_contextvars 
+[gw5] [ 26%] PASSED tests/test_server.py::test_server_delete_instance 
+tests/test_local.py::test_local_thread 
+[gw1] [ 27%] PASSED tests/test_local.py::test_local_thread 
+tests/test_local.py::test_local_thread_nested 
+[gw2] [ 28%] PASSED tests/test_wsgi.py::test_wsgi_multiple_start_response 
+tests/test_wsgi.py::test_wsgi_multi_body 
+[gw1] [ 30%] PASSED tests/test_local.py::test_local_thread_nested 
+tests/test_local.py::test_local_cycle 
+[gw0] [ 31%] FAILED tests/test_sync.py::test_sync_to_async_method_decorator 
+tests/test_sync.py::test_sync_to_async_method_self_attribute 
+[gw7] [ 32%] PASSED tests/test_garbage_collection.py::test_thread_critical_Local_remove_all_reference_cycles 
+[gw1] [ 33%] PASSED tests/test_local.py::test_local_cycle 
+[gw0] [ 34%] FAILED tests/test_sync.py::test_sync_to_async_method_self_attribute 
+tests/test_sync.py::test_async_to_sync_to_async 
+[gw0] [ 36%] FAILED tests/test_sync.py::test_async_to_sync_to_async 
+tests/test_sync.py::test_async_to_sync_to_async_decorator 
+tests/test_local.py::test_local_task_to_sync 
+[gw1] [ 37%] FAILED tests/test_local.py::test_local_task_to_sync 
+tests/test_local.py::test_local_thread_to_async 
+[gw1] [ 38%] PASSED tests/test_local.py::test_local_thread_to_async 
+tests/test_local.py::test_local_task_to_sync_to_task 
+[gw0] [ 39%] FAILED tests/test_sync.py::test_async_to_sync_to_async_decorator 
+tests/test_sync.py::test_async_to_sync_to_thread_decorator 
+[gw1] [ 40%] FAILED tests/test_local.py::test_local_task_to_sync_to_task 
+tests/test_local.py::test_local_many_layers 
+[gw0] [ 42%] PASSED tests/test_sync.py::test_async_to_sync_to_thread_decorator 
+tests/test_sync.py::test_async_to_sync_fail_non_function 
+[gw1] [ 43%] FAILED tests/test_local.py::test_local_many_layers 
+[gw0] [ 44%] PASSED tests/test_sync.py::test_async_to_sync_fail_non_function 
+tests/test_sync.py::test_async_to_sync_fail_sync 
+tests/test_local.py::test_local_critical_no_task_to_thread 
+[gw0] [ 45%] PASSED tests/test_sync.py::test_async_to_sync_fail_sync 
+[gw1] [ 46%] PASSED tests/test_local.py::test_local_critical_no_task_to_thread 
+tests/test_sync.py::test_async_to_sync 
+tests/test_local.py::test_local_critical_no_thread_to_task 
+[gw0] [ 48%] PASSED tests/test_sync.py::test_async_to_sync 
+[gw1] [ 49%] PASSED tests/test_local.py::test_local_critical_no_thread_to_task 
+tests/test_local.py::test_local_threads_and_tasks 
+tests/test_sync.py::test_async_to_sync_decorator 
+[gw0] [ 50%] PASSED tests/test_sync.py::test_async_to_sync_decorator 
+tests/test_sync.py::test_async_to_sync_method_decorator 
+[gw1] [ 51%] FAILED tests/test_local.py::test_local_threads_and_tasks 
+tests/test_local.py::test_thread_critical_local_not_context_dependent_in_sync_thread 
+[gw0] [ 53%] PASSED tests/test_sync.py::test_async_to_sync_method_decorator 
+tests/test_sync.py::test_async_to_sync_in_async 
+[gw1] [ 54%] PASSED tests/test_local.py::test_thread_critical_local_not_context_dependent_in_sync_thread 
+tests/test_local.py::test_visibility_thread_asgiref 
+[gw0] [ 55%] PASSED tests/test_sync.py::test_async_to_sync_in_async 
+[gw1] [ 56%] PASSED tests/test_local.py::test_visibility_thread_asgiref 
+tests/test_sync.py::test_async_to_sync_in_thread 
+tests/test_local.py::test_visibility_task 
+[gw1] [ 57%] PASSED tests/test_local.py::test_visibility_task 
+tests/test_local.py::test_deletion 
+[gw0] [ 59%] PASSED tests/test_sync.py::test_async_to_sync_in_thread 
+tests/test_sync.py::test_async_to_sync_in_except 
+[gw1] [ 60%] PASSED tests/test_local.py::test_deletion 
+[gw0] [ 61%] PASSED tests/test_sync.py::test_async_to_sync_in_except 
+tests/test_sync.py::test_async_to_sync_partial 
+[gw0] [ 62%] PASSED tests/test_sync.py::test_async_to_sync_partial 
+tests/test_sync.py::test_async_to_sync_on_callable_object 
+[gw0] [ 63%] PASSED tests/test_sync.py::test_async_to_sync_on_callable_object 
+tests/test_sync.py::test_async_to_sync_method_self_attribute 
+[gw0] [ 65%] PASSED tests/test_sync.py::test_async_to_sync_method_self_attribute 
+tests/test_sync.py::test_thread_sensitive_outside_sync 
+[gw0] [ 66%] PASSED tests/test_sync.py::test_thread_sensitive_outside_sync 
+tests/test_sync.py::test_thread_sensitive_outside_async 
+[gw0] [ 67%] FAILED tests/test_sync.py::test_thread_sensitive_outside_async 
+tests/test_sync.py::test_thread_sensitive_with_context_matches 
+[gw0] [ 68%] PASSED tests/test_sync.py::test_thread_sensitive_with_context_matches 
+tests/test_sync.py::test_thread_sensitive_nested_context 
+[gw0] [ 69%] PASSED tests/test_sync.py::test_thread_sensitive_nested_context 
+tests/test_sync.py::test_thread_sensitive_context_without_sync_work 
+[gw0] [ 71%] PASSED tests/test_sync.py::test_thread_sensitive_context_without_sync_work 
+tests/test_sync.py::test_thread_sensitive_double_nested_sync 
+[gw6] [ 72%] PASSED tests/test_testing.py::test_receive_nothing 
+tests/test_testing.py::test_receive_nothing_lazy_loop 
+[gw6] [ 73%] PASSED tests/test_testing.py::test_receive_nothing_lazy_loop 
+[gw4] [ 74%] PASSED tests/test_sync_contextvars.py::test_async_to_sync_contextvars 
+[gw2] [ 75%] FAILED tests/test_wsgi.py::test_wsgi_multi_body 

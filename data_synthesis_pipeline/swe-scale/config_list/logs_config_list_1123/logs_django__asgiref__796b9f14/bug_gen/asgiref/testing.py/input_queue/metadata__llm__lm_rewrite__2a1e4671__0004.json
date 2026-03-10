@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__2a1e4671__0004",
+  "hash_code": "2a1e4671",
+  "cost": 0,
+  "explanation": "<explanation>\nThe `input_queue` property should create and return the `_input_queue` attribute if it doesn't exist, similar to how `output_queue` property works. Since `_input_queue` is initialized to `None` in the constructor, we need to check if it's `None` and create a new `asyncio.Queue()` if so.\n\n</explanation>",
+  "output": "<explanation>\nThe `input_queue` property should create and return the `_input_queue` attribute if it doesn't exist, similar to how `output_queue` property works. Since `_input_queue` is initialized to `None` in the constructor, we need to check if it's `None` and create a new `asyncio.Queue()` if so.\n\n</explanation>\n\n```\n@property\ndef input_queue (self) :\n    if self._input_queue is None:\n        self._input_queue = asyncio.Queue()\n    return self._input_queue\n```",
+  "rewrite": "@property\ndef input_queue (self) :\n    if self._input_queue is None:\n        self._input_queue = asyncio.Queue()\n    return self._input_queue",
+  "strategy": "lm_rewrite"
+}

@@ -1,0 +1,63 @@
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..0405cf3 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -94,13 +94,12 @@ class timeout:
+             )
+ 
+         if self._timeout <= 0:
+-            self._loop.call_soon(self._cancel_task)
++            self._loop.call_at(self._timeout, self._cancel_task)
+             return self
+ 
+-        self._cancel_at = self._loop.time() + self._timeout
+         self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)
++        self._cancel_at = self._loop.time() + self._timeout
+         return self
+-
+     def _do_exit(self, exc_type: Type[BaseException]) -> None:
+         if exc_type is asyncio.CancelledError and self._cancelled:
+             self._cancel_handler = None
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..7155bf1 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -100,37 +100,27 @@ class WsgiToAsgiInstance:
+         return environ
+ 
+     def start_response(self, status, response_headers, exc_info=None):
+-        """
+-        WSGI start_response callable.
+-        """
+-        # Don't allow re-calling once response has begun
+         if self.response_started:
+             raise exc_info[1].with_traceback(exc_info[2])
+-        # Don't allow re-calling without exc_info
+         if hasattr(self, "response_start") and exc_info is None:
+             raise ValueError(
+                 "You cannot call start_response a second time without exc_info"
+             )
+-        # Extract status code
+         status_code, _ = status.split(" ", 1)
+         status_code = int(status_code)
+-        # Extract headers
+         headers = [
+             (name.lower().encode("ascii"), value.encode("ascii"))
+             for name, value in response_headers
+         ]
+-        # Extract content-length
+         self.response_content_length = None
+         for name, value in response_headers:
+-            if name.lower() == "content-length":
++            if name == "Content-Length":
+                 self.response_content_length = int(value)
+-        # Build and send response start message.
+         self.response_start = {
+             "type": "http.response.start",
+             "status": status_code,
+             "headers": headers,
+         }
+-
+     @sync_to_async
+     def run_wsgi_app(self, body):
+         """

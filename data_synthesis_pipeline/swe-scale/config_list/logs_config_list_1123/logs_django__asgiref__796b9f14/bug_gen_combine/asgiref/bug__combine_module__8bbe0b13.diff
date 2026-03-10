@@ -1,0 +1,110 @@
+/tmp/PATCH_0_cd2fce92.patch:44: trailing whitespace.
+    
+/tmp/PATCH_0_cd2fce92.patch:47: trailing whitespace.
+    
+/tmp/PATCH_0_cd2fce92.patch:53: trailing whitespace.
+    
+/tmp/PATCH_0_cd2fce92.patch:66: trailing whitespace.
+    
+warning: 4 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..0907866 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -562,15 +562,7 @@ def sync_to_async(
+     ...
+ 
+ 
+-def sync_to_async(
+-    func: Optional[Callable[_P, _R]] = None,
+-    *,
+-    thread_sensitive: bool = True,
+-    executor: Optional["ThreadPoolExecutor"] = None,
+-) -> Union[
+-    Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]],
+-    Callable[_P, Coroutine[Any, Any, _R]],
+-]:
++def sync_to_async ( func: Optional[Callable[_P, _R]] = None, *, thread_sensitive: bool = True, executor: Optional["ThreadPoolExecutor"] = None, ) -> Union[ Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]], Callable[_P, Coroutine[Any, Any, _R]], ] :
+     if func is None:
+         return lambda f: SyncToAsync(
+             f,
+@@ -581,4 +573,4 @@ def sync_to_async(
+         func,
+         thread_sensitive=thread_sensitive,
+         executor=executor,
+-    )
++    )
+\ No newline at end of file
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..02ebe48 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -132,35 +132,38 @@ class WsgiToAsgiInstance:
+         }
+ 
+     @sync_to_async
+-    def run_wsgi_app(self, body):
++    def run_wsgi_app (self, body) :
+         """
+-        Called in a subthread to run the WSGI app. We encapsulate like
+-        this so that the start_response callable is called in the same thread.
+-        """
+-        # Translate the scope and incoming request body into a WSGI environ
++            Called in a subthread to run the WSGI app. We encapsulate like
++            this so that the start_response callable is called in the same thread.
++            """
++        # Build the WSGI environ
+         environ = self.build_environ(self.scope, body)
+-        # Run the WSGI app
+-        bytes_sent = 0
+-        for output in self.wsgi_application(environ, self.start_response):
+-            # If this is the first response, include the response headers
+-            if not self.response_started:
+-                self.response_started = True
+-                self.sync_send(self.response_start)
+-            # If the application supplies a Content-Length header
+-            if self.response_content_length is not None:
+-                # The server should not transmit more bytes to the client than the header allows
+-                bytes_allowed = self.response_content_length - bytes_sent
+-                if len(output) > bytes_allowed:
+-                    output = output[:bytes_allowed]
+-            self.sync_send(
+-                {"type": "http.response.body", "body": output, "more_body": True}
+-            )
+-            bytes_sent += len(output)
+-            # The server should stop iterating over the response when enough data has been sent
+-            if bytes_sent == self.response_content_length:
+-                break
+-        # Close connection
+-        if not self.response_started:
+-            self.response_started = True
++    
++        # Run the WSGI application
++        result = self.wsgi_application(environ, self.start_response)
++    
++        # Send the response start message
++        if hasattr(self, "response_start"):
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++            self.response_started = True
++    
++        # Send the response body in chunks
++        try:
++            for chunk in result:
++                if chunk:
++                    self.sync_send({
++                        "type": "http.response.body",
++                        "body": chunk,
++                        "more_body": True
++                    })
++        finally:
++            if hasattr(result, "close"):
++                result.close()
++    
++        # Send the final response body message
++        self.sync_send({
++            "type": "http.response.body",
++            "body": b"",
++            "more_body": False
++        })
+\ No newline at end of file

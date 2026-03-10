@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__d703dae5__0000",
+  "hash_code": "d703dae5",
+  "cost": 0,
+  "explanation": "The `_cancel_task` method is responsible for cancelling the task when the timeout expires. When this method is called, it should set the `_cancelled` flag to True and then cancel the task if it exists and hasn't been completed yet.",
+  "output": "The `_cancel_task` method is responsible for cancelling the task when the timeout expires. When this method is called, it should set the `_cancelled` flag to True and then cancel the task if it exists and hasn't been completed yet.\n\n```\ndef _cancel_task (self) -> None :\n    if self._task and not self._task.done():\n        self._cancelled = True\n        self._task.cancel()\n```",
+  "rewrite": "def _cancel_task (self) -> None :\n    if self._task and not self._task.done():\n        self._cancelled = True\n        self._task.cancel()",
+  "strategy": "lm_rewrite"
+}

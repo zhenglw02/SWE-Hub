@@ -1,0 +1,30 @@
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..1277082 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -82,8 +82,6 @@ class timeout:
+             return None
+ 
+     def _do_enter(self) -> "timeout":
+-        # Support Tornado 5- without timeout
+-        # Details: https://github.com/python/asyncio/issues/392
+         if self._timeout is None:
+             return self
+ 
+@@ -97,7 +95,7 @@ class timeout:
+             self._loop.call_soon(self._cancel_task)
+             return self
+ 
+-        self._cancel_at = self._loop.time() + self._timeout
++        self._cancel_at = self._loop.time() - self._timeout
+         self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)
+         return self
+ 
+@@ -114,5 +112,5 @@ class timeout:
+ 
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+-            self._task.cancel()
+             self._cancelled = True
++            self._task.cancel()
+\ No newline at end of file

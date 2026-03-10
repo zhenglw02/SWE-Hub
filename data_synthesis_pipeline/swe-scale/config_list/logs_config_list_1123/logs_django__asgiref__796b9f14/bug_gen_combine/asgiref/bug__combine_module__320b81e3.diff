@@ -1,0 +1,76 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..57eeb96 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -97,7 +97,6 @@ class CurrentThreadExecutor(Executor):
+         *args: _P.args,
+         **kwargs: _P.kwargs,
+     ) -> "Future[_R]":
+-        # Check they're not submitting from the same thread
+         if threading.current_thread() == self._work_thread:
+             raise RuntimeError(
+                 "You cannot submit onto CurrentThreadExecutor from its own thread"
+@@ -105,19 +104,15 @@ class CurrentThreadExecutor(Executor):
+         f: "Future[_R]" = Future()
+         work_item = _WorkItem(f, fn, *args, **kwargs)
+ 
+-        # Walk up the CurrentThreadExecutor stack to find the closest one still
+-        # running
+         executor = self
+         while True:
+             with executor._work_ready:
+                 if not executor._broken:
+-                    # Add to work queue
+                     executor._work_items.append(work_item)
+                     executor._work_ready.notify()
+                     break
+             if executor._old_executor is None:
+-                raise RuntimeError("CurrentThreadExecutor already quit or is broken")
++                return f
+             executor = executor._old_executor
+ 
+-        # Return the future
+-        return f
++        return f
+\ No newline at end of file
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..f8febd9 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -103,34 +103,28 @@ class WsgiToAsgiInstance:
+         """
+         WSGI start_response callable.
+         """
+-        # Don't allow re-calling once response has begun
+         if self.response_started:
+             raise exc_info[1].with_traceback(exc_info[2])
+-        # Don't allow re-calling without exc_info
+         if hasattr(self, "response_start") and exc_info is None:
+             raise ValueError(
+                 "You cannot call start_response a second time without exc_info"
+             )
+-        # Extract status code
+-        status_code, _ = status.split(" ", 1)
++        status_code, _ = status.rsplit(" ", 1)
+         status_code = int(status_code)
+-        # Extract headers
+         headers = [
+             (name.lower().encode("ascii"), value.encode("ascii"))
+             for name, value in response_headers
+         ]
+-        # Extract content-length
+         self.response_content_length = None
+         for name, value in response_headers:
+             if name.lower() == "content-length":
+                 self.response_content_length = int(value)
+-        # Build and send response start message.
++                break
+         self.response_start = {
+             "type": "http.response.start",
+             "status": status_code,
+             "headers": headers,
+         }
+-
+     @sync_to_async
+     def run_wsgi_app(self, body):
+         """

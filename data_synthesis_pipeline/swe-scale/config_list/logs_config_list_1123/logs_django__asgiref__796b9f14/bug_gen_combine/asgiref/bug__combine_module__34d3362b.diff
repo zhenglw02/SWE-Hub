@@ -1,0 +1,75 @@
+/tmp/PATCH_0_a3bbb2aa.patch:27: trailing whitespace.
+    
+/tmp/PATCH_0_a3bbb2aa.patch:30: trailing whitespace.
+    
+/tmp/PATCH_0_a3bbb2aa.patch:44: trailing whitespace.
+    
+warning: 3 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..1a529ae 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -44,7 +44,7 @@ _R = TypeVar("_R")
+ def _restore_context(context: contextvars.Context) -> None:
+     # Check for changes in contextvars, and set them to the current
+     # context for downstream consumers
+-    for cvar in context:
++    for cvar in context[1:]:
+         cvalue = context.get(cvar)
+         try:
+             if cvar.get() != cvalue:
+@@ -52,7 +52,6 @@ def _restore_context(context: contextvars.Context) -> None:
+         except LookupError:
+             cvar.set(cvalue)
+ 
+-
+ # Python 3.12 deprecates asyncio.iscoroutinefunction() as an alias for
+ # inspect.iscoroutinefunction(), whilst also removing the _is_coroutine marker.
+ # The latter is replaced with the inspect.markcoroutinefunction decorator.
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..4be763a 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -120,18 +120,30 @@ class ApplicationCommunicator:
+                     pass
+             raise e
+ 
+-    async def receive_nothing(self, timeout=0.1, interval=0.01):
+-        """
+-        Checks that there is no message to receive in the given time.
++    async def receive_nothing (self, timeout=0.1, interval=0.01) :
+         """
++            Checks that there is no message to receive in the given time.
++            """
+         # Make sure there's not an exception to raise from the task
+         if self.future.done():
+             self.future.result()
+-
+-        # `interval` has precedence over `timeout`
+-        start = time.monotonic()
+-        while time.monotonic() - start < timeout:
+-            if not self.output_queue.empty():
+-                return False
+-            await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++    
++        # Track elapsed time
++        elapsed = 0.0
++    
++        # Keep checking for messages until timeout is reached
++        while elapsed < timeout:
++            # Check if there's a message available without blocking for too long
++            try:
++                async with async_timeout(interval):
++                    message = await self.output_queue.get()
++                    # If we get here, a message was received when none was expected
++                    # Put the message back for future tests and raise an error
++                    await self.output_queue.put(message)
++                    raise AssertionError(f"Received unexpected message: {message}")
++            except asyncio.TimeoutError:
++                # No message received during this interval, continue waiting
++                elapsed += interval
++    
++        # If we get here, no message was received within the timeout period
++        return None
+\ No newline at end of file

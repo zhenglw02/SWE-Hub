@@ -1,0 +1,91 @@
+/tmp/PATCH_1_24fa323c.patch:23: trailing whitespace.
+    
+/tmp/PATCH_1_24fa323c.patch:31: trailing whitespace.
+        
+/tmp/PATCH_1_24fa323c.patch:44: trailing whitespace.
+                
+/tmp/PATCH_1_24fa323c.patch:59: trailing whitespace.
+        
+warning: 4 lines add whitespace errors.
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..8455224 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -22,11 +22,10 @@ class ApplicationCommunicator:
+     # For Python 3.9 we need to lazily bind the queues, on 3.10+ they bind the
+     # event loop lazily.
+     @property
+-    def input_queue(self):
++    def input_queue (self) :
+         if self._input_queue is None:
+             self._input_queue = asyncio.Queue()
+         return self._input_queue
+-
+     @property
+     def output_queue(self):
+         if self._output_queue is None:
+@@ -67,17 +66,53 @@ class ApplicationCommunicator:
+                 except asyncio.CancelledError:
+                     pass
+ 
+-    def stop(self, exceptions=True):
+-        future = self._future
+-        if future is None:
+-            return
+-
+-        if not future.done():
+-            future.cancel()
+-        elif exceptions:
+-            # Give a chance to raise any exceptions
+-            future.result()
+-
++    def stop (self, exceptions=True) :
++        """
++        Stops the application communicator by cancelling the running future.
++    
++        Args:
++            exceptions: If True, exceptions raised during cancellation will be
++                        re-raised. If False, they will be suppressed.
++        """
++        if self._future is not None and not self._future.done():
++            # Cancel the future
++            self._future.cancel()
++        
++            # Wait for the cancellation to complete
++            try:
++                # Try to use the current event loop
++                loop = asyncio.get_event_loop()
++                if loop.is_running():
++                    # If the loop is running, we can't wait synchronously here
++                    # Create a task to wait for the cancellation
++                    async def wait_for_cancellation():
++                        try:
++                            await self._future
++                        except asyncio.CancelledError:
++                            pass
++                
++                    # Run the wait in a new task if the loop is running
++                    if not hasattr(loop, '_stopping'):
++                        asyncio.create_task(wait_for_cancellation())
++                else:
++                    # If the loop is not running, we can run it to completion
++                    loop.run_until_complete(self._future)
++            except RuntimeError:
++                # No event loop, create a new one
++                loop = asyncio.new_event_loop()
++                asyncio.set_event_loop(loop)
++                try:
++                    loop.run_until_complete(self._future)
++                finally:
++                    loop.close()
++        
++            # If exceptions is True, check for and re-raise any exceptions
++            if exceptions and self._future.done():
++                try:
++                    self._future.result()
++                except asyncio.CancelledError:
++                    # CancelledError is expected when we cancel the future
++                    pass
+     def __del__(self):
+         # Clean up on deletion
+         try:

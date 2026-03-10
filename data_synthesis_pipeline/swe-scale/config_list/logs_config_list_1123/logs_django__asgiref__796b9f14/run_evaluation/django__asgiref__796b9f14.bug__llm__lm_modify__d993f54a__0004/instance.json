@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__llm__lm_modify__d993f54a__0004",
+    "patch": "diff --git a/asgiref/local.py b/asgiref/local.py\nindex 845313a..a22e24a 100644\n--- a/asgiref/local.py\n+++ b/asgiref/local.py\n@@ -24,7 +24,8 @@ class _CVar:\n         if key == \"_data\":\n             return super().__setattr__(key, value)\n \n-        storage_object = self._data.get({}).copy()\n+        storage_object = self._data.get({})\n+        storage_object = storage_object.copy()\n         storage_object[key] = value\n         self._data.set(storage_object)\n \n@@ -36,7 +37,6 @@ class _CVar:\n         else:\n             raise AttributeError(f\"{self!r} object has no attribute {key!r}\")\n \n-\n class Local:\n     \"\"\"Local storage for async tasks.\n \n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/current_thread_executor.py/CurrentThreadExecutor/bug__llm__lm_modify__d993f54a__0004.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

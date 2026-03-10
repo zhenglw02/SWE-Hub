@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__llm__lm_rewrite__ccefe4f3__0001",
+    "patch": "diff --git a/asgiref/sync.py b/asgiref/sync.py\nindex 54496ef..58a194f 100644\n--- a/asgiref/sync.py\n+++ b/asgiref/sync.py\n@@ -469,19 +469,15 @@ class SyncToAsync(Generic[_P, _R]):\n         func = functools.partial(self.__call__, parent)\n         return functools.update_wrapper(func, self.func)\n \n-    def thread_handler(self, loop, exc_info, task_context, func, *args, **kwargs):\n+    def thread_handler (self, loop, exc_info, task_context, func, *args, **kwargs) :\n         \"\"\"\n-        Wraps the sync application with exception handling.\n-        \"\"\"\n-\n-        __traceback_hide__ = True  # noqa: F841\n-\n+            Wraps the sync application with exception handling.\n+            \"\"\"\n         # Set the threadlocal for AsyncToSync\n         self.threadlocal.main_event_loop = loop\n         self.threadlocal.main_event_loop_pid = os.getpid()\n         self.threadlocal.task_context = task_context\n-\n-        # Run the function\n+    \n         # If we have an exception, run the function inside the except block\n         # after raising it so exc_info is correctly populated.\n         if exc_info[1]:\n@@ -492,7 +488,6 @@ class SyncToAsync(Generic[_P, _R]):\n         else:\n             return func(*args, **kwargs)\n \n-\n @overload\n def async_to_sync(\n     *,\n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/sync.py/async_to_sync/bug__llm__lm_rewrite__ccefe4f3__0001.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

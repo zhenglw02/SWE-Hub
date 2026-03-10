@@ -1,0 +1,9 @@
+{
+  "instance_id": "procedural__func_pm_ctrl_shuffle__7894da1d",
+  "hash_code": "7894da1d",
+  "cost": 0.0,
+  "explanation": "The lines inside a function may be out of order.",
+  "output": "async def __aexit__(self, exc, value, tb):\n    if executor:\n        executor.shutdown()\n\n    executor = SyncToAsync.context_to_thread_executor.pop(self, None)\n    if not self.token:\n        return\n    SyncToAsync.thread_sensitive_context.reset(self.token)",
+  "rewrite": "async def __aexit__(self, exc, value, tb):\n    if executor:\n        executor.shutdown()\n\n    executor = SyncToAsync.context_to_thread_executor.pop(self, None)\n    if not self.token:\n        return\n    SyncToAsync.thread_sensitive_context.reset(self.token)",
+  "strategy": "func_pm_ctrl_shuffle"
+}

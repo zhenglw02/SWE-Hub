@@ -1,0 +1,82 @@
+/tmp/PATCH_0_3eb875e9.patch:17: trailing whitespace.
+    
+/tmp/PATCH_0_3eb875e9.patch:23: trailing whitespace.
+        
+warning: 2 lines add whitespace errors.
+/tmp/PATCH_1_86755435.patch:22: trailing whitespace.
+            
+/tmp/PATCH_1_86755435.patch:27: trailing whitespace.
+            
+warning: 2 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..1d4907a 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -41,17 +41,23 @@ _P = ParamSpec("_P")
+ _R = TypeVar("_R")
+ 
+ 
+-def _restore_context(context: contextvars.Context) -> None:
+-    # Check for changes in contextvars, and set them to the current
+-    # context for downstream consumers
+-    for cvar in context:
+-        cvalue = context.get(cvar)
++def _restore_context (context: contextvars.Context) -> None : # Check for changes in contextvars, and set them to the current # context for downstream consumers
++    # Get the current context
++    current = contextvars.copy_context()
++    
++    # Iterate through all context variables in the provided context
++    for var in context:
++        # Check if the value has changed from the current context
++        if var in current and current[var] == context[var]:
++            continue
++        
++        # Set the variable in the current context to match the provided context
++        token = var.set(context[var])
+         try:
+-            if cvar.get() != cvalue:
+-                cvar.set(cvalue)
+-        except LookupError:
+-            cvar.set(cvalue)
+-
++            # Ensure the change is applied
++            pass
++        finally:
++            var.reset(token)
+ 
+ # Python 3.12 deprecates asyncio.iscoroutinefunction() as an alias for
+ # inspect.iscoroutinefunction(), whilst also removing the _is_coroutine marker.
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..692b4a7 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -101,17 +101,19 @@ class timeout:
+         self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)
+         return self
+ 
+-    def _do_exit(self, exc_type: Type[BaseException]) -> None:
+-        if exc_type is asyncio.CancelledError and self._cancelled:
+-            self._cancel_handler = None
+-            self._task = None
+-            raise asyncio.TimeoutError
+-        if self._timeout is not None and self._cancel_handler is not None:
+-            self._cancel_handler.cancel()
+-            self._cancel_handler = None
++    def _do_exit (self, exc_type: Type[BaseException]) -> None :
++        if self._timeout is not None and self._timeout > 0:
++            if self._cancel_handler is not None:
++                self._cancel_handler.cancel()
++                self._cancel_handler = None
++            
++            if exc_type is asyncio.CancelledError and self._cancelled:
++                # Suppress the cancellation if it was caused by the timeout
++                # This prevents the CancelledError from propagating
++                pass
++            
+         self._task = None
+-        return None
+-
++        self._cancel_at = None
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+             self._task.cancel()

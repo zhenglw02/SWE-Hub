@@ -1,0 +1,114 @@
+/tmp/PATCH_1_8bf5a50b.patch:26: trailing whitespace.
+    
+/tmp/PATCH_1_8bf5a50b.patch:43: trailing whitespace.
+            
+/tmp/PATCH_1_8bf5a50b.patch:48: trailing whitespace.
+            
+/tmp/PATCH_1_8bf5a50b.patch:51: trailing whitespace.
+        
+warning: 4 lines add whitespace errors.
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..0b15cd0 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -60,36 +60,31 @@ class CurrentThreadExecutor(Executor):
+         self._broken = False  # synchronized by _work_ready
+         self._old_executor = old_executor
+ 
+-    def run_until_future(self, future: "Future[Any]") -> None:
+-        """
+-        Runs the code in the work queue until a result is available from the future.
+-        Should be run from the thread the executor is initialised in.
++    def run_until_future (self, future: "Future[Any]") -> None :
+         """
++            Runs the code in the work queue until a result is available from the future.
++            Should be run from the thread the executor is initialised in.
++            """
+         # Check we're in the right thread
+         if threading.current_thread() != self._work_thread:
+-            raise RuntimeError(
+-                "You cannot run CurrentThreadExecutor from a different thread"
+-            )
+-
+-        def done(future: "Future[Any]") -> None:
++            raise RuntimeError("run_until_future must be called from the executor's thread")
++    
++        # Process work items until the future is done or executor breaks
++        while not future.done():
+             with self._work_ready:
+-                self._broken = True
+-                self._work_ready.notify()
+-
+-        future.add_done_callback(done)
+-        # Keep getting and running work items until the future we're waiting for
+-        # is done and the queue is empty.
+-        while True:
+-            with self._work_ready:
+-                while not self._work_items and not self._broken:
++                # Wait for work items or until broken
++                while not self._broken and not self._work_items:
+                     self._work_ready.wait()
+-                if not self._work_items:
++            
++                # If broken, exit the loop
++                if self._broken:
+                     break
+-                # Get a work item and run it
++            
++                # Get the next work item
+                 work_item = self._work_items.popleft()
++        
++            # Run the work item
+             work_item.run()
+-            del work_item
+-
+     def submit(
+         self,
+         fn: Callable[_P, _R],
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..a34938f 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -48,25 +48,26 @@ class ApplicationCommunicator:
+             )
+         return self._future
+ 
+-    async def wait(self, timeout=1):
+-        """
+-        Waits for the application to stop itself and returns any exceptions.
++    async def wait (self, timeout=1) :
+         """
++            Waits for the application to stop itself and returns any exceptions.
++            """
+         try:
+             async with async_timeout(timeout):
+-                try:
+-                    await self.future
+-                    self.future.result()
+-                except asyncio.CancelledError:
+-                    pass
+-        finally:
+-            if not self.future.done():
+-                self.future.cancel()
+-                try:
+-                    await self.future
+-                except asyncio.CancelledError:
+-                    pass
+-
++                await self.future
++        except asyncio.TimeoutError:
++            # Cancel the future on timeout
++            self.future.cancel()
++            try:
++                await self.future
++            except asyncio.CancelledError:
++                pass
++            raise
++        except Exception as e:
++            # If the future completed with an exception, return it
++            return e
++        # If the future completed successfully, return None
++        return None
+     def stop(self, exceptions=True):
+         future = self._future
+         if future is None:

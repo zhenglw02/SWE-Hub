@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__587c9718__0002",
+  "hash_code": "587c9718",
+  "cost": 0,
+  "explanation": "The `_lock_storage` method needs to be implemented as a context manager that provides thread-safe access to the storage. Since the class already has a `_thread_lock` attribute (a reentrant lock), we should use that to ensure thread safety. The context manager should acquire the lock when entering and release it when exiting.",
+  "output": "The `_lock_storage` method needs to be implemented as a context manager that provides thread-safe access to the storage. Since the class already has a `_thread_lock` attribute (a reentrant lock), we should use that to ensure thread safety. The context manager should acquire the lock when entering and release it when exiting.\n\n```\ndef _lock_storage (self) : # Thread safe access to storage\n    self._thread_lock.acquire()\n    try:\n        yield self._storage\n    finally:\n        self._thread_lock.release()\n\n```",
+  "rewrite": "def _lock_storage (self) : # Thread safe access to storage\n    self._thread_lock.acquire()\n    try:\n        yield self._storage\n    finally:\n        self._thread_lock.release()",
+  "strategy": "lm_rewrite"
+}

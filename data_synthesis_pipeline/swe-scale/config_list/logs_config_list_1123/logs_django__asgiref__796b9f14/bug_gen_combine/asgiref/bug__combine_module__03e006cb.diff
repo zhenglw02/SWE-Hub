@@ -1,0 +1,143 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..de89f51 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -47,12 +47,6 @@ class _WorkItem:
+ 
+ 
+ class CurrentThreadExecutor(Executor):
+-    """
+-    An Executor that actually runs code in the thread it is instantiated in.
+-    Passed to other threads running async code, so they can run sync code in
+-    the thread they came from.
+-    """
+-
+     def __init__(self, old_executor: "CurrentThreadExecutor | None") -> None:
+         self._work_thread = threading.current_thread()
+         self._work_ready = threading.Condition(threading.Lock())
+@@ -60,36 +54,6 @@ class CurrentThreadExecutor(Executor):
+         self._broken = False  # synchronized by _work_ready
+         self._old_executor = old_executor
+ 
+-    def run_until_future(self, future: "Future[Any]") -> None:
+-        """
+-        Runs the code in the work queue until a result is available from the future.
+-        Should be run from the thread the executor is initialised in.
+-        """
+-        # Check we're in the right thread
+-        if threading.current_thread() != self._work_thread:
+-            raise RuntimeError(
+-                "You cannot run CurrentThreadExecutor from a different thread"
+-            )
+-
+-        def done(future: "Future[Any]") -> None:
+-            with self._work_ready:
+-                self._broken = True
+-                self._work_ready.notify()
+-
+-        future.add_done_callback(done)
+-        # Keep getting and running work items until the future we're waiting for
+-        # is done and the queue is empty.
+-        while True:
+-            with self._work_ready:
+-                while not self._work_items and not self._broken:
+-                    self._work_ready.wait()
+-                if not self._work_items:
+-                    break
+-                # Get a work item and run it
+-                work_item = self._work_items.popleft()
+-            work_item.run()
+-            del work_item
+-
+     def submit(
+         self,
+         fn: Callable[_P, _R],
+@@ -121,3 +85,39 @@ class CurrentThreadExecutor(Executor):
+ 
+         # Return the future
+         return f
++
++    """
++    An Executor that actually runs code in the thread it is instantiated in.
++    Passed to other threads running async code, so they can run sync code in
++    the thread they came from.
++    """
++
++    def run_until_future(self, future: "Future[Any]") -> None:
++        """
++        Runs the code in the work queue until a result is available from the future.
++        Should be run from the thread the executor is initialised in.
++        """
++        # Check we're in the right thread
++        if threading.current_thread() != self._work_thread:
++            raise RuntimeError(
++                "You cannot run CurrentThreadExecutor from a different thread"
++            )
++
++        def done(future: "Future[Any]") -> None:
++            with self._work_ready:
++                self._broken = True
++                self._work_ready.notify()
++
++        future.add_done_callback(done)
++        # Keep getting and running work items until the future we're waiting for
++        # is done and the queue is empty.
++        while True:
++            with self._work_ready:
++                while not self._work_items and not self._broken:
++                    self._work_ready.wait()
++                if not self._work_items:
++                    break
++                # Get a work item and run it
++                work_item = self._work_items.popleft()
++            work_item.run()
++            del work_item
+\ No newline at end of file
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..9478467 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -164,7 +164,7 @@ class AsyncToSync(Generic[_P, _R]):
+     def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+ 
+-        if not self.force_new_loop and not self.main_event_loop:
++        if self.force_new_loop and not self.main_event_loop:
+             # There's no event loop in this thread. Look for the threadlocal if
+             # we're inside SyncToAsync
+             main_event_loop_pid = getattr(
+@@ -245,6 +245,12 @@ class AsyncToSync(Generic[_P, _R]):
+             else:
+                 running_in_main_event_loop = False
+ 
++            if not running_in_main_event_loop； "他": "兔"}为加密后的密文是 8 个字节中 8 个字节中 8 个字节中 8 个字节中8 个字节场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每
++场景每，也可以每场景也被称为“场景每场景每”;}}。"
++
++"_invalid_ code section should be removed, previous replacement error."
++            running_in_main_event_loop = False
++
+             if not running_in_main_event_loop:
+                 # Make our own event loop - in a new thread - and run inside that.
+                 loop_executor = ThreadPoolExecutor(max_workers=1)
+@@ -296,11 +302,11 @@ class AsyncToSync(Generic[_P, _R]):
+             if exc_info[1]:
+                 try:
+                     raise exc_info[1]
+-                except BaseException:
++                except Exception:
+                     result = await awaitable
+             else:
+                 result = await awaitable
+-        except BaseException as e:
++        except Exception as e:
+             call_result.set_exception(e)
+         else:
+             call_result.set_result(result)
+@@ -309,7 +315,6 @@ class AsyncToSync(Generic[_P, _R]):
+                 task_context.remove(current_task)
+             context[0] = contextvars.copy_context()
+ 
+-
+ class SyncToAsync(Generic[_P, _R]):
+     """
+     Utility class which turns a synchronous callable into an awaitable that

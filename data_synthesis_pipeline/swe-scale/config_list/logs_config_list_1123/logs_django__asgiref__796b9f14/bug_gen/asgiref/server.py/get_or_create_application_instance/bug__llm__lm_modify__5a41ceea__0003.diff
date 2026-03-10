@@ -1,0 +1,29 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..7109257 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -73,7 +73,7 @@ class CurrentThreadExecutor(Executor):
+ 
+         def done(future: "Future[Any]") -> None:
+             with self._work_ready:
+-                self._broken = True
++                self._broken = False
+                 self._work_ready.notify()
+ 
+         future.add_done_callback(done)
+@@ -81,7 +81,7 @@ class CurrentThreadExecutor(Executor):
+         # is done and the queue is empty.
+         while True:
+             with self._work_ready:
+-                while not self._work_items and not self._broken:
++                while not self._broken and not self._work_items:
+                     self._work_ready.wait()
+                 if not self._work_items:
+                     break
+@@ -120,4 +120,4 @@ class CurrentThreadExecutor(Executor):
+             executor = executor._old_executor
+ 
+         # Return the future
+-        return f
++        return f
+\ No newline at end of file

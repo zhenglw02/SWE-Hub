@@ -1,0 +1,72 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..3799b36 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -131,40 +131,14 @@ class AsyncToSync(Generic[_P, _R]):
+     # inside create_task, we'll look it up here from the running event loop.
+     loop_thread_executors: "Dict[asyncio.AbstractEventLoop, CurrentThreadExecutor]" = {}
+ 
+-    def __init__(
+-        self,
+-        awaitable: Union[
+-            Callable[_P, Coroutine[Any, Any, _R]],
+-            Callable[_P, Awaitable[_R]],
+-        ],
+-        force_new_loop: bool = False,
+-    ):
+-        if not callable(awaitable) or (
+-            not iscoroutinefunction(awaitable)
+-            and not iscoroutinefunction(getattr(awaitable, "__call__", awaitable))
+-        ):
+-            # Python does not have very reliable detection of async functions
+-            # (lots of false negatives) so this is just a warning.
+-            warnings.warn(
+-                "async_to_sync was passed a non-async-marked callable", stacklevel=2
+-            )
++    def __init__ ( self, awaitable: Union[ Callable[_P, Coroutine[Any, Any, _R]], Callable[_P, Awaitable[_R]], ], force_new_loop: bool = False, ) :
+         self.awaitable = awaitable
+-        try:
+-            self.__self__ = self.awaitable.__self__  # type: ignore[union-attr]
+-        except AttributeError:
+-            pass
+         self.force_new_loop = force_new_loop
+         self.main_event_loop = None
+-        try:
+-            self.main_event_loop = asyncio.get_running_loop()
+-        except RuntimeError:
+-            # There's no event loop in this thread.
+-            pass
+-
+     def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+ 
+-        if not self.force_new_loop and not self.main_event_loop:
++        if not self.main_event_loop and not self.force_new_loop:
+             # There's no event loop in this thread. Look for the threadlocal if
+             # we're inside SyncToAsync
+             main_event_loop_pid = getattr(
+@@ -283,13 +257,13 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+         __traceback_hide__ = True  # noqa: F841
+ 
+-        if context is not None:
+-            _restore_context(context[0])
+-
+         current_task = asyncio.current_task()
+         if current_task is not None and task_context is not None:
+             task_context.append(current_task)
+ 
++        if context is not None:
++            _restore_context(context[0])
++
+         try:
+             # If we have an exception, run the function inside the except block
+             # after raising it so exc_info is correctly populated.
+@@ -309,7 +283,6 @@ class AsyncToSync(Generic[_P, _R]):
+                 task_context.remove(current_task)
+             context[0] = contextvars.copy_context()
+ 
+-
+ class SyncToAsync(Generic[_P, _R]):
+     """
+     Utility class which turns a synchronous callable into an awaitable that

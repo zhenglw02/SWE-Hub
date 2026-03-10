@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__bb86e79e__0004",
+  "hash_code": "bb86e79e",
+  "cost": 0,
+  "explanation": "The `_do_enter` method is responsible for setting up the timeout mechanism when entering the context manager. It needs to:\n\n1. Store the current task for potential cancellation\n2. Schedule a timeout callback using the event loop if a timeout is specified\n3. Return self for the context manager",
+  "output": "The `_do_enter` method is responsible for setting up the timeout mechanism when entering the context manager. It needs to:\n\n1. Store the current task for potential cancellation\n2. Schedule a timeout callback using the event loop if a timeout is specified\n3. Return self for the context manager\n\n```\ndef _do_enter (self) -> \"timeout\" : # Support Tornado 5- without timeout # Details: https://github.com/python/asyncio/issues/392\n    self._task = asyncio.current_task()\n    if self._timeout is not None:\n        self._cancel_at = self._loop.time() + self._timeout\n        self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)\n    return self\n```",
+  "rewrite": "def _do_enter (self) -> \"timeout\" : # Support Tornado 5- without timeout # Details: https://github.com/python/asyncio/issues/392\n    self._task = asyncio.current_task()\n    if self._timeout is not None:\n        self._cancel_at = self._loop.time() + self._timeout\n        self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)\n    return self",
+  "strategy": "lm_rewrite"
+}

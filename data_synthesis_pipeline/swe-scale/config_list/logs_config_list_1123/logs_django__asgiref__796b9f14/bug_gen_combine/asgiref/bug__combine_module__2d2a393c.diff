@@ -1,0 +1,41 @@
+/tmp/PATCH_0_d5c1ce70.patch:14: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..b47b9a8 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -120,12 +120,12 @@ class Local:
+         with self._lock_storage() as storage:
+             return getattr(storage, key)
+ 
+-    def __setattr__(self, key, value):
+-        if key in ("_local", "_storage", "_thread_critical", "_thread_lock"):
++    def __setattr__ (self, key, value) :
++        if key in ("_thread_critical", "_thread_lock", "_storage"):
+             return super().__setattr__(key, value)
++    
+         with self._lock_storage() as storage:
+             setattr(storage, key, value)
+-
+     def __delattr__(self, key):
+         with self._lock_storage() as storage:
+             delattr(storage, key)
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..296cc3b 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -22,11 +22,11 @@ class ApplicationCommunicator:
+     # For Python 3.9 we need to lazily bind the queues, on 3.10+ they bind the
+     # event loop lazily.
+     @property
+-    def input_queue(self):
++    @property
++    def input_queue (self) :
+         if self._input_queue is None:
+             self._input_queue = asyncio.Queue()
+         return self._input_queue
+-
+     @property
+     def output_queue(self):
+         if self._output_queue is None:

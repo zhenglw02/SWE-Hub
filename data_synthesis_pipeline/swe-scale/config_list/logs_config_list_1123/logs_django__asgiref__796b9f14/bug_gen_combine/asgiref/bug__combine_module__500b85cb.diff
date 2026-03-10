@@ -1,0 +1,65 @@
+/tmp/PATCH_0_d589af63.patch:23: trailing whitespace.
+    
+/tmp/PATCH_0_d589af63.patch:30: trailing whitespace.
+        
+warning: 2 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..8bbcd8c 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -41,17 +41,20 @@ _P = ParamSpec("_P")
+ _R = TypeVar("_R")
+ 
+ 
+-def _restore_context(context: contextvars.Context) -> None:
+-    # Check for changes in contextvars, and set them to the current
+-    # context for downstream consumers
+-    for cvar in context:
+-        cvalue = context.get(cvar)
+-        try:
+-            if cvar.get() != cvalue:
+-                cvar.set(cvalue)
+-        except LookupError:
+-            cvar.set(cvalue)
+-
++def _restore_context (context: contextvars.Context) -> None : # Check for changes in contextvars, and set them to the current # context for downstream consumers
++    # Get the current context
++    current_context = contextvars.copy_context()
++    
++    # Compare each context variable between the provided context and current context
++    for var in context:
++        # Get the value from the provided context
++        context_value = context[var]
++        # Get the value from the current context
++        current_value = current_context.get(var)
++        
++        # If values are different, update the current context
++        if context_value != current_value:
++            var.set(context_value)
+ 
+ # Python 3.12 deprecates asyncio.iscoroutinefunction() as an alias for
+ # inspect.iscoroutinefunction(), whilst also removing the _is_coroutine marker.
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..73cb169 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -87,9 +87,9 @@ class WsgiToAsgiInstance:
+         for name, value in self.scope.get("headers", []):
+             name = name.decode("latin1")
+             if name == "content-length":
+-                corrected_name = "CONTENT_LENGTH"
+-            elif name == "content-type":
+                 corrected_name = "CONTENT_TYPE"
++            elif name == "content-type":
++                corrected_name = "CONTENT_LENGTH"
+             else:
+                 corrected_name = "HTTP_%s" % name.upper().replace("-", "_")
+             # HTTPbis say only ASCII chars are allowed in headers, but we latin1 just in case
+@@ -98,7 +98,6 @@ class WsgiToAsgiInstance:
+                 value = environ[corrected_name] + "," + value
+             environ[corrected_name] = value
+         return environ
+-
+     def start_response(self, status, response_headers, exc_info=None):
+         """
+         WSGI start_response callable.

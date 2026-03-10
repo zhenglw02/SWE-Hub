@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__llm__lm_modify__0aedd401__0000",
+    "patch": "diff --git a/asgiref/server.py b/asgiref/server.py\nindex 131ea43..b364c55 100644\n--- a/asgiref/server.py\n+++ b/asgiref/server.py\n@@ -123,7 +123,7 @@ class StatelessServer:\n         \"\"\"\n         Finds and deletes the oldest application instance\n         \"\"\"\n-        oldest_time = min(\n+        oldest_time = max(\n             details[\"last_used\"] for details in self.application_instances.values()\n         )\n         for scope_id, details in self.application_instances.items():\n@@ -170,4 +170,4 @@ class StatelessServer:\n             exception,\n             \"\".join(traceback.format_tb(exception.__traceback__)),\n             f\"  {exception}\",\n-        )\n+        )\n\\ No newline at end of file\n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/sync.py/main_wrap/bug__llm__lm_modify__0aedd401__0000.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

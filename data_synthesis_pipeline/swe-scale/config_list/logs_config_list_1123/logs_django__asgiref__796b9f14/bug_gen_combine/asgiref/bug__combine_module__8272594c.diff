@@ -1,0 +1,98 @@
+/tmp/PATCH_0_e4973697.patch:17: trailing whitespace.
+    
+/tmp/PATCH_0_e4973697.patch:24: trailing whitespace.
+        
+/tmp/PATCH_0_e4973697.patch:29: trailing whitespace.
+            
+/tmp/PATCH_0_e4973697.patch:35: trailing whitespace.
+            
+/tmp/PATCH_0_e4973697.patch:49: trailing whitespace.
+                
+warning: 5 lines add whitespace errors.
+diff --git a/asgiref/compatibility.py b/asgiref/compatibility.py
+index 3a2a63e..ef3c3d8 100644
+--- a/asgiref/compatibility.py
++++ b/asgiref/compatibility.py
+@@ -7,23 +7,42 @@ def is_double_callable(application):
+     """
+     Tests to see if an application is a legacy-style (double-callable) application.
+     """
+-    # Look for a hint on the object first
+-    if getattr(application, "_asgi_single_callable", False):
++    if not callable(application):
+         return False
+-    if getattr(application, "_asgi_double_callable", False):
+-        return True
+-    # Uninstanted classes are double-callable
+-    if inspect.isclass(application):
++    
++    # Check if the application is double-callable by examining its signature
++    try:
++        sig = inspect.signature(application)
++        # Double callable should take exactly one parameter (scope)
++        if len(sig.parameters) != 1:
++            return False
++        
++        # The application should return a callable that takes (receive, send)
++        scope_instance = application({})
++        if not callable(scope_instance):
++            return False
++            
++        # Check if the returned callable is coroutine function or regular function
++        # that takes two parameters (receive, send)
++        sig_instance = inspect.signature(scope_instance)
++        if len(sig_instance.parameters) != 2:
++            return False
++            
+         return True
+-    # Instanted classes depend on their __call__
+-    if hasattr(application, "__call__"):
+-        # We only check to see if its __call__ is a coroutine function -
+-        # if it's not, it still might be a coroutine function itself.
+-        if iscoroutinefunction(application.__call__):
++    except (TypeError, ValueError):
++        # If signature inspection fails, try a simpler approach
++        try:
++            # Try to call with empty scope and see if it returns a callable
++            instance = application({})
++            if not callable(instance):
++                return False
++                
++            # Try to inspect the instance signature indirectly
++            if hasattr(instance, '__call__'):
++                return True
++            return False
++        except:
+             return False
+-    # Non-classes we just check directly
+-    return not iscoroutinefunction(application)
+-
+ 
+ def double_to_single_callable(application):
+     """
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..1d882b9 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -289,6 +289,7 @@ class AsyncToSync(Generic[_P, _R]):
+         current_task = asyncio.current_task()
+         if current_task is not None and task_context is not None:
+             task_context.append(current_task)
++            task_context.remove(current_task)
+ 
+         try:
+             # If we have an exception, run the function inside the except block
+@@ -306,9 +307,10 @@ class AsyncToSync(Generic[_P, _R]):
+             call_result.set_result(result)
+         finally:
+             if current_task is not None and task_context is not None:
+-                task_context.remove(current_task)
+-            context[0] = contextvars.copy_context()
+-
++                if len(task_context) > 0:
++                    task_context.pop()
++            if context is not None:
++                context[0] = contextvars.copy_context()
+ 
+ class SyncToAsync(Generic[_P, _R]):
+     """

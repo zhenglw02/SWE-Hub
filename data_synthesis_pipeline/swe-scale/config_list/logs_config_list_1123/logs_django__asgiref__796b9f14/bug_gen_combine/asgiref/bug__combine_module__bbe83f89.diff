@@ -1,0 +1,74 @@
+/tmp/PATCH_0_160a79d9.patch:18: trailing whitespace.
+    
+/tmp/PATCH_0_160a79d9.patch:21: trailing whitespace.
+    
+/tmp/PATCH_0_160a79d9.patch:32: trailing whitespace.
+    
+warning: 3 lines add whitespace errors.
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..5430a34 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -121,18 +121,21 @@ class StatelessServer:
+ 
+     def delete_oldest_application_instance(self):
+         """
+-        Finds and deletes the oldest application instance
+-        """
+-        oldest_time = min(
+-            details["last_used"] for details in self.application_instances.values()
+-        )
++            Finds and deletes the oldest application instance
++            """
++        if not self.application_instances:
++            return
++    
++        oldest_scope_id = None
++        oldest_timestamp = float('inf')
++    
+         for scope_id, details in self.application_instances.items():
+-            if details["last_used"] == oldest_time:
+-                self.delete_application_instance(scope_id)
+-                # Return to make sure we only delete one in case two have
+-                # the same oldest time
+-                return
+-
++            if details["last_used"] < oldest_timestamp:
++                oldest_timestamp = details["last_used"]
++                oldest_scope_id = scope_id
++    
++        if oldest_scope_id is not None:
++            self.delete_application_instance(oldest_scope_id)
+     def delete_application_instance(self, scope_id):
+         """
+         Removes an application instance (makes sure its task is stopped,
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..d16322d 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -57,7 +57,7 @@ class WsgiToAsgiInstance:
+         script_name = scope.get("root_path", "").encode("utf8").decode("latin1")
+         path_info = scope["path"].encode("utf8").decode("latin1")
+         if path_info.startswith(script_name):
+-            path_info = path_info[len(script_name) :]
++            path_info = path_info[len(script_name) + 1 :]
+         environ = {
+             "REQUEST_METHOD": scope["method"],
+             "SCRIPT_NAME": script_name,
+@@ -85,7 +85,7 @@ class WsgiToAsgiInstance:
+ 
+         # Go through headers and make them into environ entries
+         for name, value in self.scope.get("headers", []):
+-            name = name.decode("latin1")
++            name = name[1:].decode("latin1")
+             if name == "content-length":
+                 corrected_name = "CONTENT_LENGTH"
+             elif name == "content-type":
+@@ -98,7 +98,6 @@ class WsgiToAsgiInstance:
+                 value = environ[corrected_name] + "," + value
+             environ[corrected_name] = value
+         return environ
+-
+     def start_response(self, status, response_headers, exc_info=None):
+         """
+         WSGI start_response callable.

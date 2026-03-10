@@ -1,0 +1,20 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..41f79f5 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -46,7 +46,7 @@ class _WorkItem:
+             self.future.set_result(result)
+ 
+ 
+-class CurrentThreadExecutor(Executor):
++class CurrentThreadExecutor:
+     """
+     An Executor that actually runs code in the thread it is instantiated in.
+     Passed to other threads running async code, so they can run sync code in
+@@ -120,4 +120,4 @@ class CurrentThreadExecutor(Executor):
+             executor = executor._old_executor
+ 
+         # Return the future
+-        return f
++        return f
+\ No newline at end of file

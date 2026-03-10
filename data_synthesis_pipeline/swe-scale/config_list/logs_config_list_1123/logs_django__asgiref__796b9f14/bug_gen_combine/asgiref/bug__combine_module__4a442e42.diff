@@ -1,0 +1,42 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..d707dd3 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -446,7 +446,7 @@ class SyncToAsync(Generic[_P, _R]):
+                     await task
+                     cancel_parent = False
+                 except asyncio.CancelledError:
+-                    pass
++                    cancel_parent = False
+             except IndexError:
+                 pass
+             if exec_coro.done():
+@@ -492,7 +492,6 @@ class SyncToAsync(Generic[_P, _R]):
+         else:
+             return func(*args, **kwargs)
+ 
+-
+ @overload
+ def async_to_sync(
+     *,
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..377f582 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -80,7 +80,7 @@ class WsgiToAsgiInstance:
+             environ["SERVER_NAME"] = "localhost"
+             environ["SERVER_PORT"] = "80"
+ 
+-        if scope.get("client") is not None:
++        if scope.get("client") is None:
+             environ["REMOTE_ADDR"] = scope["client"][0]
+ 
+         # Go through headers and make them into environ entries
+@@ -98,7 +98,6 @@ class WsgiToAsgiInstance:
+                 value = environ[corrected_name] + "," + value
+             environ[corrected_name] = value
+         return environ
+-
+     def start_response(self, status, response_headers, exc_info=None):
+         """
+         WSGI start_response callable.

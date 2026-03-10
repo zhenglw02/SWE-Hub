@@ -1,0 +1,41 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..5bb2f50 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -372,14 +372,13 @@ class SyncToAsync(Generic[_P, _R]):
+         functools.update_wrapper(self, func)
+         self._thread_sensitive = thread_sensitive
+         markcoroutinefunction(self)
+-        if thread_sensitive and executor is not None:
++        if thread_sensitive or executor is not None:
+             raise TypeError("executor must not be set when thread_sensitive is True")
+         self._executor = executor
+         try:
+-            self.__self__ = func.__self__  # type: ignore
++            self.__self__ = func.__self__
+         except AttributeError:
+             pass
+-
+     async def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+         loop = asyncio.get_running_loop()
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..29d08d9 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -149,7 +149,7 @@ class WsgiToAsgiInstance:
+             # If the application supplies a Content-Length header
+             if self.response_content_length is not None:
+                 # The server should not transmit more bytes to the client than the header allows
+-                bytes_allowed = self.response_content_length - bytes_sent
++                bytes_allowed = self.response_content_length + bytes_sent
+                 if len(output) > bytes_allowed:
+                     output = output[:bytes_allowed]
+             self.sync_send(
+@@ -163,4 +163,4 @@ class WsgiToAsgiInstance:
+         if not self.response_started:
+             self.response_started = True
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        self.sync_send({"type": "http.response.body"})
+\ No newline at end of file

@@ -1,0 +1,115 @@
+/tmp/PATCH_0_31f504e9.patch:46: trailing whitespace.
+        
+warning: 1 line adds whitespace errors.
+/tmp/PATCH_1_0cb29c7b.patch:23: trailing whitespace.
+    
+/tmp/PATCH_1_0cb29c7b.patch:34: trailing whitespace.
+    
+warning: 2 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..92dc3fa 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -469,29 +469,32 @@ class SyncToAsync(Generic[_P, _R]):
+         func = functools.partial(self.__call__, parent)
+         return functools.update_wrapper(func, self.func)
+ 
+-    def thread_handler(self, loop, exc_info, task_context, func, *args, **kwargs):
++    def thread_handler (self, loop, exc_info, task_context, func, *args, **kwargs) :
+         """
+-        Wraps the sync application with exception handling.
+-        """
+-
+-        __traceback_hide__ = True  # noqa: F841
+-
+-        # Set the threadlocal for AsyncToSync
++            Wraps the sync application with exception handling.
++            """
++        # Set the threadlocal to point to the currently running loop
+         self.threadlocal.main_event_loop = loop
+         self.threadlocal.main_event_loop_pid = os.getpid()
++    
++        # Set the task context so that AsyncToSync can find it
+         self.threadlocal.task_context = task_context
+-
+-        # Run the function
+-        # If we have an exception, run the function inside the except block
+-        # after raising it so exc_info is correctly populated.
+-        if exc_info[1]:
+-            try:
+-                raise exc_info[1]
+-            except BaseException:
++    
++        try:
++            # If we have an exception, run the function inside the except block
++            # after raising it so exc_info is correctly populated
++            if exc_info[1]:
++                try:
++                    raise exc_info[1]
++                except BaseException:
++                    return func(*args, **kwargs)
++            else:
+                 return func(*args, **kwargs)
+-        else:
+-            return func(*args, **kwargs)
+-
++        finally:
++            # Clear the threadlocal
++            del self.threadlocal.main_event_loop
++            del self.threadlocal.main_event_loop_pid
++            del self.threadlocal.task_context
+ 
+ @overload
+ def async_to_sync(
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..f3ba70c 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -28,25 +28,29 @@ class timeout:
+     loop - asyncio compatible event loop
+     """
+ 
+-    def __init__(
+-        self,
+-        timeout: Optional[float],
+-        *,
+-        loop: Optional[asyncio.AbstractEventLoop] = None,
+-    ) -> None:
+-        self._timeout = timeout
+-        if loop is None:
+-            loop = asyncio.get_running_loop()
+-        else:
+-            warnings.warn(
+-                """The loop argument to timeout() is deprecated.""", DeprecationWarning
+-            )
+-        self._loop = loop
+-        self._task = None  # type: Optional[asyncio.Task[Any]]
+-        self._cancelled = False
+-        self._cancel_handler = None  # type: Optional[asyncio.Handle]
+-        self._cancel_at = None  # type: Optional[float]
+-
++    def __init__ ( self, timeout: Optional[float], *, loop: Optional[asyncio.AbstractEventLoop] = None, ) -> None :
++            self._timeout = timeout
++            if loop is None:
++                self._loop = asyncio.get_event_loop()
++            else:
++                self._loop = loop
++                # Warn if loop is passed and we can detect it's deprecated
++                try:
++                    # This warning was introduced in Python 3.10
++                    warnings.warn(
++                        "The loop argument is deprecated since Python 3.8, "
++                        "and scheduled for removal in Python 3.12.",
++                        DeprecationWarning,
++                        stacklevel=2,
++                    )
++                except (AttributeError, NameError):
++                    # warnings might not be available or version differs
++                    pass
++        
++            self._task = None
++            self._cancel_at = None
++            self._cancel_handler = None
++            self._cancelled = False
+     def __enter__(self) -> "timeout":
+         return self._do_enter()

@@ -1,0 +1,64 @@
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..231019f 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -99,38 +99,33 @@ class WsgiToAsgiInstance:
+             environ[corrected_name] = value
+         return environ
+ 
+-    def start_response(self, status, response_headers, exc_info=None):
++    def start_response (self, status, response_headers, exc_info=None) :
+         """
+-        WSGI start_response callable.
+-        """
+-        # Don't allow re-calling once response has begun
+-        if self.response_started:
+-            raise exc_info[1].with_traceback(exc_info[2])
+-        # Don't allow re-calling without exc_info
+-        if hasattr(self, "response_start") and exc_info is None:
+-            raise ValueError(
+-                "You cannot call start_response a second time without exc_info"
+-            )
+-        # Extract status code
+-        status_code, _ = status.split(" ", 1)
+-        status_code = int(status_code)
+-        # Extract headers
+-        headers = [
+-            (name.lower().encode("ascii"), value.encode("ascii"))
+-            for name, value in response_headers
+-        ]
+-        # Extract content-length
+-        self.response_content_length = None
++            WSGI start_response callable.
++            """
++        # Parse status code from status string (e.g., "200 OK" -> 200)
++        status_code = int(status.split()[0])
++    
++        # Build response headers
++        headers = []
+         for name, value in response_headers:
+-            if name.lower() == "content-length":
+-                self.response_content_length = int(value)
+-        # Build and send response start message.
++            headers.append((name.lower().encode('latin-1'), value.encode('latin-1')))
++    
++        # Store the response start information for later sending
+         self.response_start = {
+             "type": "http.response.start",
+             "status": status_code,
+-            "headers": headers,
++            "headers": headers
+         }
+-
++    
++        # Extract Content-Length header if present
++        self.response_content_length = None
++        for name, value in response_headers:
++            if name.lower() == 'content-length':
++                self.response_content_length = int(value)
++                break
++    
++        return lambda data: None  # Return a dummy write callable
+     @sync_to_async
+     def run_wsgi_app(self, body):
+         """

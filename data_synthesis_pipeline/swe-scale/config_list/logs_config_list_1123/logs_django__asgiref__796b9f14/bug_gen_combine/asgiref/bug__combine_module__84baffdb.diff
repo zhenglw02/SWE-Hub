@@ -1,0 +1,70 @@
+/tmp/PATCH_1_2e48de7e.patch:27: trailing whitespace.
+    
+/tmp/PATCH_1_2e48de7e.patch:35: trailing whitespace.
+            
+/tmp/PATCH_1_2e48de7e.patch:38: trailing whitespace.
+    
+warning: 3 lines add whitespace errors.
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..fd5fc0f 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -120,18 +120,25 @@ class ApplicationCommunicator:
+                     pass
+             raise e
+ 
+-    async def receive_nothing(self, timeout=0.1, interval=0.01):
+-        """
+-        Checks that there is no message to receive in the given time.
++    async def receive_nothing (self, timeout=0.1, interval=0.01) :
+         """
++            Checks that there is no message to receive in the given time.
++            """
+         # Make sure there's not an exception to raise from the task
+         if self.future.done():
+             self.future.result()
+-
+-        # `interval` has precedence over `timeout`
+-        start = time.monotonic()
+-        while time.monotonic() - start < timeout:
+-            if not self.output_queue.empty():
+-                return False
+-            await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++    
++        # Use async_timeout to limit the total waiting time
++        async with async_timeout(timeout):
++            start_time = time.monotonic()
++            while time.monotonic() - start_time < timeout:
++                # Check if there's a message available without blocking
++                if not self.output_queue.empty():
++                    raise AssertionError("Received a message when nothing was expected")
++            
++                # Wait for the specified interval before checking again
++                await asyncio.sleep(interval)
++    
++        # Double-check one final time after the timeout
++        if not self.output_queue.empty():
++            raise AssertionError("Received a message when nothing was expected")
+\ No newline at end of file
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..cc1a0b5 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -57,7 +57,7 @@ class WsgiToAsgiInstance:
+         script_name = scope.get("root_path", "").encode("utf8").decode("latin1")
+         path_info = scope["path"].encode("utf8").decode("latin1")
+         if path_info.startswith(script_name):
+-            path_info = path_info[len(script_name) :]
++            path_info = path_info[len(script_name) + 1 :]
+         environ = {
+             "REQUEST_METHOD": scope["method"],
+             "SCRIPT_NAME": script_name,
+@@ -98,7 +98,6 @@ class WsgiToAsgiInstance:
+                 value = environ[corrected_name] + "," + value
+             environ[corrected_name] = value
+         return environ
+-
+     def start_response(self, status, response_headers, exc_info=None):
+         """
+         WSGI start_response callable.

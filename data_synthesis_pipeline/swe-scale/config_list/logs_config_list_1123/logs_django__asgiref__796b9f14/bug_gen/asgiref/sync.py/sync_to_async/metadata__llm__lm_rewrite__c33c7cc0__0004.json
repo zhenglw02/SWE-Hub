@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__c33c7cc0__0004",
+  "hash_code": "c33c7cc0",
+  "cost": 0,
+  "explanation": "",
+  "output": "```python\ndef sync_to_async ( func: Optional[Callable[_P, _R]] = None, *, thread_sensitive: bool = True, executor: Optional[\"ThreadPoolExecutor\"] = None, ) -> Union[ Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]], Callable[_P, Coroutine[Any, Any, _R]], ] :\n    if func is None:\n        return lambda f: SyncToAsync(\n            f,\n            thread_sensitive=thread_sensitive,\n            executor=executor,\n        )\n    return SyncToAsync(\n        func,\n        thread_sensitive=thread_sensitive,\n        executor=executor,\n    )\n```",
+  "rewrite": "def sync_to_async ( func: Optional[Callable[_P, _R]] = None, *, thread_sensitive: bool = True, executor: Optional[\"ThreadPoolExecutor\"] = None, ) -> Union[ Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]], Callable[_P, Coroutine[Any, Any, _R]], ] :\n    if func is None:\n        return lambda f: SyncToAsync(\n            f,\n            thread_sensitive=thread_sensitive,\n            executor=executor,\n        )\n    return SyncToAsync(\n        func,\n        thread_sensitive=thread_sensitive,\n        executor=executor,\n    )",
+  "strategy": "lm_rewrite"
+}

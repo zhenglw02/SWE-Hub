@@ -1,0 +1,21 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..7e90880 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -81,7 +81,7 @@ class CurrentThreadExecutor(Executor):
+         # is done and the queue is empty.
+         while True:
+             with self._work_ready:
+-                while not self._work_items and not self._broken:
++                while not self._work_items or not self._broken:
+                     self._work_ready.wait()
+                 if not self._work_items:
+                     break
+@@ -89,7 +89,6 @@ class CurrentThreadExecutor(Executor):
+                 work_item = self._work_items.popleft()
+             work_item.run()
+             del work_item
+-
+     def submit(
+         self,
+         fn: Callable[_P, _R],

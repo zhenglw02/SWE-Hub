@@ -1,0 +1,43 @@
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..44f7beb 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -160,7 +160,7 @@ class StatelessServer:
+                     except KeyError:
+                         # Exception handling might have already got here before us. That's fine.
+                         pass
+-
++                break
+     async def application_exception(self, exception, application_details):
+         """
+         Called whenever an application coroutine has an exception.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..40147ae 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -179,7 +179,7 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+         # You can't call AsyncToSync from a thread with a running event loop
+         try:
+-            asyncio.get_running_loop()
++            asyncio.get_event_loop()
+         except RuntimeError:
+             pass
+         else:
+@@ -247,7 +247,7 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+             if not running_in_main_event_loop:
+                 # Make our own event loop - in a new thread - and run inside that.
+-                loop_executor = ThreadPoolExecutor(max_workers=1)
++                loop_executor = ThreadPoolExecutor(max_workers=0)
+                 loop_future = loop_executor.submit(asyncio.run, new_loop_wrap())
+                 # Run the CurrentThreadExecutor until the future is done.
+                 current_executor.run_until_future(loop_future)
+@@ -260,7 +260,6 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+         # Wait for results from the future.
+         return call_result.result()
+-
+     def __get__(self, parent: Any, objtype: Any) -> Callable[_P, _R]:
+         """
+         Include self for methods

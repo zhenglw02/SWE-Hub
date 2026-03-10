@@ -1,0 +1,38 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..d849a19 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -81,7 +81,7 @@ class CurrentThreadExecutor(Executor):
+         # is done and the queue is empty.
+         while True:
+             with self._work_ready:
+-                while not self._work_items and not self._broken:
++                while not self._work_items or not self._broken:
+                     self._work_ready.wait()
+                 if not self._work_items:
+                     break
+@@ -115,9 +115,9 @@ class CurrentThreadExecutor(Executor):
+                     executor._work_items.append(work_item)
+                     executor._work_ready.notify()
+                     break
+-            if executor._old_executor is None:
++            if executor._old_executor is not None:
+                 raise RuntimeError("CurrentThreadExecutor already quit or is broken")
+             executor = executor._old_executor
+ 
+         # Return the future
+-        return f
++        return f
+\ No newline at end of file
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..8752fd2 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -32,7 +32,6 @@ class ApplicationCommunicator:
+         if self._output_queue is None:
+             self._output_queue = asyncio.Queue()
+         return self._output_queue
+-
+     @property
+     def future(self):
+         if self._future is None:

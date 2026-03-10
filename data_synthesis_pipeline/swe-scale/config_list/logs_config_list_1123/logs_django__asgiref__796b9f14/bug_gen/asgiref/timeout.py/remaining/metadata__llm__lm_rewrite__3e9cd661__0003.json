@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__3e9cd661__0003",
+  "hash_code": "3e9cd661",
+  "cost": 0,
+  "explanation": "<explanation>\n\nThe `remaining` method should return the number of seconds left before the timeout expires. Here's the logic:\n1. If no timeout is set (self._timeout is None), return None\n2. If the timeout has already expired (self._cancelled is True), return 0.0\n3. Otherwise, calculate remaining time by subtracting current loop time from the scheduled cancellation time\n\nNote that self._cancel_at represents the absolute time when the timeout will expire, and self._loop.time() gives the current time according to the loop's clock.",
+  "output": "<explanation>\n\nThe `remaining` method should return the number of seconds left before the timeout expires. Here's the logic:\n1. If no timeout is set (self._timeout is None), return None\n2. If the timeout has already expired (self._cancelled is True), return 0.0\n3. Otherwise, calculate remaining time by subtracting current loop time from the scheduled cancellation time\n\nNote that self._cancel_at represents the absolute time when the timeout will expire, and self._loop.time() gives the current time according to the loop's clock.\n\n```\ndef remaining(self) -> Optional[float]:\n    if self._timeout is None:\n        return None\n    if self._cancelled:\n        return 0.0\n    if self._cancel_at is None:\n        return self._timeout\n    return max(0.0, self._cancel_at - self._loop.time())\n```",
+  "rewrite": "def remaining(self) -> Optional[float]:\n    if self._timeout is None:\n        return None\n    if self._cancelled:\n        return 0.0\n    if self._cancel_at is None:\n        return self._timeout\n    return max(0.0, self._cancel_at - self._loop.time())",
+  "strategy": "lm_rewrite"
+}

@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__78ef8e6c__0002",
+  "hash_code": "78ef8e6c",
+  "cost": 0,
+  "explanation": "Looking at the timeout context manager implementation, the `_do_exit` method should cancel the scheduled timeout handler when exiting the context. This prevents the timeout from being triggered after the context has been exited.\n\nHere's the implementation:",
+  "output": "Looking at the timeout context manager implementation, the `_do_exit` method should cancel the scheduled timeout handler when exiting the context. This prevents the timeout from being triggered after the context has been exited.\n\nHere's the implementation:\n\n```python\ndef _do_exit(self, exc_type: Type[BaseException]) -> None:\n    if self._cancel_handler is not None:\n        self._cancel_handler.cancel()\n        self._cancel_handler = None\n    self._cancel_at = None\n    self._task = None\n```\n\nThis implementation:\n1. Cancels the scheduled timeout handler if it exists\n2. Resets `_cancel_handler` to None\n3. Resets `_cancel_at` to None since the timeout is no longer relevant\n4. Resets `_task` to None as we're exiting the context and no longer need to reference the task\n\nThe method handles the cleanup needed when exiting the timeout context, ensuring that any scheduled timeout cancellation is properly cleaned up.",
+  "rewrite": "def _do_exit(self, exc_type: Type[BaseException]) -> None:\n    if self._cancel_handler is not None:\n        self._cancel_handler.cancel()\n        self._cancel_handler = None\n    self._cancel_at = None\n    self._task = None",
+  "strategy": "lm_rewrite"
+}

@@ -1,0 +1,51 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..f789aa7 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -294,12 +294,12 @@ class AsyncToSync(Generic[_P, _R]):
+             # If we have an exception, run the function inside the except block
+             # after raising it so exc_info is correctly populated.
+             if exc_info[1]:
++                result = await awaitable
++            else:
+                 try:
+                     raise exc_info[1]
+                 except BaseException:
+                     result = await awaitable
+-            else:
+-                result = await awaitable
+         except BaseException as e:
+             call_result.set_exception(e)
+         else:
+@@ -309,7 +309,6 @@ class AsyncToSync(Generic[_P, _R]):
+                 task_context.remove(current_task)
+             context[0] = contextvars.copy_context()
+ 
+-
+ class SyncToAsync(Generic[_P, _R]):
+     """
+     Utility class which turns a synchronous callable into an awaitable that
+@@ -562,15 +561,7 @@ def sync_to_async(
+     ...
+ 
+ 
+-def sync_to_async(
+-    func: Optional[Callable[_P, _R]] = None,
+-    *,
+-    thread_sensitive: bool = True,
+-    executor: Optional["ThreadPoolExecutor"] = None,
+-) -> Union[
+-    Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]],
+-    Callable[_P, Coroutine[Any, Any, _R]],
+-]:
++def sync_to_async ( func: Optional[Callable[_P, _R]] = None, *, thread_sensitive: bool = True, executor: Optional["ThreadPoolExecutor"] = None, ) -> Union[ Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]], Callable[_P, Coroutine[Any, Any, _R]], ] :
+     if func is None:
+         return lambda f: SyncToAsync(
+             f,
+@@ -581,4 +572,4 @@ def sync_to_async(
+         func,
+         thread_sensitive=thread_sensitive,
+         executor=executor,
+-    )
++    )
+\ No newline at end of file

@@ -1,0 +1,65 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..3c00b91 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -100,15 +100,13 @@ class ThreadSensitiveContext:
+ 
+         return self
+ 
+-    async def __aexit__(self, exc, value, tb):
+-        if not self.token:
+-            return
+-
+-        executor = SyncToAsync.context_to_thread_executor.pop(self, None)
+-        if executor:
+-            executor.shutdown()
+-        SyncToAsync.thread_sensitive_context.reset(self.token)
+-
++    async def __aexit__ (self, exc, value, tb) :
++        # If we have a token, then we are the outer-most context and should
++        # remove the context from the context variable.
++        if self.token is not None:
++            self.token = None
++            # Remove the current context from the context variable
++            _ = SyncToAsync.thread_sensitive_context.reset()
+ 
+ class AsyncToSync(Generic[_P, _R]):
+     """
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..bc3f33c 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -137,18 +137,13 @@ class WsgiToAsgiInstance:
+         Called in a subthread to run the WSGI app. We encapsulate like
+         this so that the start_response callable is called in the same thread.
+         """
+-        # Translate the scope and incoming request body into a WSGI environ
+         environ = self.build_environ(self.scope, body)
+-        # Run the WSGI app
+         bytes_sent = 0
+         for output in self.wsgi_application(environ, self.start_response):
+-            # If this is the first response, include the response headers
+             if not self.response_started:
+                 self.response_started = True
+                 self.sync_send(self.response_start)
+-            # If the application supplies a Content-Length header
+             if self.response_content_length is not None:
+-                # The server should not transmit more bytes to the client than the header allows
+                 bytes_allowed = self.response_content_length - bytes_sent
+                 if len(output) > bytes_allowed:
+                     output = output[:bytes_allowed]
+@@ -156,11 +151,9 @@ class WsgiToAsgiInstance:
+                 {"type": "http.response.body", "body": output, "more_body": True}
+             )
+             bytes_sent += len(output)
+-            # The server should stop iterating over the response when enough data has been sent
+-            if bytes_sent == self.response_content_length:
++            if bytes_sent >= self.response_content_length:
+                 break
+-        # Close connection
+         if not self.response_started:
+             self.response_started = True
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        self.sync_send({"type": "http.response.body"})
+\ No newline at end of file

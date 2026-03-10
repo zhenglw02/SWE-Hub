@@ -1,0 +1,239 @@
+/tmp/PATCH_1_56a960d6.patch:28: trailing whitespace.
+    
+/tmp/PATCH_1_56a960d6.patch:31: trailing whitespace.
+    
+warning: 2 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..c42e412 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -356,30 +356,17 @@ class SyncToAsync(Generic[_P, _R]):
+         weakref.WeakKeyDictionary()
+     )
+ 
+-    def __init__(
+-        self,
+-        func: Callable[_P, _R],
+-        thread_sensitive: bool = True,
+-        executor: Optional["ThreadPoolExecutor"] = None,
+-    ) -> None:
+-        if (
+-            not callable(func)
+-            or iscoroutinefunction(func)
+-            or iscoroutinefunction(getattr(func, "__call__", func))
+-        ):
+-            raise TypeError("sync_to_async can only be applied to sync functions.")
+-        self.func = func
+-        functools.update_wrapper(self, func)
+-        self._thread_sensitive = thread_sensitive
+-        markcoroutinefunction(self)
++    def __init__(self, func: Callable[_P, _R], thread_sensitive: bool = True, executor: Optional["ThreadPoolExecutor"] = None) -> None:
++        if not callable(func):
++            raise TypeError("func must be callable")
++    
+         if thread_sensitive and executor is not None:
+             raise TypeError("executor must not be set when thread_sensitive is True")
++    
++        self.func = func
++        self._thread_sensitive = thread_sensitive
+         self._executor = executor
+-        try:
+-            self.__self__ = func.__self__  # type: ignore
+-        except AttributeError:
+-            pass
+-
++        functools.update_wrapper(self, func)
+     async def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+         loop = asyncio.get_running_loop()
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..9fb2f4c 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -7,47 +7,46 @@ from .timeout import timeout as async_timeout
+ 
+ 
+ class ApplicationCommunicator:
+-    """
+-    Runs an ASGI application in a test mode, allowing sending of
+-    messages to it and retrieval of messages it sends.
+-    """
+-
+-    def __init__(self, application, scope):
+-        self._future = None
+-        self.application = guarantee_single_callable(application)
+-        self.scope = scope
+-        self._input_queue = None
+-        self._output_queue = None
+-
+     # For Python 3.9 we need to lazily bind the queues, on 3.10+ they bind the
+-    # event loop lazily.
+-    @property
+-    def input_queue(self):
+-        if self._input_queue is None:
+-            self._input_queue = asyncio.Queue()
+-        return self._input_queue
+ 
+-    @property
+-    def output_queue(self):
+-        if self._output_queue is None:
+-            self._output_queue = asyncio.Queue()
+-        return self._output_queue
++    async def receive_nothing(self, timeout=0.1, interval=0.01):
++        """
++        Checks that there is no message to receive in the given time.
++        """
++        # Make sure there's not an exception to raise from the task
++        if self.future.done():
++            self.future.result()
+ 
+-    @property
+-    def future(self):
+-        if self._future is None:
+-            # Clear context - this ensures that context vars set in the testing scope
+-            # are not "leaked" into the application which would normally begin with
+-            # an empty context. In Python >= 3.11 this could also be written as:
+-            # asyncio.create_task(..., context=contextvars.Context())
+-            self._future = contextvars.Context().run(
+-                asyncio.create_task,
+-                self.application(
+-                    self.scope, self.input_queue.get, self.output_queue.put
+-                ),
+-            )
+-        return self._future
++        # `interval` has precedence over `timeout`
++        start = time.monotonic()
++        while time.monotonic() - start < timeout:
++            if not self.output_queue.empty():
++                return False
++            await asyncio.sleep(interval)
++        return self.output_queue.empty()
+ 
++    async def receive_output(self, timeout=1):
++        """
++        Receives a single message from the application, with optional timeout.
++        """
++        # Make sure there's not an exception to raise from the task
++        if self.future.done():
++            self.future.result()
++        # Wait and receive the message
++        try:
++            async with async_timeout(timeout):
++                return await self.output_queue.get()
++        except asyncio.TimeoutError as e:
++            # See if we have another error to raise inside
++            if self.future.done():
++                self.future.result()
++            else:
++                self.future.cancel()
++                try:
++                    await self.future
++                except asyncio.CancelledError:
++                    pass
++            raise e
+     async def wait(self, timeout=1):
+         """
+         Waits for the application to stop itself and returns any exceptions.
+@@ -66,7 +65,6 @@ class ApplicationCommunicator:
+                     await self.future
+                 except asyncio.CancelledError:
+                     pass
+-
+     def stop(self, exceptions=True):
+         future = self._future
+         if future is None:
+@@ -78,6 +76,8 @@ class ApplicationCommunicator:
+             # Give a chance to raise any exceptions
+             future.result()
+ 
++    # event loop lazily.
++
+     def __del__(self):
+         # Clean up on deletion
+         try:
+@@ -86,6 +86,17 @@ class ApplicationCommunicator:
+             # Event loop already stopped
+             pass
+ 
++    """
++    Runs an ASGI application in a test mode, allowing sending of
++    messages to it and retrieval of messages it sends.
++    """
++
++    @property
++    def input_queue(self):
++        if self._input_queue is None:
++            self._input_queue = asyncio.Queue()
++        return self._input_queue
++
+     async def send_input(self, message):
+         """
+         Sends a single message to the application
+@@ -97,41 +108,30 @@ class ApplicationCommunicator:
+         # Give it the message
+         await self.input_queue.put(message)
+ 
+-    async def receive_output(self, timeout=1):
+-        """
+-        Receives a single message from the application, with optional timeout.
+-        """
+-        # Make sure there's not an exception to raise from the task
+-        if self.future.done():
+-            self.future.result()
+-        # Wait and receive the message
+-        try:
+-            async with async_timeout(timeout):
+-                return await self.output_queue.get()
+-        except asyncio.TimeoutError as e:
+-            # See if we have another error to raise inside
+-            if self.future.done():
+-                self.future.result()
+-            else:
+-                self.future.cancel()
+-                try:
+-                    await self.future
+-                except asyncio.CancelledError:
+-                    pass
+-            raise e
++    @property
++    def output_queue(self):
++        if self._output_queue is None:
++            self._output_queue = asyncio.Queue()
++        return self._output_queue
+ 
+-    async def receive_nothing(self, timeout=0.1, interval=0.01):
+-        """
+-        Checks that there is no message to receive in the given time.
+-        """
+-        # Make sure there's not an exception to raise from the task
+-        if self.future.done():
+-            self.future.result()
++    def __init__(self, application, scope):
++        self._future = None
++        self.application = guarantee_single_callable(application)
++        self.scope = scope
++        self._input_queue = None
++        self._output_queue = None
+ 
+-        # `interval` has precedence over `timeout`
+-        start = time.monotonic()
+-        while time.monotonic() - start < timeout:
+-            if not self.output_queue.empty():
+-                return False
+-            await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++    @property
++    def future(self):
++        if self._future is None:
++            # Clear context - this ensures that context vars set in the testing scope
++            # are not "leaked" into the application which would normally begin with
++            # an empty context. In Python >= 3.11 this could also be written as:
++            # asyncio.create_task(..., context=contextvars.Context())
++            self._future = contextvars.Context().run(
++                asyncio.create_task,
++                self.application(
++                    self.scope, self.input_queue.get, self.output_queue.put
++                ),
++            )
++        return self._future
+\ No newline at end of file

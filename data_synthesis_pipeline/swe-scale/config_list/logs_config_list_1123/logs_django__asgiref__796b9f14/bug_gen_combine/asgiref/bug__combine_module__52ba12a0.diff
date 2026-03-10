@@ -1,0 +1,61 @@
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..592f4a6 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -14,7 +14,7 @@ class _CVar:
+         )
+ 
+     def __getattr__(self, key):
+-        storage_object = self._data.get({})
++        storage_object = {}
+         try:
+             return storage_object[key]
+         except KeyError:
+@@ -36,7 +36,6 @@ class _CVar:
+         else:
+             raise AttributeError(f"{self!r} object has no attribute {key!r}")
+ 
+-
+ class Local:
+     """Local storage for async tasks.
+ 
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..4a58c2d 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -516,32 +516,10 @@ def async_to_sync(
+     ...
+ 
+ 
+-def async_to_sync(
+-    awaitable: Optional[
+-        Union[
+-            Callable[_P, Coroutine[Any, Any, _R]],
+-            Callable[_P, Awaitable[_R]],
+-        ]
+-    ] = None,
+-    *,
+-    force_new_loop: bool = False,
+-) -> Union[
+-    Callable[
+-        [Union[Callable[_P, Coroutine[Any, Any, _R]], Callable[_P, Awaitable[_R]]]],
+-        Callable[_P, _R],
+-    ],
+-    Callable[_P, _R],
+-]:
++def async_to_sync ( awaitable: Optional[ Union[ Callable[_P, Coroutine[Any, Any, _R]], Callable[_P, Awaitable[_R]], ] ] = None, *, force_new_loop: bool = False, ) -> Union[ Callable[ [Union[Callable[_P, Coroutine[Any, Any, _R]], Callable[_P, Awaitable[_R]]]], Callable[_P, _R], ], Callable[_P, _R], ] :
+     if awaitable is None:
+-        return lambda f: AsyncToSync(
+-            f,
+-            force_new_loop=force_new_loop,
+-        )
+-    return AsyncToSync(
+-        awaitable,
+-        force_new_loop=force_new_loop,
+-    )
+-
++        return lambda f: AsyncToSync(f, force_new_loop=force_new_loop)
++    return AsyncToSync(awaitable, force_new_loop=force_new_loop)
+ 
+ @overload
+ def sync_to_async(

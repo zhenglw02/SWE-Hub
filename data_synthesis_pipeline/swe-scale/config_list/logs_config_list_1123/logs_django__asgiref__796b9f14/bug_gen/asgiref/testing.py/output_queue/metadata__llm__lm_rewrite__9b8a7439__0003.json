@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__9b8a7439__0003",
+  "hash_code": "9b8a7439",
+  "cost": 0,
+  "explanation": "",
+  "output": "```python\ndef output_queue(self):\n    if self._output_queue is None:\n        self._output_queue = asyncio.Queue()\n    return self._output_queue\n```\n\nThis implementation follows the same pattern as the existing `input_queue` property. It lazily initializes the `_output_queue` attribute to an `asyncio.Queue()` instance when first accessed, and returns the queue on subsequent calls. This ensures that the output queue is created only when needed and maintains the same interface as the input queue.",
+  "rewrite": "def output_queue(self):\n    if self._output_queue is None:\n        self._output_queue = asyncio.Queue()\n    return self._output_queue",
+  "strategy": "lm_rewrite"
+}

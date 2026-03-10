@@ -1,0 +1,16 @@
+class DataService extends BaseService implements IDataService {
+  
+  // 目标: ClassShuffleMethodsModifier (静态属性)
+  public static serviceName: string = "DataService";
+
+  // 目标: ClassShuffleMethodsModifier (私有属性)
+  private data: number[];
+
+  // 目标: ClassRemoveFuncsModifier, ClassShuffleMethodsModifier
+  
+
+  // 目标: ClassRemoveFuncsModifier, ClassShuffleMethodsModifier
+  
+
+  // 目标: ClassRemoveBasesModifier (`extends BaseService implements IDataService`)
+}

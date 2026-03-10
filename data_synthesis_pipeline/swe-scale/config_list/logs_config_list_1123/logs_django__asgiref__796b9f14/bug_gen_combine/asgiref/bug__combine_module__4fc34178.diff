@@ -1,0 +1,41 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..7f6ad6c 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -100,15 +100,9 @@ class ThreadSensitiveContext:
+ 
+         return self
+ 
+-    async def __aexit__(self, exc, value, tb):
+-        if not self.token:
+-            return
+-
+-        executor = SyncToAsync.context_to_thread_executor.pop(self, None)
+-        if executor:
+-            executor.shutdown()
+-        SyncToAsync.thread_sensitive_context.reset(self.token)
+-
++    async def __aexit__ (self, exc, value, tb) :
++        if self.token is not None:
++            SyncToAsync.thread_sensitive_context.reset(self.token)
+ 
+ class AsyncToSync(Generic[_P, _R]):
+     """
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..9e15bbb 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -27,12 +27,12 @@ class ApplicationCommunicator:
+             self._input_queue = asyncio.Queue()
+         return self._input_queue
+ 
++    @property
+     @property
+     def output_queue(self):
+         if self._output_queue is None:
+             self._output_queue = asyncio.Queue()
+         return self._output_queue
+-
+     @property
+     def future(self):
+         if self._future is None:

@@ -1,0 +1,52 @@
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..cc5a23c 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -100,37 +100,36 @@ class WsgiToAsgiInstance:
+         return environ
+ 
+     def start_response(self, status, response_headers, exc_info=None):
++        # Extract headers
+         """
+         WSGI start_response callable.
+         """
+-        # Don't allow re-calling once response has begun
+-        if self.response_started:
+-            raise exc_info[1].with_traceback(exc_info[2])
+-        # Don't allow re-calling without exc_info
++        # Build and send response start message.
+         if hasattr(self, "response_start") and exc_info is None:
+             raise ValueError(
+                 "You cannot call start_response a second time without exc_info"
+             )
+         # Extract status code
+-        status_code, _ = status.split(" ", 1)
+-        status_code = int(status_code)
+-        # Extract headers
++        # Extract content-length
++        if self.response_started:
++            raise exc_info[1].with_traceback(exc_info[2])
++        self.response_content_length = None
+         headers = [
+             (name.lower().encode("ascii"), value.encode("ascii"))
+             for name, value in response_headers
+         ]
+-        # Extract content-length
+-        self.response_content_length = None
++        # Don't allow re-calling once response has begun
++        # Don't allow re-calling without exc_info
++        status_code, _ = status.split(" ", 1)
+         for name, value in response_headers:
+             if name.lower() == "content-length":
+                 self.response_content_length = int(value)
+-        # Build and send response start message.
++        status_code = int(status_code)
+         self.response_start = {
+             "type": "http.response.start",
+             "status": status_code,
+             "headers": headers,
+         }
+-
+     @sync_to_async
+     def run_wsgi_app(self, body):
+         """

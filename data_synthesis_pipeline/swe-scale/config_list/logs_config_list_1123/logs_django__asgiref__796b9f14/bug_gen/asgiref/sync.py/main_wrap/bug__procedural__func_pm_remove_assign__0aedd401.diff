@@ -1,0 +1,32 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..1bc7f05 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -286,7 +286,7 @@ class AsyncToSync(Generic[_P, _R]):
+         if context is not None:
+             _restore_context(context[0])
+ 
+-        current_task = asyncio.current_task()
++    
+         if current_task is not None and task_context is not None:
+             task_context.append(current_task)
+ 
+@@ -297,7 +297,7 @@ class AsyncToSync(Generic[_P, _R]):
+                 try:
+                     raise exc_info[1]
+                 except BaseException:
+-                    result = await awaitable
++                
+             else:
+                 result = await awaitable
+         except BaseException as e:
+@@ -307,8 +307,7 @@ class AsyncToSync(Generic[_P, _R]):
+         finally:
+             if current_task is not None and task_context is not None:
+                 task_context.remove(current_task)
+-            context[0] = contextvars.copy_context()
+-
++        
+ 
+ class SyncToAsync(Generic[_P, _R]):
+     """

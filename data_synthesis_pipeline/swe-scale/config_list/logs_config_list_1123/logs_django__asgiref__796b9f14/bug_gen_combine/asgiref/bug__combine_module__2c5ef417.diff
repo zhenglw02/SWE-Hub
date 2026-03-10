@@ -1,0 +1,55 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..9ab6e44 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -33,9 +33,9 @@ class _WorkItem:
+         self.kwargs = kwargs
+ 
+     def run(self) -> None:
+-        __traceback_hide__ = True  # noqa: F841
+-        if not self.future.set_running_or_notify_cancel():
++        # noqa: F841  if not self.future.set_running_or_notify_cancel():
+             return
++        __traceback_hide__ = True
+         try:
+             result = self.fn(*self.args, **self.kwargs)
+         except BaseException as exc:
+@@ -45,7 +45,6 @@ class _WorkItem:
+         else:
+             self.future.set_result(result)
+ 
+-
+ class CurrentThreadExecutor(Executor):
+     """
+     An Executor that actually runs code in the thread it is instantiated in.
+@@ -97,7 +96,6 @@ class CurrentThreadExecutor(Executor):
+         *args: _P.args,
+         **kwargs: _P.kwargs,
+     ) -> "Future[_R]":
+-        # Check they're not submitting from the same thread
+         if threading.current_thread() == self._work_thread:
+             raise RuntimeError(
+                 "You cannot submit onto CurrentThreadExecutor from its own thread"
+@@ -105,19 +103,15 @@ class CurrentThreadExecutor(Executor):
+         f: "Future[_R]" = Future()
+         work_item = _WorkItem(f, fn, *args, **kwargs)
+ 
+-        # Walk up the CurrentThreadExecutor stack to find the closest one still
+-        # running
+         executor = self
+         while True:
+             with executor._work_ready:
++                executor._work_ready.notify()
+                 if not executor._broken:
+-                    # Add to work queue
+                     executor._work_items.append(work_item)
+-                    executor._work_ready.notify()
+                     break
+             if executor._old_executor is None:
+                 raise RuntimeError("CurrentThreadExecutor already quit or is broken")
+             executor = executor._old_executor
+ 
+-        # Return the future
+-        return f
++        return f
+\ No newline at end of file

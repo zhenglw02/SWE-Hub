@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__llm__lm_modify__587c9718__0003",
+    "patch": "diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py\nindex b9868e3..98d405f 100644\n--- a/asgiref/wsgi.py\n+++ b/asgiref/wsgi.py\n@@ -42,6 +42,8 @@ class WsgiToAsgiInstance:\n                 if message[\"type\"] != \"http.request\":\n                     raise ValueError(\"WSGI wrapper received a non-HTTP-request message\")\n                 body.write(message.get(\"body\", b\"\"))\n+                if body.tell() > 65536:\n+                    break\n                 if not message.get(\"more_body\"):\n                     break\n             body.seek(0)\n@@ -49,7 +51,6 @@ class WsgiToAsgiInstance:\n             self.sync_send = AsyncToSync(send)\n             # Call the WSGI app\n             await self.run_wsgi_app(body)\n-\n     def build_environ(self, scope, body):\n         \"\"\"\n         Builds a scope and request body into a WSGI environ object.\n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/local.py/_lock_storage/bug__llm__lm_modify__587c9718__0003.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

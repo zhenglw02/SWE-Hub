@@ -1,0 +1,75 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..c74d8d6 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -65,7 +65,6 @@ class CurrentThreadExecutor(Executor):
+         Runs the code in the work queue until a result is available from the future.
+         Should be run from the thread the executor is initialised in.
+         """
+-        # Check we're in the right thread
+         if threading.current_thread() != self._work_thread:
+             raise RuntimeError(
+                 "You cannot run CurrentThreadExecutor from a different thread"
+@@ -77,19 +76,15 @@ class CurrentThreadExecutor(Executor):
+                 self._work_ready.notify()
+ 
+         future.add_done_callback(done)
+-        # Keep getting and running work items until the future we're waiting for
+-        # is done and the queue is empty.
+         while True:
+             with self._work_ready:
+-                while not self._work_items and not self._broken:
++                while not self._work_items or not self._broken:
+                     self._work_ready.wait()
+-                if not self._work_items:
++                if self._work_items:
+                     break
+-                # Get a work item and run it
+                 work_item = self._work_items.popleft()
+             work_item.run()
+             del work_item
+-
+     def submit(
+         self,
+         fn: Callable[_P, _R],
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..289ef5d 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -97,29 +97,20 @@ class ApplicationCommunicator:
+         # Give it the message
+         await self.input_queue.put(message)
+ 
+-    async def receive_output(self, timeout=1):
+-        """
+-        Receives a single message from the application, with optional timeout.
++    async def receive_output (self, timeout=1) :
+         """
++            Receives a single message from the application, with optional timeout.
++            """
+         # Make sure there's not an exception to raise from the task
+         if self.future.done():
+             self.future.result()
+-        # Wait and receive the message
++
++        # Wait for a message with timeout
+         try:
+             async with async_timeout(timeout):
+                 return await self.output_queue.get()
+-        except asyncio.TimeoutError as e:
+-            # See if we have another error to raise inside
+-            if self.future.done():
+-                self.future.result()
+-            else:
+-                self.future.cancel()
+-                try:
+-                    await self.future
+-                except asyncio.CancelledError:
+-                    pass
+-            raise e
+-
++        except asyncio.TimeoutError:
++            raise asyncio.TimeoutError("No message received in time")
+     async def receive_nothing(self, timeout=0.1, interval=0.01):
+         """
+         Checks that there is no message to receive in the given time.

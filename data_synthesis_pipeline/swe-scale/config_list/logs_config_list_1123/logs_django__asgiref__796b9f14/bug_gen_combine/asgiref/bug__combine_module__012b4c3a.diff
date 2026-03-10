@@ -1,0 +1,29 @@
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..5e69400 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -28,11 +28,10 @@ class ApplicationCommunicator:
+         return self._input_queue
+ 
+     @property
+-    def output_queue(self):
++    def output_queue (self) :
+         if self._output_queue is None:
+             self._output_queue = asyncio.Queue()
+         return self._output_queue
+-
+     @property
+     def future(self):
+         if self._future is None:
+@@ -130,8 +129,8 @@ class ApplicationCommunicator:
+ 
+         # `interval` has precedence over `timeout`
+         start = time.monotonic()
+-        while time.monotonic() - start < timeout:
++        while time.monotonic() - start >= timeout:
+             if not self.output_queue.empty():
+                 return False
+             await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++        return self.output_queue.empty()
+\ No newline at end of file

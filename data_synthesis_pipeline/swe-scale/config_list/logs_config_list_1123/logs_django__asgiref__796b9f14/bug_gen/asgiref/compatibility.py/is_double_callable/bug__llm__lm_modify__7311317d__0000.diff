@@ -1,0 +1,20 @@
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..b018373 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -77,7 +77,7 @@ class timeout:
+     @property
+     def remaining(self) -> Optional[float]:
+         if self._cancel_at is not None:
+-            return max(self._cancel_at - self._loop.time(), 0.0)
++            return self._cancel_at - self._loop.time()
+         else:
+             return None
+ 
+@@ -115,4 +115,4 @@ class timeout:
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+             self._task.cancel()
+-            self._cancelled = True
++            self._cancelled = True
+\ No newline at end of file

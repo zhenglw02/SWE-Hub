@@ -1,0 +1,94 @@
+/tmp/PATCH_1_bf866245.patch:19: trailing whitespace.
+        
+/tmp/PATCH_1_bf866245.patch:22: trailing whitespace.
+            param for param in parameters.values() 
+/tmp/PATCH_1_bf866245.patch:25: trailing whitespace.
+        
+warning: 3 lines add whitespace errors.
+diff --git a/asgiref/compatibility.py b/asgiref/compatibility.py
+index 3a2a63e..5430b29 100644
+--- a/asgiref/compatibility.py
++++ b/asgiref/compatibility.py
+@@ -3,27 +3,25 @@ import inspect
+ from .sync import iscoroutinefunction
+ 
+ 
+-def is_double_callable(application):
++def is_double_callable (application) :
+     """
+     Tests to see if an application is a legacy-style (double-callable) application.
+     """
+-    # Look for a hint on the object first
+-    if getattr(application, "_asgi_single_callable", False):
++    try:
++        signature = inspect.signature(application)
++        parameters = signature.parameters
++        
++        # Count required positional parameters (those without defaults)
++        required_params = [
++            param for param in parameters.values() 
++            if param.default is param.empty and param.kind in (param.POSITIONAL_ONLY, param.POSITIONAL_OR_KEYWORD)
++        ]
++        
++        # Double-callable applications should accept exactly one required positional parameter (scope)
++        return len(required_params) == 1
++    except (ValueError, TypeError):
++        # If we can't inspect the signature, assume it's not double-callable
+         return False
+-    if getattr(application, "_asgi_double_callable", False):
+-        return True
+-    # Uninstanted classes are double-callable
+-    if inspect.isclass(application):
+-        return True
+-    # Instanted classes depend on their __call__
+-    if hasattr(application, "__call__"):
+-        # We only check to see if its __call__ is a coroutine function -
+-        # if it's not, it still might be a coroutine function itself.
+-        if iscoroutinefunction(application.__call__):
+-            return False
+-    # Non-classes we just check directly
+-    return not iscoroutinefunction(application)
+-
+ 
+ def double_to_single_callable(application):
+     """
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..4a58c2d 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -516,32 +516,10 @@ def async_to_sync(
+     ...
+ 
+ 
+-def async_to_sync(
+-    awaitable: Optional[
+-        Union[
+-            Callable[_P, Coroutine[Any, Any, _R]],
+-            Callable[_P, Awaitable[_R]],
+-        ]
+-    ] = None,
+-    *,
+-    force_new_loop: bool = False,
+-) -> Union[
+-    Callable[
+-        [Union[Callable[_P, Coroutine[Any, Any, _R]], Callable[_P, Awaitable[_R]]]],
+-        Callable[_P, _R],
+-    ],
+-    Callable[_P, _R],
+-]:
++def async_to_sync ( awaitable: Optional[ Union[ Callable[_P, Coroutine[Any, Any, _R]], Callable[_P, Awaitable[_R]], ] ] = None, *, force_new_loop: bool = False, ) -> Union[ Callable[ [Union[Callable[_P, Coroutine[Any, Any, _R]], Callable[_P, Awaitable[_R]]]], Callable[_P, _R], ], Callable[_P, _R], ] :
+     if awaitable is None:
+-        return lambda f: AsyncToSync(
+-            f,
+-            force_new_loop=force_new_loop,
+-        )
+-    return AsyncToSync(
+-        awaitable,
+-        force_new_loop=force_new_loop,
+-    )
+-
++        return lambda f: AsyncToSync(f, force_new_loop=force_new_loop)
++    return AsyncToSync(awaitable, force_new_loop=force_new_loop)
+ 
+ @overload
+ def sync_to_async(

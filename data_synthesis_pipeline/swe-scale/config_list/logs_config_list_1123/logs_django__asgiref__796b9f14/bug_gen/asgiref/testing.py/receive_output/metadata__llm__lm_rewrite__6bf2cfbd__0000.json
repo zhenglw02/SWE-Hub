@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__6bf2cfbd__0000",
+  "hash_code": "6bf2cfbd",
+  "cost": 0,
+  "explanation": "The function `receive_output` needs to receive a single message from the application's output queue with an optional timeout. It should handle the case where the future is already done (which would indicate an exception in the application) and use the existing `async_timeout` context manager to implement the timeout functionality.\n\nHere's the implementation:",
+  "output": "The function `receive_output` needs to receive a single message from the application's output queue with an optional timeout. It should handle the case where the future is already done (which would indicate an exception in the application) and use the existing `async_timeout` context manager to implement the timeout functionality.\n\nHere's the implementation:\n\n```\nasync def receive_output (self, timeout=1) :\n    \"\"\"\n        Receives a single message from the application, with optional timeout.\n        \"\"\"\n    # Make sure there's not an exception to raise from the task\n    if self.future.done():\n        self.future.result()\n\n    # Wait for a message with timeout\n    try:\n        async with async_timeout(timeout):\n            return await self.output_queue.get()\n    except asyncio.TimeoutError:\n        raise asyncio.TimeoutError(\"No message received in time\")\n```",
+  "rewrite": "async def receive_output (self, timeout=1) :\n    \"\"\"\n        Receives a single message from the application, with optional timeout.\n        \"\"\"\n    # Make sure there's not an exception to raise from the task\n    if self.future.done():\n        self.future.result()\n\n    # Wait for a message with timeout\n    try:\n        async with async_timeout(timeout):\n            return await self.output_queue.get()\n    except asyncio.TimeoutError:\n        raise asyncio.TimeoutError(\"No message received in time\")",
+  "strategy": "lm_rewrite"
+}

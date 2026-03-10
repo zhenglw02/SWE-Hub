@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__78ef8e6c__0004",
+  "hash_code": "78ef8e6c",
+  "cost": 0,
+  "explanation": "Looking at the context manager pattern, the `_do_exit` method needs to clean up the timeout mechanism when exiting the context. Specifically, it should cancel any pending timeout handler if one was scheduled.\n\nHere's the implementation:",
+  "output": "Looking at the context manager pattern, the `_do_exit` method needs to clean up the timeout mechanism when exiting the context. Specifically, it should cancel any pending timeout handler if one was scheduled.\n\nHere's the implementation:\n\n```\ndef _do_exit (self, exc_type: Type[BaseException]) -> None :\n    if self._cancel_handler is not None:\n        self._cancel_handler.cancel()\n        self._cancel_handler = None\n    self._cancel_at = None\n```\n\nThis implementation:\n- Cancels the scheduled timeout callback if it exists\n- Resets the handler and cancellation timestamp to None to clean up state\n- This ensures that when we exit the context manager, we don't leave any pending callbacks that could interfere with the normal execution",
+  "rewrite": "def _do_exit (self, exc_type: Type[BaseException]) -> None :\n    if self._cancel_handler is not None:\n        self._cancel_handler.cancel()\n        self._cancel_handler = None\n    self._cancel_at = None",
+  "strategy": "lm_rewrite"
+}

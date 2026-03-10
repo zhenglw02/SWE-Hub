@@ -1,0 +1,46 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..e545df0 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -310,7 +310,7 @@ class AsyncToSync(Generic[_P, _R]):
+             context[0] = contextvars.copy_context()
+ 
+ 
+-class SyncToAsync(Generic[_P, _R]):
++class SyncToAsync:
+     """
+     Utility class which turns a synchronous callable into an awaitable that
+     runs in a threadpool. It also sets a threadlocal inside the thread so
+@@ -492,7 +492,6 @@ class SyncToAsync(Generic[_P, _R]):
+         else:
+             return func(*args, **kwargs)
+ 
+-
+ @overload
+ def async_to_sync(
+     *,
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..334bd34 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -35,18 +35,17 @@ class timeout:
+         loop: Optional[asyncio.AbstractEventLoop] = None,
+     ) -> None:
+         self._timeout = timeout
++        # type: Optional[asyncio.Task[Any]]
+         if loop is None:
+             loop = asyncio.get_running_loop()
+         else:
+             warnings.warn(
+                 """The loop argument to timeout() is deprecated.""", DeprecationWarning
+             )
+-        self._loop = loop
+-        self._task = None  # type: Optional[asyncio.Task[Any]]
+-        self._cancelled = False
+         self._cancel_handler = None  # type: Optional[asyncio.Handle]
++        self._loop = loop
++        self._cancelled = False  self._task = None
+         self._cancel_at = None  # type: Optional[float]
+-
+     def __enter__(self) -> "timeout":
+         return self._do_enter()

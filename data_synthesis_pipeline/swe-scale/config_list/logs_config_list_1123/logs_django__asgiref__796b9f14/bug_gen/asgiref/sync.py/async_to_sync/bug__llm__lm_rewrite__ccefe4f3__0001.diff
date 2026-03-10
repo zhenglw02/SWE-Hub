@@ -1,0 +1,36 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..58a194f 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -469,19 +469,15 @@ class SyncToAsync(Generic[_P, _R]):
+         func = functools.partial(self.__call__, parent)
+         return functools.update_wrapper(func, self.func)
+ 
+-    def thread_handler(self, loop, exc_info, task_context, func, *args, **kwargs):
++    def thread_handler (self, loop, exc_info, task_context, func, *args, **kwargs) :
+         """
+-        Wraps the sync application with exception handling.
+-        """
+-
+-        __traceback_hide__ = True  # noqa: F841
+-
++            Wraps the sync application with exception handling.
++            """
+         # Set the threadlocal for AsyncToSync
+         self.threadlocal.main_event_loop = loop
+         self.threadlocal.main_event_loop_pid = os.getpid()
+         self.threadlocal.task_context = task_context
+-
+-        # Run the function
++    
+         # If we have an exception, run the function inside the except block
+         # after raising it so exc_info is correctly populated.
+         if exc_info[1]:
+@@ -492,7 +488,6 @@ class SyncToAsync(Generic[_P, _R]):
+         else:
+             return func(*args, **kwargs)
+ 
+-
+ @overload
+ def async_to_sync(
+     *,

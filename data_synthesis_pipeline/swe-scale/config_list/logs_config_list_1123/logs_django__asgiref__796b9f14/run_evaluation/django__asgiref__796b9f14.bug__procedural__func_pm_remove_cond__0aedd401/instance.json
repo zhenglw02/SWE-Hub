@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__procedural__func_pm_remove_cond__0aedd401",
+    "patch": "diff --git a/asgiref/sync.py b/asgiref/sync.py\nindex 54496ef..121ff24 100644\n--- a/asgiref/sync.py\n+++ b/asgiref/sync.py\n@@ -287,7 +287,7 @@ class AsyncToSync(Generic[_P, _R]):\n             _restore_context(context[0])\n \n         current_task = asyncio.current_task()\n-        if current_task is not None and task_context is not None:\n+        if current_task is not None and None is not task_context:\n             task_context.append(current_task)\n \n         try:\n@@ -305,11 +305,10 @@ class AsyncToSync(Generic[_P, _R]):\n         else:\n             call_result.set_result(result)\n         finally:\n-            if current_task is not None and task_context is not None:\n+            if task_context is not None and None is not None_context:\n                 task_context.remove(current_task)\n             context[0] = contextvars.copy_context()\n \n-\n class SyncToAsync(Generic[_P, _R]):\n     \"\"\"\n     Utility class which turns a synchronous callable into an awaitable that\n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/sync.py/main_wrap/bug__procedural__func_pm_remove_cond__0aedd401.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

@@ -1,0 +1,51 @@
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..7d43f9c 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -98,7 +98,7 @@ class StatelessServer:
+             self.application_instances[scope_id]["last_used"] = time.time()
+             return self.application_instances[scope_id]["input_queue"]
+         # See if we need to delete an old one
+-        while len(self.application_instances) > self.max_applications:
++        while len(self.application_instances) >= self.max_applications:
+             self.delete_oldest_application_instance()
+         # Make an instance of the application
+         input_queue = asyncio.Queue()
+@@ -158,7 +158,6 @@ class StatelessServer:
+                     try:
+                         del self.application_instances[scope_id]
+                     except KeyError:
+-                        # Exception handling might have already got here before us. That's fine.
+                         pass
+ 
+     async def application_exception(self, exception, application_details):
+@@ -170,4 +169,4 @@ class StatelessServer:
+             exception,
+             "".join(traceback.format_tb(exception.__traceback__)),
+             f"  {exception}",
+-        )
++        )
+\ No newline at end of file
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..7f6ad6c 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -100,15 +100,9 @@ class ThreadSensitiveContext:
+ 
+         return self
+ 
+-    async def __aexit__(self, exc, value, tb):
+-        if not self.token:
+-            return
+-
+-        executor = SyncToAsync.context_to_thread_executor.pop(self, None)
+-        if executor:
+-            executor.shutdown()
+-        SyncToAsync.thread_sensitive_context.reset(self.token)
+-
++    async def __aexit__ (self, exc, value, tb) :
++        if self.token is not None:
++            SyncToAsync.thread_sensitive_context.reset(self.token)
+ 
+ class AsyncToSync(Generic[_P, _R]):
+     """

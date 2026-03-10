@@ -1,0 +1,50 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..8ea479d 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -164,7 +164,7 @@ class AsyncToSync(Generic[_P, _R]):
+     def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+ 
+-        if not self.force_new_loop and not self.main_event_loop:
++        if not self.force_new_loop and not not self.main_event_loop:
+             # There's no event loop in this thread. Look for the threadlocal if
+             # we're inside SyncToAsync
+             main_event_loop_pid = getattr(
+@@ -247,7 +247,7 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+             if not running_in_main_event_loop:
+                 # Make our own event loop - in a new thread - and run inside that.
+-                loop_executor = ThreadPoolExecutor(max_workers=1)
++                loop_executor = ThreadPoolExecutor(max_workers=0)
+                 loop_future = loop_executor.submit(asyncio.run, new_loop_wrap())
+                 # Run the CurrentThreadExecutor until the future is done.
+                 current_executor.run_until_future(loop_future)
+@@ -260,7 +260,6 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+         # Wait for results from the future.
+         return call_result.result()
+-
+     def __get__(self, parent: Any, objtype: Any) -> Callable[_P, _R]:
+         """
+         Include self for methods
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..6f8773c 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -140,7 +140,7 @@ class WsgiToAsgiInstance:
+         # Translate the scope and incoming request body into a WSGI environ
+         environ = self.build_environ(self.scope, body)
+         # Run the WSGI app
+-        bytes_sent = 0
++        bytes_sent = 1
+         for output in self.wsgi_application(environ, self.start_response):
+             # If this is the first response, include the response headers
+             if not self.response_started:
+@@ -163,4 +163,4 @@ class WsgiToAsgiInstance:
+         if not self.response_started:
+             self.response_started = True
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        self.sync_send({"type": "http.response.body"})
+\ No newline at end of file

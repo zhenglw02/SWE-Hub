@@ -1,0 +1,22 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..642367a 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -449,8 +449,7 @@ class SyncToAsync(Generic[_P, _R]):
+                     pass
+             except IndexError:
+                 pass
+-            if exec_coro.done():
+-                raise
++        
+             if cancel_parent:
+                 exec_coro.cancel()
+             ret = await exec_coro
+@@ -459,7 +458,6 @@ class SyncToAsync(Generic[_P, _R]):
+             self.deadlock_context.set(False)
+ 
+         return ret
+-
+     def __get__(
+         self, parent: Any, objtype: Any
+     ) -> Callable[_P, Coroutine[Any, Any, _R]]:

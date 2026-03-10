@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__7894da1d__0004",
+  "hash_code": "7894da1d",
+  "cost": 0,
+  "explanation": "<explanation>\nThe `__aexit__` method for the `ThreadSensitiveContext` class needs to reset the context variable by resetting the token if it was set during `__aenter__`. This ensures that the thread-sensitive context is properly cleaned up when exiting the context manager. The implementation should check if `self.token` is not None and then reset the context variable using the token.\n</explanation>",
+  "output": "<explanation>\nThe `__aexit__` method for the `ThreadSensitiveContext` class needs to reset the context variable by resetting the token if it was set during `__aenter__`. This ensures that the thread-sensitive context is properly cleaned up when exiting the context manager. The implementation should check if `self.token` is not None and then reset the context variable using the token.\n</explanation>\n\n```\nasync def __aexit__ (self, exc, value, tb) :\n    if self.token is not None:\n        SyncToAsync.thread_sensitive_context.reset(self.token)\n```",
+  "rewrite": "async def __aexit__ (self, exc, value, tb) :\n    if self.token is not None:\n        SyncToAsync.thread_sensitive_context.reset(self.token)",
+  "strategy": "lm_rewrite"
+}

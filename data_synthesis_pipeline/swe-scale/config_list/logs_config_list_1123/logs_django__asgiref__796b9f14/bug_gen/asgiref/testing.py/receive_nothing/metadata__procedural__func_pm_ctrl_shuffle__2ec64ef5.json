@@ -1,0 +1,9 @@
+{
+  "instance_id": "procedural__func_pm_ctrl_shuffle__2ec64ef5",
+  "hash_code": "2ec64ef5",
+  "cost": 0.0,
+  "explanation": "The lines inside a function may be out of order.",
+  "output": "async def receive_nothing(self, timeout=0.1, interval=0.01):\n    if self.future.done():\n        self.future.result()\n    start = time.monotonic()\n    \"\"\"\n    Checks that there is no message to receive in the given time.\n    \"\"\"\n\n    while time.monotonic() - start < timeout:\n        if not self.output_queue.empty():\n            return False\n        await asyncio.sleep(interval)\n    # Make sure there's not an exception to raise from the task\n    # `interval` has precedence over `timeout`\n    return self.output_queue.empty()",
+  "rewrite": "async def receive_nothing(self, timeout=0.1, interval=0.01):\n    if self.future.done():\n        self.future.result()\n    start = time.monotonic()\n    \"\"\"\n    Checks that there is no message to receive in the given time.\n    \"\"\"\n\n    while time.monotonic() - start < timeout:\n        if not self.output_queue.empty():\n            return False\n        await asyncio.sleep(interval)\n    # Make sure there's not an exception to raise from the task\n    # `interval` has precedence over `timeout`\n    return self.output_queue.empty()",
+  "strategy": "func_pm_ctrl_shuffle"
+}

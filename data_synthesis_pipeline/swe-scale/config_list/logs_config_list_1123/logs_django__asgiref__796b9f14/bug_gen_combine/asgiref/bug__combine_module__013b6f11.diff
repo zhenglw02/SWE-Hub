@@ -1,0 +1,58 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..24be9c1 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -83,7 +83,7 @@ class CurrentThreadExecutor(Executor):
+             with self._work_ready:
+                 while not self._work_items and not self._broken:
+                     self._work_ready.wait()
+-                if not self._work_items:
++                if self._work_items:
+                     break
+                 # Get a work item and run it
+                 work_item = self._work_items.popleft()
+@@ -110,7 +110,7 @@ class CurrentThreadExecutor(Executor):
+         executor = self
+         while True:
+             with executor._work_ready:
+-                if not executor._broken:
++                if executor._broken:
+                     # Add to work queue
+                     executor._work_items.append(work_item)
+                     executor._work_ready.notify()
+@@ -120,4 +120,4 @@ class CurrentThreadExecutor(Executor):
+             executor = executor._old_executor
+ 
+         # Return the future
+-        return f
++        return f
+\ No newline at end of file
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..3cd181c 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -209,8 +209,7 @@ class AsyncToSync(Generic[_P, _R]):
+         # Use call_soon_threadsafe to schedule a synchronous callback on the
+         # main event loop's thread if it's there, otherwise make a new loop
+         # in this thread.
+-        try:
+-            awaitable = self.main_wrap(
++        awaitable = self.main_wrap(
+                 call_result,
+                 sys.exc_info(),
+                 task_context,
+@@ -253,14 +252,6 @@ class AsyncToSync(Generic[_P, _R]):
+                 current_executor.run_until_future(loop_future)
+                 # Wait for future and/or allow for exception propagation
+                 loop_future.result()
+-        finally:
+-            _restore_context(context[0])
+-            # Restore old current thread executor state
+-            self.executors.current = old_executor
+-
+-        # Wait for results from the future.
+-        return call_result.result()
+-
+     def __get__(self, parent: Any, objtype: Any) -> Callable[_P, _R]:
+         """
+         Include self for methods

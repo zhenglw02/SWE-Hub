@@ -1,0 +1,8 @@
+{
+    "FAIL_TO_PASS": [],
+    "PASS_TO_PASS": [
+        "tests.test_garbage_collection::test_thread_critical_Local_remove_all_reference_cycles"
+    ],
+    "FAIL_TO_FAIL": [],
+    "PASS_TO_FAIL": []
+}

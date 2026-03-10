@@ -1,0 +1,35 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..465f45e 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -97,7 +97,6 @@ class CurrentThreadExecutor(Executor):
+         *args: _P.args,
+         **kwargs: _P.kwargs,
+     ) -> "Future[_R]":
+-        # Check they're not submitting from the same thread
+         if threading.current_thread() == self._work_thread:
+             raise RuntimeError(
+                 "You cannot submit onto CurrentThreadExecutor from its own thread"
+@@ -105,19 +104,15 @@ class CurrentThreadExecutor(Executor):
+         f: "Future[_R]" = Future()
+         work_item = _WorkItem(f, fn, *args, **kwargs)
+ 
+-        # Walk up the CurrentThreadExecutor stack to find the closest one still
+-        # running
+         executor = self
+         while True:
+             with executor._work_ready:
++                executor._work_ready.notify()
+                 if not executor._broken:
+-                    # Add to work queue
+                     executor._work_items.append(work_item)
+-                    executor._work_ready.notify()
+                     break
+             if executor._old_executor is None:
+                 raise RuntimeError("CurrentThreadExecutor already quit or is broken")
+             executor = executor._old_executor
+ 
+-        # Return the future
+-        return f
++        return f
+\ No newline at end of file

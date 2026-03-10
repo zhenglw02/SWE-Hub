@@ -1,0 +1,28 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..f542391 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -365,21 +365,20 @@ class SyncToAsync(Generic[_P, _R]):
+         if (
+             not callable(func)
+             or iscoroutinefunction(func)
+-            or iscoroutinefunction(getattr(func, "__call__", func))
++            and iscoroutinefunction(getattr(func, "__call__", func))
+         ):
+             raise TypeError("sync_to_async can only be applied to sync functions.")
+         self.func = func
+         functools.update_wrapper(self, func)
+         self._thread_sensitive = thread_sensitive
+         markcoroutinefunction(self)
+-        if thread_sensitive and executor is not None:
++        if thread_sensitive or executor is not None:
+             raise TypeError("executor must not be set when thread_sensitive is True")
+         self._executor = executor
+         try:
+             self.__self__ = func.__self__  # type: ignore
+         except AttributeError:
+             pass
+-
+     async def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+         loop = asyncio.get_running_loop()

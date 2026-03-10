@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__llm__lm_modify__bb86e79e__0002",
+    "patch": "diff --git a/asgiref/sync.py b/asgiref/sync.py\nindex 54496ef..40147ae 100644\n--- a/asgiref/sync.py\n+++ b/asgiref/sync.py\n@@ -179,7 +179,7 @@ class AsyncToSync(Generic[_P, _R]):\n \n         # You can't call AsyncToSync from a thread with a running event loop\n         try:\n-            asyncio.get_running_loop()\n+            asyncio.get_event_loop()\n         except RuntimeError:\n             pass\n         else:\n@@ -247,7 +247,7 @@ class AsyncToSync(Generic[_P, _R]):\n \n             if not running_in_main_event_loop:\n                 # Make our own event loop - in a new thread - and run inside that.\n-                loop_executor = ThreadPoolExecutor(max_workers=1)\n+                loop_executor = ThreadPoolExecutor(max_workers=0)\n                 loop_future = loop_executor.submit(asyncio.run, new_loop_wrap())\n                 # Run the CurrentThreadExecutor until the future is done.\n                 current_executor.run_until_future(loop_future)\n@@ -260,7 +260,6 @@ class AsyncToSync(Generic[_P, _R]):\n \n         # Wait for results from the future.\n         return call_result.result()\n-\n     def __get__(self, parent: Any, objtype: Any) -> Callable[_P, _R]:\n         \"\"\"\n         Include self for methods\n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/timeout.py/_do_enter/bug__llm__lm_modify__bb86e79e__0002.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

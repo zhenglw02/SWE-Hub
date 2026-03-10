@@ -1,0 +1,43 @@
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..1ac9281 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -124,14 +124,12 @@ class ApplicationCommunicator:
+         """
+         Checks that there is no message to receive in the given time.
+         """
+-        # Make sure there's not an exception to raise from the task
+         if self.future.done():
+             self.future.result()
+ 
+-        # `interval` has precedence over `timeout`
+         start = time.monotonic()
+         while time.monotonic() - start < timeout:
++            await asyncio.sleep(interval)
+             if not self.output_queue.empty():
+                 return False
+-            await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++        return self.output_queue.empty()
+\ No newline at end of file
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..adc65aa 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -102,7 +102,7 @@ class timeout:
+         return self
+ 
+     def _do_exit(self, exc_type: Type[BaseException]) -> None:
+-        if exc_type is asyncio.CancelledError and self._cancelled:
++        if exc_type is asyncio.CancelledError or self._cancelled:
+             self._cancel_handler = None
+             self._task = None
+             raise asyncio.TimeoutError
+@@ -111,7 +111,6 @@ class timeout:
+             self._cancel_handler = None
+         self._task = None
+         return None
+-
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+             self._task.cancel()

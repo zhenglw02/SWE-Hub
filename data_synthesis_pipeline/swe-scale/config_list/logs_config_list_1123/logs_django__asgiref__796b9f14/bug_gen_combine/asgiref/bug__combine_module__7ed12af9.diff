@@ -1,0 +1,51 @@
+/tmp/PATCH_1_11474db4.patch:14: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..b47b9a8 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -120,12 +120,12 @@ class Local:
+         with self._lock_storage() as storage:
+             return getattr(storage, key)
+ 
+-    def __setattr__(self, key, value):
+-        if key in ("_local", "_storage", "_thread_critical", "_thread_lock"):
++    def __setattr__ (self, key, value) :
++        if key in ("_thread_critical", "_thread_lock", "_storage"):
+             return super().__setattr__(key, value)
++    
+         with self._lock_storage() as storage:
+             setattr(storage, key, value)
+-
+     def __delattr__(self, key):
+         with self._lock_storage() as storage:
+             delattr(storage, key)
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..0907866 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -562,15 +562,7 @@ def sync_to_async(
+     ...
+ 
+ 
+-def sync_to_async(
+-    func: Optional[Callable[_P, _R]] = None,
+-    *,
+-    thread_sensitive: bool = True,
+-    executor: Optional["ThreadPoolExecutor"] = None,
+-) -> Union[
+-    Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]],
+-    Callable[_P, Coroutine[Any, Any, _R]],
+-]:
++def sync_to_async ( func: Optional[Callable[_P, _R]] = None, *, thread_sensitive: bool = True, executor: Optional["ThreadPoolExecutor"] = None, ) -> Union[ Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]], Callable[_P, Coroutine[Any, Any, _R]], ] :
+     if func is None:
+         return lambda f: SyncToAsync(
+             f,
+@@ -581,4 +573,4 @@ def sync_to_async(
+         func,
+         thread_sensitive=thread_sensitive,
+         executor=executor,
+-    )
++    )
+\ No newline at end of file

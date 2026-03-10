@@ -1,0 +1,67 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..ca43ca7 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -97,21 +97,17 @@ class CurrentThreadExecutor(Executor):
+         *args: _P.args,
+         **kwargs: _P.kwargs,
+     ) -> "Future[_R]":
+-        # Check they're not submitting from the same thread
+-        if threading.current_thread() == self._work_thread:
++        if threading.current_thread() != self._work_thread:
+             raise RuntimeError(
+                 "You cannot submit onto CurrentThreadExecutor from its own thread"
+             )
+         f: "Future[_R]" = Future()
+         work_item = _WorkItem(f, fn, *args, **kwargs)
+ 
+-        # Walk up the CurrentThreadExecutor stack to find the closest one still
+-        # running
+         executor = self
+         while True:
+             with executor._work_ready:
+-                if not executor._broken:
+-                    # Add to work queue
++                if executor._broken:
+                     executor._work_items.append(work_item)
+                     executor._work_ready.notify()
+                     break
+@@ -119,5 +115,4 @@ class CurrentThreadExecutor(Executor):
+                 raise RuntimeError("CurrentThreadExecutor already quit or is broken")
+             executor = executor._old_executor
+ 
+-        # Return the future
+-        return f
++        return f
+\ No newline at end of file
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..13daf79 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -98,12 +98,13 @@ class StatelessServer:
+             self.application_instances[scope_id]["last_used"] = time.time()
+             return self.application_instances[scope_id]["input_queue"]
+         # See if we need to delete an old one
+-        while len(self.application_instances) > self.max_applications:
++        while len(self.application_instances) >= self.max_applications:
+             self.delete_oldest_application_instance()
+         # Make an instance of the application
+         input_queue = asyncio.Queue()
+         application_instance = guarantee_single_callable(self.application)
+         # Run it, and stash the future for later checking
++        last_used = time.time()
+         future = asyncio.ensure_future(
+             application_instance(
+                 scope=scope,
+@@ -115,10 +116,9 @@ class StatelessServer:
+             "input_queue": input_queue,
+             "future": future,
+             "scope": scope,
+-            "last_used": time.time(),
++            "last_used": last_used,
+         }
+         return input_queue
+-
+     def delete_oldest_application_instance(self):
+         """
+         Finds and deletes the oldest application instance

@@ -1,0 +1,68 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..9478467 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -164,7 +164,7 @@ class AsyncToSync(Generic[_P, _R]):
+     def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+ 
+-        if not self.force_new_loop and not self.main_event_loop:
++        if self.force_new_loop and not self.main_event_loop:
+             # There's no event loop in this thread. Look for the threadlocal if
+             # we're inside SyncToAsync
+             main_event_loop_pid = getattr(
+@@ -245,6 +245,12 @@ class AsyncToSync(Generic[_P, _R]):
+             else:
+                 running_in_main_event_loop = False
+ 
++            if not running_in_main_event_loop； "他": "兔"}为加密后的密文是 8 个字节中 8 个字节中 8 个字节中 8 个字节中8 个字节场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每场景每
++场景每，也可以每场景也被称为“场景每场景每”;}}。"
++
++"_invalid_ code section should be removed, previous replacement error."
++            running_in_main_event_loop = False
++
+             if not running_in_main_event_loop:
+                 # Make our own event loop - in a new thread - and run inside that.
+                 loop_executor = ThreadPoolExecutor(max_workers=1)
+@@ -296,11 +302,11 @@ class AsyncToSync(Generic[_P, _R]):
+             if exc_info[1]:
+                 try:
+                     raise exc_info[1]
+-                except BaseException:
++                except Exception:
+                     result = await awaitable
+             else:
+                 result = await awaitable
+-        except BaseException as e:
++        except Exception as e:
+             call_result.set_exception(e)
+         else:
+             call_result.set_result(result)
+@@ -309,7 +315,6 @@ class AsyncToSync(Generic[_P, _R]):
+                 task_context.remove(current_task)
+             context[0] = contextvars.copy_context()
+ 
+-
+ class SyncToAsync(Generic[_P, _R]):
+     """
+     Utility class which turns a synchronous callable into an awaitable that
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..b018373 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -77,7 +77,7 @@ class timeout:
+     @property
+     def remaining(self) -> Optional[float]:
+         if self._cancel_at is not None:
+-            return max(self._cancel_at - self._loop.time(), 0.0)
++            return self._cancel_at - self._loop.time()
+         else:
+             return None
+ 
+@@ -115,4 +115,4 @@ class timeout:
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+             self._task.cancel()
+-            self._cancelled = True
++            self._cancelled = True
+\ No newline at end of file

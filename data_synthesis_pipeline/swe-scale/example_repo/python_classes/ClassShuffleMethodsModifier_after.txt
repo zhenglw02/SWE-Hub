@@ -1,0 +1,8 @@
+class MyService(test_name1, test_name2):
+    def start_service(self):
+        print("Starting...")
+
+    is_active = True
+
+    def __init__(self):
+        pass

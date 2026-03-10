@@ -1,0 +1,34 @@
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..6fe0727 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -98,28 +98,21 @@ class ApplicationCommunicator:
+         await self.input_queue.put(message)
+ 
+     async def receive_output(self, timeout=1):
+-        """
+-        Receives a single message from the application, with optional timeout.
+-        """
+-        # Make sure there's not an exception to raise from the task
+         if self.future.done():
+             self.future.result()
+-        # Wait and receive the message
+         try:
+             async with async_timeout(timeout):
+                 return await self.output_queue.get()
+         except asyncio.TimeoutError as e:
+-            # See if we have another error to raise inside
++            self.future.cancel()
+             if self.future.done():
+                 self.future.result()
+             else:
+-                self.future.cancel()
+                 try:
+                     await self.future
+                 except asyncio.CancelledError:
+                     pass
+             raise e
+-
+     async def receive_nothing(self, timeout=0.1, interval=0.01):
+         """
+         Checks that there is no message to receive in the given time.

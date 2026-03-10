@@ -1,0 +1,44 @@
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..c3ca654 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -120,18 +120,30 @@ class ApplicationCommunicator:
+                     pass
+             raise e
+ 
+-    async def receive_nothing(self, timeout=0.1, interval=0.01):
+-        """
+-        Checks that there is no message to receive in the given time.
++    async def receive_nothing (self, timeout=0.1, interval=0.01) :
+         """
++            Checks that there is no message to receive in the given time.
++            """
+         # Make sure there's not an exception to raise from the task
+         if self.future.done():
+             self.future.result()
+ 
+-        # `interval` has precedence over `timeout`
+-        start = time.monotonic()
+-        while time.monotonic() - start < timeout:
++        # Track how long we've been waiting
++        start_time = time.time()
++        elapsed = 0
++
++        # Keep checking until timeout is reached
++        while elapsed < timeout:
++            # Check if there's a message available without blocking
+             if not self.output_queue.empty():
+-                return False
++                # If we find a message, raise an AssertionError
++                raise AssertionError("Received unexpected message")
++        
++            # Wait for the specified interval before checking again
+             await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++        
++            # Update elapsed time
++            elapsed = time.time() - start_time
++
++        # If we reach here, no message was received during the timeout period
++        return
+\ No newline at end of file

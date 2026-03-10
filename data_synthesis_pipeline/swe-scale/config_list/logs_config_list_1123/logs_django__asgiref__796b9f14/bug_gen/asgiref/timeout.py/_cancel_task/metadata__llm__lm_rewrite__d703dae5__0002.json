@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__d703dae5__0002",
+  "hash_code": "d703dae5",
+  "cost": 0,
+  "explanation": "<explanation>\nThe `_cancel_task` function is called when the timeout period expires. Its purpose is to cancel the associated task if it's still running. We should:\n1. Check if `self._task` exists and hasn't been cancelled already\n2. Cancel the task using `self._task.cancel()`\n3. Set `self._cancelled` to True to mark that the timeout has occurred\n\nThis follows the pattern used in the original async-timeout library where the timeout manager cancels the task when the timeout period elapses.",
+  "output": "<explanation>\nThe `_cancel_task` function is called when the timeout period expires. Its purpose is to cancel the associated task if it's still running. We should:\n1. Check if `self._task` exists and hasn't been cancelled already\n2. Cancel the task using `self._task.cancel()`\n3. Set `self._cancelled` to True to mark that the timeout has occurred\n\nThis follows the pattern used in the original async-timeout library where the timeout manager cancels the task when the timeout period elapses.\n\n```\ndef _cancel_task (self) -> None :\n    if self._task is not None and not self._task.done():\n        self._task.cancel()\n        self._cancelled = True\n```",
+  "rewrite": "def _cancel_task (self) -> None :\n    if self._task is not None and not self._task.done():\n        self._task.cancel()\n        self._cancelled = True",
+  "strategy": "lm_rewrite"
+}

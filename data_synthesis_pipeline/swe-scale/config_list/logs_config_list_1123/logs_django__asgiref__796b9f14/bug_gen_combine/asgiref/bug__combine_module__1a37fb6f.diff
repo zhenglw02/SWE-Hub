@@ -1,0 +1,56 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..7d68afa 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -32,19 +32,15 @@ class _WorkItem:
+         self.args = args
+         self.kwargs = kwargs
+ 
+-    def run(self) -> None:
+-        __traceback_hide__ = True  # noqa: F841
+-        if not self.future.set_running_or_notify_cancel():
+-            return
+-        try:
+-            result = self.fn(*self.args, **self.kwargs)
+-        except BaseException as exc:
+-            self.future.set_exception(exc)
+-            # Break a reference cycle with the exception 'exc'
+-            self = None  # type: ignore[assignment]
+-        else:
+-            self.future.set_result(result)
+-
++    def run (self) -> None :
++            if not self.future.set_running_or_notify_cancel():
++                return
++            try:
++                result = self.fn(*self.args, **self.kwargs)
++            except BaseException as e:
++                self.future.set_exception(e)
++            else:
++                self.future.set_result(result)
+ 
+ class CurrentThreadExecutor(Executor):
+     """
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..d9bedf4 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -102,16 +102,11 @@ class timeout:
+         return self
+ 
+     def _do_exit(self, exc_type: Type[BaseException]) -> None:
+-        if exc_type is asyncio.CancelledError and self._cancelled:
+-            self._cancel_handler = None
+-            self._task = None
+-            raise asyncio.TimeoutError
+-        if self._timeout is not None and self._cancel_handler is not None:
++        if self._cancel_handler is not None:
+             self._cancel_handler.cancel()
+             self._cancel_handler = None
++        self._cancel_at = None
+         self._task = None
+-        return None
+-
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+             self._task.cancel()

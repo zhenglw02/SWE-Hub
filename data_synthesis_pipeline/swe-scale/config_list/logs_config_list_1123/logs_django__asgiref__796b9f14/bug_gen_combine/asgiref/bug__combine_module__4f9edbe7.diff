@@ -1,0 +1,143 @@
+Applied patch to 'asgiref/wsgi.py' cleanly.
+Applied patch to 'asgiref/wsgi.py' cleanly.
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..bf37fc6 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -99,68 +99,80 @@ class WsgiToAsgiInstance:
+             environ[corrected_name] = value
+         return environ
+ 
+-    def start_response(self, status, response_headers, exc_info=None):
++    def start_response (self, status, response_headers, exc_info=None) :
+         """
+-        WSGI start_response callable.
+-        """
+-        # Don't allow re-calling once response has begun
+-        if self.response_started:
+-            raise exc_info[1].with_traceback(exc_info[2])
+-        # Don't allow re-calling without exc_info
+-        if hasattr(self, "response_start") and exc_info is None:
+-            raise ValueError(
+-                "You cannot call start_response a second time without exc_info"
+-            )
+-        # Extract status code
+-        status_code, _ = status.split(" ", 1)
+-        status_code = int(status_code)
+-        # Extract headers
+-        headers = [
+-            (name.lower().encode("ascii"), value.encode("ascii"))
+-            for name, value in response_headers
+-        ]
+-        # Extract content-length
+-        self.response_content_length = None
++            WSGI start_response callable.
++            """
++        # If we've already started the response and exc_info is provided, we should re-raise
++        if exc_info and self.response_started:
++            raise exc_info[0](exc_info[1]).with_traceback(exc_info[2])
++    
++        # Parse the status code from the status string (e.g., "200 OK" -> 200)
++        status_code = int(status.split()[0])
++    
++        # Convert headers to the format expected by ASGI
++        headers = []
++        content_length = None
++    
+         for name, value in response_headers:
+-            if name.lower() == "content-length":
+-                self.response_content_length = int(value)
+-        # Build and send response start message.
++            # Store Content-Length separately for tracking
++            if name.lower() == 'content-length':
++                content_length = int(value)
++            headers.append((name.lower().encode('latin1'), value.encode('latin1')))
++    
++        # Store the response start information
+         self.response_start = {
+             "type": "http.response.start",
+             "status": status_code,
+-            "headers": headers,
++            "headers": headers
+         }
+-
++        self.response_content_length = content_length
++    
++        # Return a write callable (though in this implementation, writing is handled separately)
++        def write(data):
++            # This would typically write data to the response body
++            # However, in our implementation, the response body is handled in run_wsgi_app
++            pass
++    
++        return write
+     @sync_to_async
+-    def run_wsgi_app(self, body):
++    def run_wsgi_app (self, body) :
+         """
+-        Called in a subthread to run the WSGI app. We encapsulate like
+-        this so that the start_response callable is called in the same thread.
+-        """
+-        # Translate the scope and incoming request body into a WSGI environ
++            Called in a subthread to run the WSGI app. We encapsulate like
++            this so that the start_response callable is called in the same thread.
++            """
++        # Build the WSGI environ
+         environ = self.build_environ(self.scope, body)
+-        # Run the WSGI app
+-        bytes_sent = 0
+-        for output in self.wsgi_application(environ, self.start_response):
+-            # If this is the first response, include the response headers
+-            if not self.response_started:
+-                self.response_started = True
+-                self.sync_send(self.response_start)
+-            # If the application supplies a Content-Length header
+-            if self.response_content_length is not None:
+-                # The server should not transmit more bytes to the client than the header allows
+-                bytes_allowed = self.response_content_length - bytes_sent
+-                if len(output) > bytes_allowed:
+-                    output = output[:bytes_allowed]
+-            self.sync_send(
+-                {"type": "http.response.body", "body": output, "more_body": True}
+-            )
+-            bytes_sent += len(output)
+-            # The server should stop iterating over the response when enough data has been sent
+-            if bytes_sent == self.response_content_length:
+-                break
+-        # Close connection
+-        if not self.response_started:
+-            self.response_started = True
++    
++        # Prepare to collect the response body
++        response_body = []
++    
++        # Call the WSGI application
++        result = self.wsgi_application(environ, self.start_response)
++    
++        # Send the response start if it was set
++        if hasattr(self, 'response_start'):
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++            self.response_started = True
++    
++        # Iterate through the result and send the body chunks
++        try:
++            for data in result:
++                if data:
++                    response_body.append(data)
++                    self.sync_send({
++                        "type": "http.response.body",
++                        "body": data,
++                        "more_body": True
++                    })
++        
++            # Send the final chunk
++            self.sync_send({
++                "type": "http.response.body",
++                "body": b"",
++                "more_body": False
++            })
++        finally:
++            # Close the result if it has a close method
++            if hasattr(result, 'close'):
++                result.close()
+\ No newline at end of file

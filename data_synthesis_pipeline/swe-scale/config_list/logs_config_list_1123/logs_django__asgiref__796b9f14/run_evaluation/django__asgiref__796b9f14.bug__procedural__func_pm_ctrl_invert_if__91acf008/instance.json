@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__procedural__func_pm_ctrl_invert_if__91acf008",
+    "patch": "diff --git a/asgiref/sync.py b/asgiref/sync.py\nindex 54496ef..3cd181c 100644\n--- a/asgiref/sync.py\n+++ b/asgiref/sync.py\n@@ -209,8 +209,7 @@ class AsyncToSync(Generic[_P, _R]):\n         # Use call_soon_threadsafe to schedule a synchronous callback on the\n         # main event loop's thread if it's there, otherwise make a new loop\n         # in this thread.\n-        try:\n-            awaitable = self.main_wrap(\n+        awaitable = self.main_wrap(\n                 call_result,\n                 sys.exc_info(),\n                 task_context,\n@@ -253,14 +252,6 @@ class AsyncToSync(Generic[_P, _R]):\n                 current_executor.run_until_future(loop_future)\n                 # Wait for future and/or allow for exception propagation\n                 loop_future.result()\n-        finally:\n-            _restore_context(context[0])\n-            # Restore old current thread executor state\n-            self.executors.current = old_executor\n-\n-        # Wait for results from the future.\n-        return call_result.result()\n-\n     def __get__(self, parent: Any, objtype: Any) -> Callable[_P, _R]:\n         \"\"\"\n         Include self for methods\n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/sync.py/__call__/bug__procedural__func_pm_ctrl_invert_if__91acf008.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

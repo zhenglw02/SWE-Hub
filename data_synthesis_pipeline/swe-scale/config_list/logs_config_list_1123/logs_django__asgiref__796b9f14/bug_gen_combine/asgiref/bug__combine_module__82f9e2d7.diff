@@ -1,0 +1,71 @@
+/tmp/PATCH_0_cbb30149.patch:23: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/compatibility.py b/asgiref/compatibility.py
+index 3a2a63e..9b4c32c 100644
+--- a/asgiref/compatibility.py
++++ b/asgiref/compatibility.py
+@@ -7,24 +7,17 @@ def is_double_callable(application):
+     """
+     Tests to see if an application is a legacy-style (double-callable) application.
+     """
+-    # Look for a hint on the object first
+     if getattr(application, "_asgi_single_callable", False):
+         return False
+     if getattr(application, "_asgi_double_callable", False):
+         return True
+-    # Uninstanted classes are double-callable
+     if inspect.isclass(application):
+         return True
+-    # Instanted classes depend on their __call__
+     if hasattr(application, "__call__"):
+-        # We only check to see if its __call__ is a coroutine function -
+-        # if it's not, it still might be a coroutine function itself.
+-        if iscoroutinefunction(application.__call__):
++        if iscoroutinefunction(application):
+             return False
+-    # Non-classes we just check directly
+     return not iscoroutinefunction(application)
+ 
+-
+ def double_to_single_callable(application):
+     """
+     Transforms a double-callable ASGI application into a single-callable one.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..d985e7d 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -469,30 +469,25 @@ class SyncToAsync(Generic[_P, _R]):
+         func = functools.partial(self.__call__, parent)
+         return functools.update_wrapper(func, self.func)
+ 
+-    def thread_handler(self, loop, exc_info, task_context, func, *args, **kwargs):
++    def thread_handler (self, loop, exc_info, task_context, func, *args, **kwargs) :
+         """
+         Wraps the sync application with exception handling.
+         """
+-
+-        __traceback_hide__ = True  # noqa: F841
+-
+         # Set the threadlocal for AsyncToSync
+         self.threadlocal.main_event_loop = loop
+         self.threadlocal.main_event_loop_pid = os.getpid()
+         self.threadlocal.task_context = task_context
+-
+-        # Run the function
++    
+         # If we have an exception, run the function inside the except block
+         # after raising it so exc_info is correctly populated.
+         if exc_info[1]:
+             try:
+                 raise exc_info[1]
+-            except BaseException:
++            except:
+                 return func(*args, **kwargs)
+         else:
+             return func(*args, **kwargs)
+ 
+-
+ @overload
+ def async_to_sync(
+     *,

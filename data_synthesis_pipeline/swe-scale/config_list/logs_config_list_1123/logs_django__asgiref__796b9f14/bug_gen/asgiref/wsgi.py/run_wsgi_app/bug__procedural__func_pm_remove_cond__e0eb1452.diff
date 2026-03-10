@@ -1,0 +1,24 @@
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..4fffbcb 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -147,11 +147,7 @@ class WsgiToAsgiInstance:
+                 self.response_started = True
+                 self.sync_send(self.response_start)
+             # If the application supplies a Content-Length header
+-            if self.response_content_length is not None:
+-                # The server should not transmit more bytes to the client than the header allows
+-                bytes_allowed = self.response_content_length - bytes_sent
+-                if len(output) > bytes_allowed:
+-                    output = output[:bytes_allowed]
++        
+             self.sync_send(
+                 {"type": "http.response.body", "body": output, "more_body": True}
+             )
+@@ -163,4 +159,4 @@ class WsgiToAsgiInstance:
+         if not self.response_started:
+             self.response_started = True
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        self.sync_send({"type": "http.response.body"})
+\ No newline at end of file

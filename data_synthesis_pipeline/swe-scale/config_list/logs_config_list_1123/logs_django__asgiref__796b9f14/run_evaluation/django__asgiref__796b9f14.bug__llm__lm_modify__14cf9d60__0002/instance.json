@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__llm__lm_modify__14cf9d60__0002",
+    "patch": "diff --git a/asgiref/sync.py b/asgiref/sync.py\nindex 54496ef..ee77db0 100644\n--- a/asgiref/sync.py\n+++ b/asgiref/sync.py\n@@ -47,12 +47,10 @@ def _restore_context(context: contextvars.Context) -> None:\n     for cvar in context:\n         cvalue = context.get(cvar)\n         try:\n-            if cvar.get() != cvalue:\n-                cvar.set(cvalue)\n+            cvar.set(cvalue)\n         except LookupError:\n             cvar.set(cvalue)\n \n-\n # Python 3.12 deprecates asyncio.iscoroutinefunction() as an alias for\n # inspect.iscoroutinefunction(), whilst also removing the _is_coroutine marker.\n # The latter is replaced with the inspect.markcoroutinefunction decorator.\n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/server.py/StatelessServer/bug__llm__lm_modify__14cf9d60__0002.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

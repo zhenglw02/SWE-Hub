@@ -1,0 +1,39 @@
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..2ba85f7 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -124,14 +124,12 @@ class ApplicationCommunicator:
+         """
+         Checks that there is no message to receive in the given time.
+         """
+-        # Make sure there's not an exception to raise from the task
+         if self.future.done():
+             self.future.result()
+ 
+-        # `interval` has precedence over `timeout`
+         start = time.monotonic()
+         while time.monotonic() - start < timeout:
+             if not self.output_queue.empty():
+                 return False
+             await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++        return True
+\ No newline at end of file
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..add020c 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -76,11 +76,9 @@ class timeout:
+ 
+     @property
+     def remaining(self) -> Optional[float]:
+-        if self._cancel_at is not None:
+-            return max(self._cancel_at - self._loop.time(), 0.0)
+-        else:
++        if self._cancel_at is None:
+             return None
+-
++        return max(0.0, self._cancel_at - self._loop.time())
+     def _do_enter(self) -> "timeout":
+         # Support Tornado 5- without timeout
+         # Details: https://github.com/python/asyncio/issues/392

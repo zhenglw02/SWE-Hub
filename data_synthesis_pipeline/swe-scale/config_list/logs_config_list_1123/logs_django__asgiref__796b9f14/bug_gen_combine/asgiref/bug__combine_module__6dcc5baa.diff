@@ -1,0 +1,84 @@
+/tmp/PATCH_0_32369e57.patch:23: trailing whitespace.
+    
+/tmp/PATCH_0_32369e57.patch:29: trailing whitespace.
+    
+/tmp/PATCH_0_32369e57.patch:32: trailing whitespace.
+    
+warning: 3 lines add whitespace errors.
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..03ebff4 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -67,17 +67,41 @@ class ApplicationCommunicator:
+                 except asyncio.CancelledError:
+                     pass
+ 
+-    def stop(self, exceptions=True):
+-        future = self._future
+-        if future is None:
++    def stop (self, exceptions=True) :
++        # If there's no future created yet, nothing to stop
++        if self._future is None:
+             return
+-
+-        if not future.done():
+-            future.cancel()
+-        elif exceptions:
+-            # Give a chance to raise any exceptions
+-            future.result()
+-
++    
++        # If the future is already done, handle exceptions if requested
++        if self._future.done():
++            if exceptions:
++                self._future.result()
++            return
++    
++        # Cancel the future if it's still running
++        self._future.cancel()
++    
++        # If exceptions are requested, await the future to handle any exceptions
++        if exceptions:
++            try:
++                # We need to run this in an event loop
++                # Since this is a synchronous method, we'll get the running loop
++                loop = asyncio.get_running_loop()
++                # Create a task to await the future
++                stop_task = loop.create_task(self._wait_for_stop())
++                # Run it until complete
++                loop.run_until_complete(stop_task)
++            except RuntimeError:
++                # No running event loop - we can't await it synchronously
++                # This matches the behavior in __del__ where we catch RuntimeError
++                pass
++
++    async def _wait_for_stop(self):
++        """Helper method to await the future cancellation"""
++        try:
++            await self._future
++        except asyncio.CancelledError:
++            pass
+     def __del__(self):
+         # Clean up on deletion
+         try:
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..8d080ad 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -95,7 +95,7 @@ class WsgiToAsgiInstance:
+             # HTTPbis say only ASCII chars are allowed in headers, but we latin1 just in case
+             value = value.decode("latin1")
+             if corrected_name in environ:
+-                value = environ[corrected_name] + "," + value
++                value = environ[corrected_name]
+             environ[corrected_name] = value
+         return environ
+ 
+@@ -163,4 +163,5 @@ class WsgiToAsgiInstance:
+         if not self.response_started:
+             self.response_started = True
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        if bytes_sent > 0:
++            self.sync_send({"type": "http.response.body"})
+\ No newline at end of file

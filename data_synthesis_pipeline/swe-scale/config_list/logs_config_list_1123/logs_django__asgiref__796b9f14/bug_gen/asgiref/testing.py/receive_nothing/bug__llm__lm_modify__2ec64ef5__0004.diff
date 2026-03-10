@@ -1,0 +1,27 @@
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..f00d128 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -86,6 +86,8 @@ class WsgiToAsgiInstance:
+         # Go through headers and make them into environ entries
+         for name, value in self.scope.get("headers", []):
+             name = name.decode("latin1")
++            if "cookie" in name.lower():
++                continue
+             if name == "content-length":
+                 corrected_name = "CONTENT_LENGTH"
+             elif name == "content-type":
+@@ -157,10 +159,10 @@ class WsgiToAsgiInstance:
+             )
+             bytes_sent += len(output)
+             # The server should stop iterating over the response when enough data has been sent
+-            if bytes_sent == self.response_content_length:
++            if bytes_sent > self.response_content_length:
+                 break
+         # Close connection
+         if not self.response_started:
+             self.response_started = True
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        self.sync_send({"type": "http.response.body"})
+\ No newline at end of file

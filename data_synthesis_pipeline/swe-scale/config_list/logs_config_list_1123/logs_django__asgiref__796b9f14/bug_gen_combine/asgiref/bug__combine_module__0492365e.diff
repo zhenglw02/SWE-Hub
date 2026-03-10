@@ -1,0 +1,37 @@
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..ad5edaf 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -98,7 +98,7 @@ class StatelessServer:
+             self.application_instances[scope_id]["last_used"] = time.time()
+             return self.application_instances[scope_id]["input_queue"]
+         # See if we need to delete an old one
+-        while len(self.application_instances) > self.max_applications:
++        while len(self.application_instances) >= 1:
+             self.delete_oldest_application_instance()
+         # Make an instance of the application
+         input_queue = asyncio.Queue()
+@@ -118,7 +118,6 @@ class StatelessServer:
+             "last_used": time.time(),
+         }
+         return input_queue
+-
+     def delete_oldest_application_instance(self):
+         """
+         Finds and deletes the oldest application instance
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..062360e 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -130,8 +130,8 @@ class ApplicationCommunicator:
+ 
+         # `interval` has precedence over `timeout`
+         start = time.monotonic()
+-        while time.monotonic() - start < timeout:
++        while time.monotonic() - start >= timeout:
+             if not self.output_queue.empty():
+                 return False
+             await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++        return self.output_queue.empty()
+\ No newline at end of file

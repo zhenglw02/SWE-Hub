@@ -1,0 +1,54 @@
+/tmp/PATCH_1_ad0353d1.patch:21: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..bddf931 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -24,7 +24,8 @@ class _CVar:
+         if key == "_data":
+             return super().__setattr__(key, value)
+ 
+-        storage_object = self._data.get({}).copy()
++        storage_object = self._data.get({})
++        storage_object = {}.copy()
+         storage_object[key] = value
+         self._data.set(storage_object)
+ 
+@@ -36,7 +37,6 @@ class _CVar:
+         else:
+             raise AttributeError(f"{self!r} object has no attribute {key!r}")
+ 
+-
+ class Local:
+     """Local storage for async tasks.
+ 
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..9c3aed0 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -101,17 +101,16 @@ class timeout:
+         self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)
+         return self
+ 
+-    def _do_exit(self, exc_type: Type[BaseException]) -> None:
+-        if exc_type is asyncio.CancelledError and self._cancelled:
+-            self._cancel_handler = None
+-            self._task = None
+-            raise asyncio.TimeoutError
++    def _do_exit (self, exc_type: Type[BaseException]) -> None :
+         if self._timeout is not None and self._cancel_handler is not None:
+             self._cancel_handler.cancel()
+             self._cancel_handler = None
+-        self._task = None
+-        return None
+-
++    
++        if self._cancelled:
++            # If the task was cancelled due to timeout, we need to raise
++            # TimeoutError instead of CancelledError
++            if exc_type is asyncio.CancelledError:
++                raise TimeoutError
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+             self._task.cancel()

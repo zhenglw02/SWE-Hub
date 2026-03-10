@@ -1,0 +1,95 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..de89f51 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -47,12 +47,6 @@ class _WorkItem:
+ 
+ 
+ class CurrentThreadExecutor(Executor):
+-    """
+-    An Executor that actually runs code in the thread it is instantiated in.
+-    Passed to other threads running async code, so they can run sync code in
+-    the thread they came from.
+-    """
+-
+     def __init__(self, old_executor: "CurrentThreadExecutor | None") -> None:
+         self._work_thread = threading.current_thread()
+         self._work_ready = threading.Condition(threading.Lock())
+@@ -60,36 +54,6 @@ class CurrentThreadExecutor(Executor):
+         self._broken = False  # synchronized by _work_ready
+         self._old_executor = old_executor
+ 
+-    def run_until_future(self, future: "Future[Any]") -> None:
+-        """
+-        Runs the code in the work queue until a result is available from the future.
+-        Should be run from the thread the executor is initialised in.
+-        """
+-        # Check we're in the right thread
+-        if threading.current_thread() != self._work_thread:
+-            raise RuntimeError(
+-                "You cannot run CurrentThreadExecutor from a different thread"
+-            )
+-
+-        def done(future: "Future[Any]") -> None:
+-            with self._work_ready:
+-                self._broken = True
+-                self._work_ready.notify()
+-
+-        future.add_done_callback(done)
+-        # Keep getting and running work items until the future we're waiting for
+-        # is done and the queue is empty.
+-        while True:
+-            with self._work_ready:
+-                while not self._work_items and not self._broken:
+-                    self._work_ready.wait()
+-                if not self._work_items:
+-                    break
+-                # Get a work item and run it
+-                work_item = self._work_items.popleft()
+-            work_item.run()
+-            del work_item
+-
+     def submit(
+         self,
+         fn: Callable[_P, _R],
+@@ -121,3 +85,39 @@ class CurrentThreadExecutor(Executor):
+ 
+         # Return the future
+         return f
++
++    """
++    An Executor that actually runs code in the thread it is instantiated in.
++    Passed to other threads running async code, so they can run sync code in
++    the thread they came from.
++    """
++
++    def run_until_future(self, future: "Future[Any]") -> None:
++        """
++        Runs the code in the work queue until a result is available from the future.
++        Should be run from the thread the executor is initialised in.
++        """
++        # Check we're in the right thread
++        if threading.current_thread() != self._work_thread:
++            raise RuntimeError(
++                "You cannot run CurrentThreadExecutor from a different thread"
++            )
++
++        def done(future: "Future[Any]") -> None:
++            with self._work_ready:
++                self._broken = True
++                self._work_ready.notify()
++
++        future.add_done_callback(done)
++        # Keep getting and running work items until the future we're waiting for
++        # is done and the queue is empty.
++        while True:
++            with self._work_ready:
++                while not self._work_items and not self._broken:
++                    self._work_ready.wait()
++                if not self._work_items:
++                    break
++                # Get a work item and run it
++                work_item = self._work_items.popleft()
++            work_item.run()
++            del work_item
+\ No newline at end of file

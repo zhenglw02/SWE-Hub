@@ -1,0 +1,9 @@
+{
+  "instance_id": "procedural__func_pm_ctrl_shuffle__900c35cd",
+  "hash_code": "900c35cd",
+  "cost": 0.0,
+  "explanation": "The lines inside a function may be out of order.",
+  "output": "def run(self) -> None:\n    # noqa: F841  if not self.future.set_running_or_notify_cancel():\n        return\n    __traceback_hide__ = True\n    try:\n        result = self.fn(*self.args, **self.kwargs)\n    except BaseException as exc:\n        self.future.set_exception(exc)\n        # Break a reference cycle with the exception 'exc'\n        self = None  # type: ignore[assignment]\n    else:\n        self.future.set_result(result)",
+  "rewrite": "def run(self) -> None:\n    # noqa: F841  if not self.future.set_running_or_notify_cancel():\n        return\n    __traceback_hide__ = True\n    try:\n        result = self.fn(*self.args, **self.kwargs)\n    except BaseException as exc:\n        self.future.set_exception(exc)\n        # Break a reference cycle with the exception 'exc'\n        self = None  # type: ignore[assignment]\n    else:\n        self.future.set_result(result)",
+  "strategy": "func_pm_ctrl_shuffle"
+}

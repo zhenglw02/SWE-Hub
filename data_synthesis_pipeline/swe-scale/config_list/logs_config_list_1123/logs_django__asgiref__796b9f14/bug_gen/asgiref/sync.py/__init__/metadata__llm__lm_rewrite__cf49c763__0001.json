@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__cf49c763__0001",
+  "hash_code": "cf49c763",
+  "cost": 0,
+  "explanation": "<explanation>\nThe `__init__` method for `AsyncToSync` needs to initialize the instance attributes. Based on the usage in the `__call__` method, we need to store:\n- `self.awaitable`: The awaitable function passed in\n- `self.force_new_loop`: Whether to force creating a new event loop\n- `self.main_event_loop`: The main event loop (initially None, will be set later)\n\nWe should also validate that the `awaitable` parameter is actually callable, as required by the class functionality.\n</explanation>",
+  "output": "<explanation>\nThe `__init__` method for `AsyncToSync` needs to initialize the instance attributes. Based on the usage in the `__call__` method, we need to store:\n- `self.awaitable`: The awaitable function passed in\n- `self.force_new_loop`: Whether to force creating a new event loop\n- `self.main_event_loop`: The main event loop (initially None, will be set later)\n\nWe should also validate that the `awaitable` parameter is actually callable, as required by the class functionality.\n</explanation>\n\n```\ndef __init__ ( self, awaitable: Union[ Callable[_P, Coroutine[Any, Any, _R]], Callable[_P, Awaitable[_R]], ], force_new_loop: bool = False, ) :\n    if not callable(awaitable):\n        raise TypeError(\"The awaitable must be a callable\")\n    self.awaitable = awaitable\n    self.force_new_loop = force_new_loop\n    self.main_event_loop = None\n```",
+  "rewrite": "def __init__ ( self, awaitable: Union[ Callable[_P, Coroutine[Any, Any, _R]], Callable[_P, Awaitable[_R]], ], force_new_loop: bool = False, ) :\n    if not callable(awaitable):\n        raise TypeError(\"The awaitable must be a callable\")\n    self.awaitable = awaitable\n    self.force_new_loop = force_new_loop\n    self.main_event_loop = None",
+  "strategy": "lm_rewrite"
+}

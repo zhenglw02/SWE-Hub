@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__826fced3__0004",
+  "hash_code": "826fced3",
+  "cost": 0,
+  "explanation": "The `__setattr__` method in the `Local` class needs to handle setting attributes on the storage object while respecting the thread safety and context isolation mechanisms. Since the `Local` class uses different storage backends (thread-local or contextvar-based), we need to use the `_lock_storage` context manager to ensure thread-safe access.\n\nThe implementation should:\n1. Handle special attributes (starting with underscore) by delegating to the parent class\n2. For regular attributes, use the locked storage context to set the attribute value\n3. Follow the same pattern as `__getattr__` and `__delattr__`",
+  "output": "The `__setattr__` method in the `Local` class needs to handle setting attributes on the storage object while respecting the thread safety and context isolation mechanisms. Since the `Local` class uses different storage backends (thread-local or contextvar-based), we need to use the `_lock_storage` context manager to ensure thread-safe access.\n\nThe implementation should:\n1. Handle special attributes (starting with underscore) by delegating to the parent class\n2. For regular attributes, use the locked storage context to set the attribute value\n3. Follow the same pattern as `__getattr__` and `__delattr__`\n\n```\ndef __setattr__ (self, key, value) :\n    if key.startswith(\"_\"):\n        return super().__setattr__(key, value)\n    \n    with self._lock_storage() as storage:\n        setattr(storage, key, value)\n```",
+  "rewrite": "def __setattr__ (self, key, value) :\n    if key.startswith(\"_\"):\n        return super().__setattr__(key, value)\n    \n    with self._lock_storage() as storage:\n        setattr(storage, key, value)",
+  "strategy": "lm_rewrite"
+}

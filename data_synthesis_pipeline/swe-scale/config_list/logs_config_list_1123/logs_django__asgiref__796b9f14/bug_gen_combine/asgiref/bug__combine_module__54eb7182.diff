@@ -1,0 +1,68 @@
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..b364c55 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -123,7 +123,7 @@ class StatelessServer:
+         """
+         Finds and deletes the oldest application instance
+         """
+-        oldest_time = min(
++        oldest_time = max(
+             details["last_used"] for details in self.application_instances.values()
+         )
+         for scope_id, details in self.application_instances.items():
+@@ -170,4 +170,4 @@ class StatelessServer:
+             exception,
+             "".join(traceback.format_tb(exception.__traceback__)),
+             f"  {exception}",
+-        )
++        )
+\ No newline at end of file
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..c636c5f 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -131,36 +131,16 @@ class AsyncToSync(Generic[_P, _R]):
+     # inside create_task, we'll look it up here from the running event loop.
+     loop_thread_executors: "Dict[asyncio.AbstractEventLoop, CurrentThreadExecutor]" = {}
+ 
+-    def __init__(
+-        self,
+-        awaitable: Union[
+-            Callable[_P, Coroutine[Any, Any, _R]],
+-            Callable[_P, Awaitable[_R]],
+-        ],
+-        force_new_loop: bool = False,
+-    ):
+-        if not callable(awaitable) or (
+-            not iscoroutinefunction(awaitable)
+-            and not iscoroutinefunction(getattr(awaitable, "__call__", awaitable))
+-        ):
+-            # Python does not have very reliable detection of async functions
+-            # (lots of false negatives) so this is just a warning.
+-            warnings.warn(
+-                "async_to_sync was passed a non-async-marked callable", stacklevel=2
+-            )
++    def __init__ ( self, awaitable: Union[ Callable[_P, Coroutine[Any, Any, _R]], Callable[_P, Awaitable[_R]], ], force_new_loop: bool = False, ) :
+         self.awaitable = awaitable
+-        try:
+-            self.__self__ = self.awaitable.__self__  # type: ignore[union-attr]
+-        except AttributeError:
+-            pass
+         self.force_new_loop = force_new_loop
+-        self.main_event_loop = None
+-        try:
+-            self.main_event_loop = asyncio.get_running_loop()
+-        except RuntimeError:
+-            # There's no event loop in this thread.
+-            pass
+-
++        if not force_new_loop:
++            try:
++                self.main_event_loop = asyncio.get_running_loop()
++            except RuntimeError:
++                self.main_event_loop = None
++        else:
++            self.main_event_loop = None
+     def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841

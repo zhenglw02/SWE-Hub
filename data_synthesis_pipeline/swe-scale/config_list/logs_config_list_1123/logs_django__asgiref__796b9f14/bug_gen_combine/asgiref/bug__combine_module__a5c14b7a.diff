@@ -1,0 +1,47 @@
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..30310f6 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -97,9 +97,6 @@ class StatelessServer:
+         if scope_id in self.application_instances:
+             self.application_instances[scope_id]["last_used"] = time.time()
+             return self.application_instances[scope_id]["input_queue"]
+-        # See if we need to delete an old one
+-        while len(self.application_instances) > self.max_applications:
+-            self.delete_oldest_application_instance()
+         # Make an instance of the application
+         input_queue = asyncio.Queue()
+         application_instance = guarantee_single_callable(self.application)
+@@ -117,8 +114,10 @@ class StatelessServer:
+             "scope": scope,
+             "last_used": time.time(),
+         }
++        # See if we need to delete an old one
++        while len(self.application_instances) > self.max_applications:
++            self.delete_oldest_application_instance()
+         return input_queue
+-
+     def delete_oldest_application_instance(self):
+         """
+         Finds and deletes the oldest application instance
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..1127605 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -55,8 +55,8 @@ class ApplicationCommunicator:
+         try:
+             async with async_timeout(timeout):
+                 try:
+-                    await self.future
+                     self.future.result()
++                    await self.future
+                 except asyncio.CancelledError:
+                     pass
+         finally:
+@@ -134,4 +134,4 @@ class ApplicationCommunicator:
+             if not self.output_queue.empty():
+                 return False
+             await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++        return self.output_queue.empty()
+\ No newline at end of file

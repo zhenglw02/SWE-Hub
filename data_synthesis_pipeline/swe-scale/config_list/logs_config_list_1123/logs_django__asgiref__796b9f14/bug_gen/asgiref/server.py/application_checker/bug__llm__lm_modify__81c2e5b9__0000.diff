@@ -1,0 +1,11 @@
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..51b15b0 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -134,4 +134,4 @@ class ApplicationCommunicator:
+             if not self.output_queue.empty():
+                 return False
+             await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++        return self.output_queue.empty()
+\ No newline at end of file

@@ -1,0 +1,22 @@
+Applied patch to 'asgiref/local.py' cleanly.
+Applied patch to 'asgiref/local.py' cleanly.
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..b47b9a8 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -120,12 +120,12 @@ class Local:
+         with self._lock_storage() as storage:
+             return getattr(storage, key)
+ 
+-    def __setattr__(self, key, value):
+-        if key in ("_local", "_storage", "_thread_critical", "_thread_lock"):
++    def __setattr__ (self, key, value) :
++        if key in ("_thread_critical", "_thread_lock", "_storage"):
+             return super().__setattr__(key, value)
++    
+         with self._lock_storage() as storage:
+             setattr(storage, key, value)
+-
+     def __delattr__(self, key):
+         with self._lock_storage() as storage:
+             delattr(storage, key)

@@ -1,0 +1,67 @@
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..46fb99f 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -67,16 +67,7 @@ class ApplicationCommunicator:
+                 except asyncio.CancelledError:
+                     pass
+ 
+-    def stop(self, exceptions=True):
+-        future = self._future
+-        if future is None:
+-            return
+-
+-        if not future.done():
+-            future.cancel()
+-        elif exceptions:
+-            # Give a chance to raise any exceptions
+-            future.result()
++    
+ 
+     def __del__(self):
+         # Clean up on deletion
+@@ -97,41 +88,6 @@ class ApplicationCommunicator:
+         # Give it the message
+         await self.input_queue.put(message)
+ 
+-    async def receive_output(self, timeout=1):
+-        """
+-        Receives a single message from the application, with optional timeout.
+-        """
+-        # Make sure there's not an exception to raise from the task
+-        if self.future.done():
+-            self.future.result()
+-        # Wait and receive the message
+-        try:
+-            async with async_timeout(timeout):
+-                return await self.output_queue.get()
+-        except asyncio.TimeoutError as e:
+-            # See if we have another error to raise inside
+-            if self.future.done():
+-                self.future.result()
+-            else:
+-                self.future.cancel()
+-                try:
+-                    await self.future
+-                except asyncio.CancelledError:
+-                    pass
+-            raise e
+-
+-    async def receive_nothing(self, timeout=0.1, interval=0.01):
+-        """
+-        Checks that there is no message to receive in the given time.
+-        """
+-        # Make sure there's not an exception to raise from the task
+-        if self.future.done():
+-            self.future.result()
++    
+ 
+-        # `interval` has precedence over `timeout`
+-        start = time.monotonic()
+-        while time.monotonic() - start < timeout:
+-            if not self.output_queue.empty():
+-                return False
+-            await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++    
+\ No newline at end of file

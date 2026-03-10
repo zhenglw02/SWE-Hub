@@ -1,0 +1,99 @@
+/tmp/PATCH_1_6bb8f6ac.patch:23: trailing whitespace.
+    
+/tmp/PATCH_1_6bb8f6ac.patch:25: trailing whitespace.
+            exceptions: If True, raises any exceptions from the future; if False, 
+/tmp/PATCH_1_6bb8f6ac.patch:43: trailing whitespace.
+    
+warning: 3 lines add whitespace errors.
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..842f6f3 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -67,17 +67,37 @@ class ApplicationCommunicator:
+                 except asyncio.CancelledError:
+                     pass
+ 
+-    def stop(self, exceptions=True):
+-        future = self._future
+-        if future is None:
+-            return
+-
+-        if not future.done():
+-            future.cancel()
+-        elif exceptions:
+-            # Give a chance to raise any exceptions
+-            future.result()
+-
++    def stop (self, exceptions=True) :
++        """
++        Stops the application communicator by cancelling the running future.
++    
++        Args:
++            exceptions: If True, raises any exceptions from the future; if False, 
++                       suppresses exceptions.
++        """
++        if self._future is not None and not self._future.done():
++            # Cancel the future
++            self._future.cancel()
++            try:
++                # Wait for cancellation to complete
++                loop = asyncio.get_event_loop()
++                if loop.is_running():
++                    # If event loop is running, create a task to await the future
++                    loop.create_task(self._future)
++                else:
++                    # If event loop is not running, run until complete
++                    loop.run_until_complete(self._future)
++            except (RuntimeError, asyncio.CancelledError):
++                # Event loop might be closed or already stopped
++                pass
++    
++        # If exceptions is True and future is done with an exception, re-raise it
++        if exceptions and self._future is not None and self._future.done():
++            try:
++                self._future.result()
++            except asyncio.CancelledError:
++                # Don't re-raise cancellation errors
++                pass
+     def __del__(self):
+         # Clean up on deletion
+         try:
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..4a576a2 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -137,30 +137,23 @@ class WsgiToAsgiInstance:
+         Called in a subthread to run the WSGI app. We encapsulate like
+         this so that the start_response callable is called in the same thread.
+         """
+-        # Translate the scope and incoming request body into a WSGI environ
+         environ = self.build_environ(self.scope, body)
+-        # Run the WSGI app
+         bytes_sent = 0
+         for output in self.wsgi_application(environ, self.start_response):
+-            # If this is the first response, include the response headers
+             if not self.response_started:
+                 self.response_started = True
+                 self.sync_send(self.response_start)
+-            # If the application supplies a Content-Length header
+             if self.response_content_length is not None:
+-                # The server should not transmit more bytes to the client than the header allows
+-                bytes_allowed = self.response_content_length - bytes_sent
++                bytes_allowed = len(output) - bytes_sent
+                 if len(output) > bytes_allowed:
+                     output = output[:bytes_allowed]
+             self.sync_send(
+                 {"type": "http.response.body", "body": output, "more_body": True}
+             )
+             bytes_sent += len(output)
+-            # The server should stop iterating over the response when enough data has been sent
+-            if bytes_sent == self.response_content_length:
++            if bytes_sent >= self.response_content_length:
+                 break
+-        # Close connection
+         if not self.response_started:
+             self.response_started = True
+             self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        self.sync_send({"type": "http.response.body", "body": b""})
+\ No newline at end of file

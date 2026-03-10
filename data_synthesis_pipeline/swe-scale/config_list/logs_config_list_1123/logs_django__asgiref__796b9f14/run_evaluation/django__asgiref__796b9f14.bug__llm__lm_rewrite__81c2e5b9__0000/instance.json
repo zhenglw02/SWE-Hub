@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__llm__lm_rewrite__81c2e5b9__0000",
+    "patch": "diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py\nindex 6293cbd..10eed20 100644\n--- a/asgiref/current_thread_executor.py\n+++ b/asgiref/current_thread_executor.py\n@@ -33,18 +33,16 @@ class _WorkItem:\n         self.kwargs = kwargs\n \n     def run(self) -> None:\n-        __traceback_hide__ = True  # noqa: F841\n-        if not self.future.set_running_or_notify_cancel():\n-            return\n-        try:\n-            result = self.fn(*self.args, **self.kwargs)\n-        except BaseException as exc:\n-            self.future.set_exception(exc)\n-            # Break a reference cycle with the exception 'exc'\n-            self = None  # type: ignore[assignment]\n-        else:\n-            self.future.set_result(result)\n-\n+            if not self.future.set_running_or_notify_cancel():\n+                return\n+            try:\n+                result = self.fn(*self.args, **self.kwargs)\n+            except BaseException as exc:\n+                self.future.set_exception(exc)\n+                # Break a reference cycle with the exception 'exc'\n+                self = None\n+            else:\n+                self.future.set_result(result)\n \n class CurrentThreadExecutor(Executor):\n     \"\"\"\n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/server.py/application_checker/bug__llm__lm_rewrite__81c2e5b9__0000.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

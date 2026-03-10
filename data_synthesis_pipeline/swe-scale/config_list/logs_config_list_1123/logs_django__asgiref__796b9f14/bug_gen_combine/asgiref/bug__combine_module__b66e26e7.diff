@@ -1,0 +1,47 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..fb88c92 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -179,7 +179,7 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+         # You can't call AsyncToSync from a thread with a running event loop
+         try:
+-            asyncio.get_running_loop()
++            asyncio.get_event_loop()
+         except RuntimeError:
+             pass
+         else:
+@@ -247,7 +247,7 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+             if not running_in_main_event_loop:
+                 # Make our own event loop - in a new thread - and run inside that.
+-                loop_executor = ThreadPoolExecutor(max_workers=1)
++                loop_executor = ThreadPoolExecutor(max_workers=0)
+                 loop_future = loop_executor.submit(asyncio.run, new_loop_wrap())
+                 # Run the CurrentThreadExecutor until the future is done.
+                 current_executor.run_until_future(loop_future)
+@@ -260,7 +260,6 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+         # Wait for results from the future.
+         return call_result.result()
+-
+     def __get__(self, parent: Any, objtype: Any) -> Callable[_P, _R]:
+         """
+         Include self for methods
+@@ -451,7 +450,7 @@ class SyncToAsync(Generic[_P, _R]):
+                 pass
+             if exec_coro.done():
+                 raise
+-            if cancel_parent:
++            if not cancel_parent:
+                 exec_coro.cancel()
+             ret = await exec_coro
+         finally:
+@@ -492,7 +491,6 @@ class SyncToAsync(Generic[_P, _R]):
+         else:
+             return func(*args, **kwargs)
+ 
+-
+ @overload
+ def async_to_sync(
+     *,

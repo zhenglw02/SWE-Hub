@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__900c35cd__0003",
+  "hash_code": "900c35cd",
+  "cost": 0,
+  "explanation": "The `run` method should execute the function `fn` with the given arguments and set the result on the future. If an exception occurs during execution, it should set the exception on the future instead.",
+  "output": "The `run` method should execute the function `fn` with the given arguments and set the result on the future. If an exception occurs during execution, it should set the exception on the future instead.\n\n```\ndef run(self) -> None:\n    if not self.future.set_running_or_notify_cancel():\n        return\n\n    try:\n        result = self.fn(*self.args, **self.kwargs)\n    except BaseException as e:\n        self.future.set_exception(e)\n    else:\n        self.future.set_result(result)\n```",
+  "rewrite": "def run(self) -> None:\n    if not self.future.set_running_or_notify_cancel():\n        return\n\n    try:\n        result = self.fn(*self.args, **self.kwargs)\n    except BaseException as e:\n        self.future.set_exception(e)\n    else:\n        self.future.set_result(result)",
+  "strategy": "lm_rewrite"
+}

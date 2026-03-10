@@ -1,0 +1,60 @@
+/tmp/PATCH_0_96ca90b5.patch:14: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..0f3a0ed 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -32,20 +32,17 @@ class _WorkItem:
+         self.args = args
+         self.kwargs = kwargs
+ 
+-    def run(self) -> None:
+-        __traceback_hide__ = True  # noqa: F841
++    def run (self) -> None :
+         if not self.future.set_running_or_notify_cancel():
+             return
++    
+         try:
+             result = self.fn(*self.args, **self.kwargs)
+-        except BaseException as exc:
+-            self.future.set_exception(exc)
+-            # Break a reference cycle with the exception 'exc'
+-            self = None  # type: ignore[assignment]
++        except BaseException as e:
++            self.future.set_exception(e)
+         else:
+             self.future.set_result(result)
+ 
+-
+ class CurrentThreadExecutor(Executor):
+     """
+     An Executor that actually runs code in the thread it is instantiated in.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..0907866 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -562,15 +562,7 @@ def sync_to_async(
+     ...
+ 
+ 
+-def sync_to_async(
+-    func: Optional[Callable[_P, _R]] = None,
+-    *,
+-    thread_sensitive: bool = True,
+-    executor: Optional["ThreadPoolExecutor"] = None,
+-) -> Union[
+-    Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]],
+-    Callable[_P, Coroutine[Any, Any, _R]],
+-]:
++def sync_to_async ( func: Optional[Callable[_P, _R]] = None, *, thread_sensitive: bool = True, executor: Optional["ThreadPoolExecutor"] = None, ) -> Union[ Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]], Callable[_P, Coroutine[Any, Any, _R]], ] :
+     if func is None:
+         return lambda f: SyncToAsync(
+             f,
+@@ -581,4 +573,4 @@ def sync_to_async(
+         func,
+         thread_sensitive=thread_sensitive,
+         executor=executor,
+-    )
++    )
+\ No newline at end of file

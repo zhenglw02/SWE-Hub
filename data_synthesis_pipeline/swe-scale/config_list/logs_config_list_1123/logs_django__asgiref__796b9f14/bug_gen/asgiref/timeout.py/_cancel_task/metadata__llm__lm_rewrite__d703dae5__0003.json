@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__d703dae5__0003",
+  "hash_code": "d703dae5",
+  "cost": 0,
+  "explanation": "The `_cancel_task` method is responsible for cancelling the task that the timeout context manager is monitoring. When the timeout period elapses, this method should cancel the task associated with the timeout. The method needs to set the `_cancelled` flag to indicate that the timeout has expired and then cancel the task if it still exists.\n\nHere's the implementation:",
+  "output": "The `_cancel_task` method is responsible for cancelling the task that the timeout context manager is monitoring. When the timeout period elapses, this method should cancel the task associated with the timeout. The method needs to set the `_cancelled` flag to indicate that the timeout has expired and then cancel the task if it still exists.\n\nHere's the implementation:\n\n```python\ndef _cancel_task (self) -> None :\n    if not self._cancelled:\n        self._cancelled = True\n        if self._task is not None and not self._task.done():\n            self._task.cancel()\n```",
+  "rewrite": "def _cancel_task (self) -> None :\n    if not self._cancelled:\n        self._cancelled = True\n        if self._task is not None and not self._task.done():\n            self._task.cancel()",
+  "strategy": "lm_rewrite"
+}

@@ -1,0 +1,112 @@
+/tmp/PATCH_0_8d691284.patch:34: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..2143345 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -268,47 +268,25 @@ class AsyncToSync(Generic[_P, _R]):
+         func = functools.partial(self.__call__, parent)
+         return functools.update_wrapper(func, self.awaitable)
+ 
+-    async def main_wrap(
+-        self,
+-        call_result: "Future[_R]",
+-        exc_info: "OptExcInfo",
+-        task_context: "Optional[List[asyncio.Task[Any]]]",
+-        context: List[contextvars.Context],
+-        awaitable: Union[Coroutine[Any, Any, _R], Awaitable[_R]],
+-    ) -> None:
++    async def main_wrap ( self, call_result: "Future[_R]", exc_info: "OptExcInfo", task_context: "Optional[List[asyncio.Task[Any]]]", context: List[contextvars.Context], awaitable: Union[Coroutine[Any, Any, _R], Awaitable[_R]], ) -> None :
+         """
+-        Wraps the awaitable with something that puts the result into the
+-        result/exception future.
+-        """
+-
+-        __traceback_hide__ = True  # noqa: F841
+-
+-        if context is not None:
+-            _restore_context(context[0])
+-
+-        current_task = asyncio.current_task()
+-        if current_task is not None and task_context is not None:
+-            task_context.append(current_task)
+-
++            Wraps the awaitable with something that puts the result into the
++            result/exception future.
++            """
++        if task_context is not None:
++            self.threadlocal.task_context = task_context
+         try:
+-            # If we have an exception, run the function inside the except block
+-            # after raising it so exc_info is correctly populated.
+-            if exc_info[1]:
+-                try:
+-                    raise exc_info[1]
+-                except BaseException:
+-                    result = await awaitable
+-            else:
+-                result = await awaitable
+-        except BaseException as e:
++            # Run the awaitable in the copied context
++            result = await awaitable
++        except Exception as e:
++            # Set exception on the future
+             call_result.set_exception(e)
+         else:
++            # Set result on the future
+             call_result.set_result(result)
+         finally:
+-            if current_task is not None and task_context is not None:
+-                task_context.remove(current_task)
+-            context[0] = contextvars.copy_context()
+-
++            # Always restore the context
++            _restore_context(context[0])
+ 
+ class SyncToAsync(Generic[_P, _R]):
+     """
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..73c297e 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -35,19 +35,29 @@ class ApplicationCommunicator:
+ 
+     @property
+     def future(self):
++        """
++        The future that runs the ASGI application.
++        Created lazily on first access.
++        """
+         if self._future is None:
+-            # Clear context - this ensures that context vars set in the testing scope
+-            # are not "leaked" into the application which would normally begin with
+-            # an empty context. In Python >= 3.11 this could also be written as:
+-            # asyncio.create_task(..., context=contextvars.Context())
+-            self._future = contextvars.Context().run(
+-                asyncio.create_task,
+-                self.application(
+-                    self.scope, self.input_queue.get, self.output_queue.put
+-                ),
+-            )
++            # Create the application task
++            self._future = asyncio.create_task(self._run_application())
+         return self._future
+ 
++    async def _run_application(self):
++        """
++        Internal method to run the ASGI application and handle message passing.
++        """
++        # Create the ASGI callable with the appropriate scope
++        instance = self.application(self.scope)
++    
++        try:
++            # Run the application with the input and output queues
++            await instance(self.input_queue.get, self.output_queue.put)
++        finally:
++            # Ensure any cleanup happens
++            if hasattr(instance, 'close'):
++                await instance.close()
+     async def wait(self, timeout=1):
+         """
+         Waits for the application to stop itself and returns any exceptions.

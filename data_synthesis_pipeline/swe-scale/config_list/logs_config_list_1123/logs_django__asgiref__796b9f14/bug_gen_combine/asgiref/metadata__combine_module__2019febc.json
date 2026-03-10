@@ -1,0 +1,15 @@
+{
+    "instance_id": "combine_module__2019febc",
+    "hash_code": "2019febc",
+    "cost": 0,
+    "strategy": "combine_module",
+    "patch_files": [
+        "bug__llm__lm_rewrite__91acf008__0001",
+        "bug__llm__lm_rewrite__c33c7cc0__0003"
+    ],
+    "patch_path": [
+        "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/sync.py/__call__/bug__llm__lm_rewrite__91acf008__0001.diff",
+        "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/sync.py/sync_to_async/bug__llm__lm_rewrite__c33c7cc0__0003.diff"
+    ],
+    "num_patch_files": 2
+}

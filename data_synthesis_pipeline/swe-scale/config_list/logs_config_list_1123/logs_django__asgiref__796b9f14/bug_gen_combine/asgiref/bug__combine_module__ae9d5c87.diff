@@ -1,0 +1,86 @@
+/tmp/PATCH_1_a5bd2c33.patch:29: trailing whitespace.
+    
+/tmp/PATCH_1_a5bd2c33.patch:39: trailing whitespace.
+    
+warning: 2 lines add whitespace errors.
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..4f3548d 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -48,25 +48,23 @@ class ApplicationCommunicator:
+             )
+         return self._future
+ 
+-    async def wait(self, timeout=1):
++    async def wait (self, timeout=1) :
+         """
+-        Waits for the application to stop itself and returns any exceptions.
+-        """
+-        try:
+-            async with async_timeout(timeout):
+-                try:
+-                    await self.future
+-                    self.future.result()
+-                except asyncio.CancelledError:
+-                    pass
+-        finally:
+-            if not self.future.done():
+-                self.future.cancel()
+-                try:
++            Waits for the application to stop itself and returns any exceptions.
++            """
++        if self._future is None:
++            return None
++    
++        if not self.future.done():
++            try:
++                async with async_timeout(timeout):
+                     await self.future
+-                except asyncio.CancelledError:
+-                    pass
+-
++            except asyncio.TimeoutError:
++                raise
++    
++        if self.future.exception() is not None:
++            return self.future.exception()
++        return None
+     def stop(self, exceptions=True):
+         future = self._future
+         if future is None:
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..c04b0d5 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -81,26 +81,12 @@ class timeout:
+         else:
+             return None
+ 
+-    def _do_enter(self) -> "timeout":
+-        # Support Tornado 5- without timeout
+-        # Details: https://github.com/python/asyncio/issues/392
+-        if self._timeout is None:
+-            return self
+-
+-        self._task = asyncio.current_task(self._loop)
+-        if self._task is None:
+-            raise RuntimeError(
+-                "Timeout context manager should be used " "inside a task"
+-            )
+-
+-        if self._timeout <= 0:
+-            self._loop.call_soon(self._cancel_task)
+-            return self
+-
+-        self._cancel_at = self._loop.time() + self._timeout
+-        self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)
++    def _do_enter (self) -> "timeout" : # Support Tornado 5- without timeout # Details: https://github.com/python/asyncio/issues/392
++        self._task = asyncio.current_task()
++        if self._timeout is not None:
++            self._cancel_at = self._loop.time() + self._timeout
++            self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)
+         return self
+-
+     def _do_exit(self, exc_type: Type[BaseException]) -> None:
+         if exc_type is asyncio.CancelledError and self._cancelled:
+             self._cancel_handler = None

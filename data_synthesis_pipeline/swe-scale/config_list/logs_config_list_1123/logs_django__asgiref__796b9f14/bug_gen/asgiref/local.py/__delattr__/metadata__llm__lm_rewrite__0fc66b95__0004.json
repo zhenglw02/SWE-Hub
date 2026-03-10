@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__0fc66b95__0004",
+  "hash_code": "0fc66b95",
+  "cost": 0,
+  "explanation": "The `__delattr__` method for the `_CVar` class needs to handle deleting attributes from the context-local storage. Similar to how `__setattr__` works, we need to:\n\n1. Get the current storage dictionary from the context variable\n2. Make a copy of it (since context variables are intended to be immutable)\n3. Delete the specified key from the copied dictionary\n4. Set the context variable to the updated dictionary\n\nIf the key doesn't exist in the storage, we should raise an `AttributeError` to maintain consistent behavior with `__getattr__`.",
+  "output": "The `__delattr__` method for the `_CVar` class needs to handle deleting attributes from the context-local storage. Similar to how `__setattr__` works, we need to:\n\n1. Get the current storage dictionary from the context variable\n2. Make a copy of it (since context variables are intended to be immutable)\n3. Delete the specified key from the copied dictionary\n4. Set the context variable to the updated dictionary\n\nIf the key doesn't exist in the storage, we should raise an `AttributeError` to maintain consistent behavior with `__getattr__`.\n\n```\ndef __delattr__ (self, key: str) -> None :\n    if key == \"_data\":\n        return super().__delattr__(key)\n\n    storage_object = self._data.get({}).copy()\n    try:\n        del storage_object[key]\n    except KeyError:\n        raise AttributeError(f\"{self!r} object has no attribute {key!r}\")\n    self._data.set(storage_object)\n```",
+  "rewrite": "def __delattr__ (self, key: str) -> None :\n    if key == \"_data\":\n        return super().__delattr__(key)\n\n    storage_object = self._data.get({}).copy()\n    try:\n        del storage_object[key]\n    except KeyError:\n        raise AttributeError(f\"{self!r} object has no attribute {key!r}\")\n    self._data.set(storage_object)",
+  "strategy": "lm_rewrite"
+}

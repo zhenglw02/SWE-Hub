@@ -1,0 +1,29 @@
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..52ba854 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -82,8 +82,6 @@ class timeout:
+             return None
+ 
+     def _do_enter(self) -> "timeout":
+-        # Support Tornado 5- without timeout
+-        # Details: https://github.com/python/asyncio/issues/392
+         if self._timeout is None:
+             return self
+ 
+@@ -93,14 +91,13 @@ class timeout:
+                 "Timeout context manager should be used " "inside a task"
+             )
+ 
+-        if self._timeout <= 0:
++        if self._timeout < 0:
+             self._loop.call_soon(self._cancel_task)
+             return self
+ 
+         self._cancel_at = self._loop.time() + self._timeout
+         self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)
+         return self
+-
+     def _do_exit(self, exc_type: Type[BaseException]) -> None:
+         if exc_type is asyncio.CancelledError and self._cancelled:
+             self._cancel_handler = None

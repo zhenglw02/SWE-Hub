@@ -1,0 +1,116 @@
+/tmp/PATCH_1_9055b426.patch:40: trailing whitespace.
+    
+/tmp/PATCH_1_9055b426.patch:45: trailing whitespace.
+    
+/tmp/PATCH_1_9055b426.patch:54: trailing whitespace.
+    
+/tmp/PATCH_1_9055b426.patch:61: trailing whitespace.
+    
+/tmp/PATCH_1_9055b426.patch:68: trailing whitespace.
+    
+warning: 5 lines add whitespace errors.
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..c0ba10a 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -65,7 +65,6 @@ class CurrentThreadExecutor(Executor):
+         Runs the code in the work queue until a result is available from the future.
+         Should be run from the thread the executor is initialised in.
+         """
+-        # Check we're in the right thread
+         if threading.current_thread() != self._work_thread:
+             raise RuntimeError(
+                 "You cannot run CurrentThreadExecutor from a different thread"
+@@ -77,19 +76,15 @@ class CurrentThreadExecutor(Executor):
+                 self._work_ready.notify()
+ 
+         future.add_done_callback(done)
+-        # Keep getting and running work items until the future we're waiting for
+-        # is done and the queue is empty.
+         while True:
+             with self._work_ready:
+                 while not self._work_items and not self._broken:
+                     self._work_ready.wait()
+-                if not self._work_items:
++                if self._work_items is None:
+                     break
+-                # Get a work item and run it
+                 work_item = self._work_items.popleft()
+             work_item.run()
+             del work_item
+-
+     def submit(
+         self,
+         fn: Callable[_P, _R],
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..a3d0325 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -99,38 +99,40 @@ class WsgiToAsgiInstance:
+             environ[corrected_name] = value
+         return environ
+ 
+-    def start_response(self, status, response_headers, exc_info=None):
++    def start_response (self, status, response_headers, exc_info=None) :
+         """
+-        WSGI start_response callable.
+-        """
+-        # Don't allow re-calling once response has begun
+-        if self.response_started:
+-            raise exc_info[1].with_traceback(exc_info[2])
+-        # Don't allow re-calling without exc_info
+-        if hasattr(self, "response_start") and exc_info is None:
+-            raise ValueError(
+-                "You cannot call start_response a second time without exc_info"
+-            )
+-        # Extract status code
+-        status_code, _ = status.split(" ", 1)
+-        status_code = int(status_code)
+-        # Extract headers
+-        headers = [
+-            (name.lower().encode("ascii"), value.encode("ascii"))
+-            for name, value in response_headers
+-        ]
+-        # Extract content-length
+-        self.response_content_length = None
+-        for name, value in response_headers:
+-            if name.lower() == "content-length":
+-                self.response_content_length = int(value)
+-        # Build and send response start message.
++            WSGI start_response callable.
++            """
++        # Parse the status code from the status string
++        status_code = int(status.split()[0])
++    
++        # Build response headers dictionary
++        headers = []
++        for header, value in response_headers:
++            headers.append((header.lower().encode('latin1'), value.encode('latin1')))
++    
++        # Store the response start information for later use
+         self.response_start = {
+             "type": "http.response.start",
+             "status": status_code,
+-            "headers": headers,
++            "headers": headers
+         }
+-
++    
++        # Extract Content-Length if present
++        self.response_content_length = None
++        for header, value in response_headers:
++            if header.lower() == 'content-length':
++                self.response_content_length = int(value)
++                break
++    
++        # Return a write function that can be used to write response body directly
++        def write(data):
++            if not self.response_started:
++                self.response_started = True
++                self.sync_send(self.response_start)
++            self.sync_send({"type": "http.response.body", "body": data})
++    
++        return write
+     @sync_to_async
+     def run_wsgi_app(self, body):
+         """

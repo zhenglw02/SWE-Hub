@@ -1,0 +1,41 @@
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..e885c35 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -75,12 +75,12 @@ class timeout:
+         return self._cancelled
+ 
+     @property
+-    def remaining(self) -> Optional[float]:
+-        if self._cancel_at is not None:
+-            return max(self._cancel_at - self._loop.time(), 0.0)
+-        else:
++    def remaining (self) -> Optional[float] :
++        if self._timeout is None:
+             return None
+-
++        if self._cancel_at is None:
++            return 0.0
++        return max(0.0, self._cancel_at - self._loop.time())
+     def _do_enter(self) -> "timeout":
+         # Support Tornado 5- without timeout
+         # Details: https://github.com/python/asyncio/issues/392
+@@ -102,16 +102,15 @@ class timeout:
+         return self
+ 
+     def _do_exit(self, exc_type: Type[BaseException]) -> None:
+-        if exc_type is asyncio.CancelledError and self._cancelled:
++        if exc_type is asyncio.CancelledError or self._cancelled:
+             self._cancel_handler = None
+             self._task = None
+             raise asyncio.TimeoutError
+-        if self._timeout is not None and self._cancel_handler is not None:
++        if self._timeout is not None or self._cancel_handler is not None:
+             self._cancel_handler.cancel()
+             self._cancel_handler = None
+         self._task = None
+         return None
+-
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+             self._task.cancel()

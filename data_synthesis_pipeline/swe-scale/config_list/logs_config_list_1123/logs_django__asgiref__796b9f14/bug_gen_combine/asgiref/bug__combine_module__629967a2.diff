@@ -1,0 +1,179 @@
+/tmp/PATCH_0_983fec94.patch:19: trailing whitespace.
+    
+/tmp/PATCH_0_983fec94.patch:22: trailing whitespace.
+    
+warning: 2 lines add whitespace errors.
+/tmp/PATCH_1_f879f406.patch:33: trailing whitespace.
+    
+/tmp/PATCH_1_f879f406.patch:37: trailing whitespace.
+    
+/tmp/PATCH_1_f879f406.patch:45: trailing whitespace.
+        
+/tmp/PATCH_1_f879f406.patch:49: trailing whitespace.
+        
+/tmp/PATCH_1_f879f406.patch:55: trailing whitespace.
+        
+warning: squelched 9 whitespace errors
+warning: 14 lines add whitespace errors.
+diff --git a/asgiref/compatibility.py b/asgiref/compatibility.py
+index 3a2a63e..9938b87 100644
+--- a/asgiref/compatibility.py
++++ b/asgiref/compatibility.py
+@@ -3,27 +3,25 @@ import inspect
+ from .sync import iscoroutinefunction
+ 
+ 
+-def is_double_callable(application):
++def is_double_callable (application) :
+     """
+     Tests to see if an application is a legacy-style (double-callable) application.
+     """
+-    # Look for a hint on the object first
+-    if getattr(application, "_asgi_single_callable", False):
++    # First, verify the application is callable at all
++    if not callable(application):
++        return False
++    
++    # Create a minimal test scope that would be valid for ASGI
++    test_scope = {"type": "http", "protocol": "http/1.1"}
++    
++    try:
++        # Call the application with the test scope
++        result = application(test_scope)
++        # Check if the result is callable (indicating double-callable pattern)
++        return callable(result)
++    except (TypeError, Exception):
++        # If calling fails or raises an exception, it's not a valid double-callable
+         return False
+-    if getattr(application, "_asgi_double_callable", False):
+-        return True
+-    # Uninstanted classes are double-callable
+-    if inspect.isclass(application):
+-        return True
+-    # Instanted classes depend on their __call__
+-    if hasattr(application, "__call__"):
+-        # We only check to see if its __call__ is a coroutine function -
+-        # if it's not, it still might be a coroutine function itself.
+-        if iscoroutinefunction(application.__call__):
+-            return False
+-    # Non-classes we just check directly
+-    return not iscoroutinefunction(application)
+-
+ 
+ def double_to_single_callable(application):
+     """
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..ede2e57 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -137,30 +137,84 @@ class WsgiToAsgiInstance:
+         Called in a subthread to run the WSGI app. We encapsulate like
+         this so that the start_response callable is called in the same thread.
+         """
+-        # Translate the scope and incoming request body into a WSGI environ
+         environ = self.build_environ(self.scope, body)
+-        # Run the WSGI app
+-        bytes_sent = 0
+-        for output in self.wsgi_application(environ, self.start_response):
+-            # If this is the first response, include the response headers
+-            if not self.response_started:
+-                self.response_started = True
+-                self.sync_send(self.response_start)
+-            # If the application supplies a Content-Length header
+-            if self.response_content_length is not None:
+-                # The server should not transmit more bytes to the client than the header allows
+-                bytes_allowed = self.response_content_length - bytes_sent
+-                if len(output) > bytes_allowed:
+-                    output = output[:bytes_allowed]
+-            self.sync_send(
+-                {"type": "http.response.body", "body": output, "more_body": True}
+-            )
+-            bytes_sent += len(output)
+-            # The server should stop iterating over the response when enough data has been sent
+-            if bytes_sent == self.response_content_length:
+-                break
+-        # Close connection
+-        if not self.response_started:
++    
++        # Reset response state
++        self.response_started = False
++        response_start = {}
++    
++        def start_response(status, response_headers, exc_info=None):
++            # Don't allow re-calling once response has begun
++            if self.response_started:
++                if exc_info:
++                    raise exc_info[1].with_traceback(exc_info[2])
++                else:
++                    raise ValueError("Response already started")
++        
++            # Extract status code
++            status_code, _ = status.split(" ", 1)
++            status_code = int(status_code)
++        
++            # Extract headers
++            headers = [
++                (name.lower().encode("ascii"), value.encode("ascii"))
++                for name, value in response_headers
++            ]
++        
++            # Extract content-length
++            response_content_length = None
++            for name, value in response_headers:
++                if name.lower() == "content-length":
++                    response_content_length = int(value)
++        
++            # Store response start information
++            response_start.update({
++                "type": "http.response.start",
++                "status": status_code,
++                "headers": headers,
++            })
++        
+             self.response_started = True
+-            self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++            self.response_content_length = response_content_length
++        
++            # Return a write function that accumulates response body
++            def write(data):
++                if not self.response_started:
++                    raise ValueError("Response not started")
++                write.buffer.append(data)
++                if self.response_content_length is not None:
++                    write.total_length += len(data)
++                    if write.total_length > self.response_content_length:
++                        raise ValueError("Response body exceeds content-length")
++        
++            write.buffer = []
++            write.total_length = 0
++            return write
++    
++        # Run the WSGI application
++        result = self.wsgi_application(environ, start_response)
++    
++        # Send response start if it was set
++        if response_start:
++            # Convert sync send to async using AsyncToSync wrapper
++            self.sync_send(response_start)
++    
++        # Send response body chunks
++        for chunk in result:
++            if chunk:
++                self.sync_send({
++                    "type": "http.response.body",
++                    "body": chunk,
++                    "more_body": True
++                })
++    
++        # Close the response
++        self.sync_send({
++            "type": "http.response.body",
++            "body": b"",
++            "more_body": False
++        })
++    
++        # Close the WSGI result if it has a close method
++        if hasattr(result, 'close'):
++            result.close()
+\ No newline at end of file

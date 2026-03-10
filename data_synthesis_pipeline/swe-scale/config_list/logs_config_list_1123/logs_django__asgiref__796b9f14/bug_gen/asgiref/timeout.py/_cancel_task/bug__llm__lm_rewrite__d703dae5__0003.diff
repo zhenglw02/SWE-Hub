@@ -1,0 +1,61 @@
+diff --git a/asgiref/compatibility.py b/asgiref/compatibility.py
+index 3a2a63e..ef3c3d8 100644
+--- a/asgiref/compatibility.py
++++ b/asgiref/compatibility.py
+@@ -7,23 +7,42 @@ def is_double_callable(application):
+     """
+     Tests to see if an application is a legacy-style (double-callable) application.
+     """
+-    # Look for a hint on the object first
+-    if getattr(application, "_asgi_single_callable", False):
++    if not callable(application):
+         return False
+-    if getattr(application, "_asgi_double_callable", False):
+-        return True
+-    # Uninstanted classes are double-callable
+-    if inspect.isclass(application):
++    
++    # Check if the application is double-callable by examining its signature
++    try:
++        sig = inspect.signature(application)
++        # Double callable should take exactly one parameter (scope)
++        if len(sig.parameters) != 1:
++            return False
++        
++        # The application should return a callable that takes (receive, send)
++        scope_instance = application({})
++        if not callable(scope_instance):
++            return False
++            
++        # Check if the returned callable is coroutine function or regular function
++        # that takes two parameters (receive, send)
++        sig_instance = inspect.signature(scope_instance)
++        if len(sig_instance.parameters) != 2:
++            return False
++            
+         return True
+-    # Instanted classes depend on their __call__
+-    if hasattr(application, "__call__"):
+-        # We only check to see if its __call__ is a coroutine function -
+-        # if it's not, it still might be a coroutine function itself.
+-        if iscoroutinefunction(application.__call__):
++    except (TypeError, ValueError):
++        # If signature inspection fails, try a simpler approach
++        try:
++            # Try to call with empty scope and see if it returns a callable
++            instance = application({})
++            if not callable(instance):
++                return False
++                
++            # Try to inspect the instance signature indirectly
++            if hasattr(instance, '__call__'):
++                return True
++            return False
++        except:
+             return False
+-    # Non-classes we just check directly
+-    return not iscoroutinefunction(application)
+-
+ 
+ def double_to_single_callable(application):
+     """

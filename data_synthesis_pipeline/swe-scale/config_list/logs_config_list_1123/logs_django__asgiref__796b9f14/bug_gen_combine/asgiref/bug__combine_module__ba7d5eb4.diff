@@ -1,0 +1,86 @@
+/tmp/PATCH_0_b1e30ed7.patch:33: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..289ef5d 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -97,29 +97,20 @@ class ApplicationCommunicator:
+         # Give it the message
+         await self.input_queue.put(message)
+ 
+-    async def receive_output(self, timeout=1):
+-        """
+-        Receives a single message from the application, with optional timeout.
++    async def receive_output (self, timeout=1) :
+         """
++            Receives a single message from the application, with optional timeout.
++            """
+         # Make sure there's not an exception to raise from the task
+         if self.future.done():
+             self.future.result()
+-        # Wait and receive the message
++
++        # Wait for a message with timeout
+         try:
+             async with async_timeout(timeout):
+                 return await self.output_queue.get()
+-        except asyncio.TimeoutError as e:
+-            # See if we have another error to raise inside
+-            if self.future.done():
+-                self.future.result()
+-            else:
+-                self.future.cancel()
+-                try:
+-                    await self.future
+-                except asyncio.CancelledError:
+-                    pass
+-            raise e
+-
++        except asyncio.TimeoutError:
++            raise asyncio.TimeoutError("No message received in time")
+     async def receive_nothing(self, timeout=0.1, interval=0.01):
+         """
+         Checks that there is no message to receive in the given time.
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..15c5898 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -28,25 +28,22 @@ class timeout:
+     loop - asyncio compatible event loop
+     """
+ 
+-    def __init__(
+-        self,
+-        timeout: Optional[float],
+-        *,
+-        loop: Optional[asyncio.AbstractEventLoop] = None,
+-    ) -> None:
++    def __init__ ( self, timeout: Optional[float], *, loop: Optional[asyncio.AbstractEventLoop] = None, ) -> None :
+         self._timeout = timeout
+-        if loop is None:
+-            loop = asyncio.get_running_loop()
++        if loop is not None:
++            warnings.warn("The loop argument is deprecated", DeprecationWarning)
++            self._loop = loop
+         else:
+-            warnings.warn(
+-                """The loop argument to timeout() is deprecated.""", DeprecationWarning
+-            )
+-        self._loop = loop
+-        self._task = None  # type: Optional[asyncio.Task[Any]]
++            try:
++                self._loop = asyncio.get_running_loop()
++            except RuntimeError:
++                # Fallback to get_event_loop if no running loop
++                self._loop = asyncio.get_event_loop()
++    
++        self._task = None
+         self._cancelled = False
+-        self._cancel_handler = None  # type: Optional[asyncio.Handle]
+-        self._cancel_at = None  # type: Optional[float]
+-
++        self._cancel_at = None
++        self._cancel_handler = None
+     def __enter__(self) -> "timeout":
+         return self._do_enter()

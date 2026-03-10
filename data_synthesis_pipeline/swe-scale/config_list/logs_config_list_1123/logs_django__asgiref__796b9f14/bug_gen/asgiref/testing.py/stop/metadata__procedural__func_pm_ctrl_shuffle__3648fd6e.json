@@ -1,0 +1,9 @@
+{
+  "instance_id": "procedural__func_pm_ctrl_shuffle__3648fd6e",
+  "hash_code": "3648fd6e",
+  "cost": 0.0,
+  "explanation": "The lines inside a function may be out of order.",
+  "output": "def stop(self, exceptions=True):\n    if future is None:\n        return\n    future = self._future\n\n    if not future.done():\n        future.cancel()\n    elif exceptions:\n        # Give a chance to raise any exceptions\n        future.result()",
+  "rewrite": "def stop(self, exceptions=True):\n    if future is None:\n        return\n    future = self._future\n\n    if not future.done():\n        future.cancel()\n    elif exceptions:\n        # Give a chance to raise any exceptions\n        future.result()",
+  "strategy": "func_pm_ctrl_shuffle"
+}

@@ -1,0 +1,125 @@
+/tmp/PATCH_0_9b58c7fd.patch:23: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+/tmp/PATCH_1_4d748150.patch:40: trailing whitespace.
+    
+/tmp/PATCH_1_4d748150.patch:45: trailing whitespace.
+    
+/tmp/PATCH_1_4d748150.patch:54: trailing whitespace.
+    
+/tmp/PATCH_1_4d748150.patch:61: trailing whitespace.
+    
+/tmp/PATCH_1_4d748150.patch:68: trailing whitespace.
+    
+warning: 5 lines add whitespace errors.
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..b5b45c3 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -67,17 +67,23 @@ class ApplicationCommunicator:
+                 except asyncio.CancelledError:
+                     pass
+ 
+-    def stop(self, exceptions=True):
+-        future = self._future
+-        if future is None:
+-            return
+-
+-        if not future.done():
+-            future.cancel()
+-        elif exceptions:
+-            # Give a chance to raise any exceptions
+-            future.result()
+-
++    def stop (self, exceptions=True) :
++        """
++        Stops the application by cancelling the running task.
++    
++        Args:
++            exceptions: If True, exceptions will be raised. If False, exceptions
++                        will be suppressed.
++        """
++        if self._future is not None and not self._future.done():
++            self._future.cancel()
++            if exceptions:
++                # Allow the exception to propagate
++                try:
++                    self._future.result()
++                except asyncio.CancelledError:
++                    # CancelledError is expected when we cancel the task
++                    pass
+     def __del__(self):
+         # Clean up on deletion
+         try:
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..a3d0325 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -99,38 +99,40 @@ class WsgiToAsgiInstance:
+             environ[corrected_name] = value
+         return environ
+ 
+-    def start_response(self, status, response_headers, exc_info=None):
++    def start_response (self, status, response_headers, exc_info=None) :
+         """
+-        WSGI start_response callable.
+-        """
+-        # Don't allow re-calling once response has begun
+-        if self.response_started:
+-            raise exc_info[1].with_traceback(exc_info[2])
+-        # Don't allow re-calling without exc_info
+-        if hasattr(self, "response_start") and exc_info is None:
+-            raise ValueError(
+-                "You cannot call start_response a second time without exc_info"
+-            )
+-        # Extract status code
+-        status_code, _ = status.split(" ", 1)
+-        status_code = int(status_code)
+-        # Extract headers
+-        headers = [
+-            (name.lower().encode("ascii"), value.encode("ascii"))
+-            for name, value in response_headers
+-        ]
+-        # Extract content-length
+-        self.response_content_length = None
+-        for name, value in response_headers:
+-            if name.lower() == "content-length":
+-                self.response_content_length = int(value)
+-        # Build and send response start message.
++            WSGI start_response callable.
++            """
++        # Parse the status code from the status string
++        status_code = int(status.split()[0])
++    
++        # Build response headers dictionary
++        headers = []
++        for header, value in response_headers:
++            headers.append((header.lower().encode('latin1'), value.encode('latin1')))
++    
++        # Store the response start information for later use
+         self.response_start = {
+             "type": "http.response.start",
+             "status": status_code,
+-            "headers": headers,
++            "headers": headers
+         }
+-
++    
++        # Extract Content-Length if present
++        self.response_content_length = None
++        for header, value in response_headers:
++            if header.lower() == 'content-length':
++                self.response_content_length = int(value)
++                break
++    
++        # Return a write function that can be used to write response body directly
++        def write(data):
++            if not self.response_started:
++                self.response_started = True
++                self.sync_send(self.response_start)
++            self.sync_send({"type": "http.response.body", "body": data})
++    
++        return write
+     @sync_to_async
+     def run_wsgi_app(self, body):
+         """

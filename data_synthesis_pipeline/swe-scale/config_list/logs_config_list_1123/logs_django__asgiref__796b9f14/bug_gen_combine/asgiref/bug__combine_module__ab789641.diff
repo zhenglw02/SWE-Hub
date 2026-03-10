@@ -1,0 +1,65 @@
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..592f4a6 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -14,7 +14,7 @@ class _CVar:
+         )
+ 
+     def __getattr__(self, key):
+-        storage_object = self._data.get({})
++        storage_object = {}
+         try:
+             return storage_object[key]
+         except KeyError:
+@@ -36,7 +36,6 @@ class _CVar:
+         else:
+             raise AttributeError(f"{self!r} object has no attribute {key!r}")
+ 
+-
+ class Local:
+     """Local storage for async tasks.
+ 
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..fdcb9d9 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -103,34 +103,30 @@ class WsgiToAsgiInstance:
+         """
+         WSGI start_response callable.
+         """
+-        # Don't allow re-calling once response has begun
+         if self.response_started:
+             raise exc_info[1].with_traceback(exc_info[2])
+-        # Don't allow re-calling without exc_info
+         if hasattr(self, "response_start") and exc_info is None:
+             raise ValueError(
+                 "You cannot call start_response a second time without exc_info"
+             )
+-        # Extract status code
+-        status_code, _ = status.split(" ", 1)
++        status_code, _ = status.split(" ", 2)
+         status_code = int(status_code)
+-        # Extract headers
+         headers = [
+             (name.lower().encode("ascii"), value.encode("ascii"))
+             for name, value in response_headers
+         ]
+-        # Extract content-length
+         self.response_content_length = None
+         for name, value in response_headers:
+             if name.lower() == "content-length":
+-                self.response_content_length = int(value)
+-        # Build and send response start message.
++                try:
++                    self.response_content_length = int(value)
++                except ValueError:
++                    pass
+         self.response_start = {
+             "type": "http.response.start",
+             "status": status_code,
+             "headers": headers,
+         }
+-
+     @sync_to_async
+     def run_wsgi_app(self, body):
+         """

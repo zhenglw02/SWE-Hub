@@ -1,0 +1,46 @@
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..193176f 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -143,24 +143,26 @@ class StatelessServer:
+         if not details["future"].done():
+             details["future"].cancel()
+ 
+-    async def application_checker(self):
+-        """
+-        Goes through the set of current application instance Futures and cleans up
+-        any that are done/prints exceptions for any that errored.
++    async def application_checker (self) :
+         """
++            Goes through the set of current application instance Futures and cleans up
++            any that are done/prints exceptions for any that errored.
++            """
+         while True:
+             await asyncio.sleep(self.application_checker_interval)
+-            for scope_id, details in list(self.application_instances.items()):
+-                if details["future"].done():
+-                    exception = details["future"].exception()
+-                    if exception:
+-                        await self.application_exception(exception, details)
+-                    try:
+-                        del self.application_instances[scope_id]
+-                    except KeyError:
+-                        # Exception handling might have already got here before us. That's fine.
+-                        pass
+-
++        
++            # Copy the keys to avoid modification during iteration
++            for scope_id in list(self.application_instances.keys()):
++                details = self.application_instances[scope_id]
++                future = details["future"]
++            
++                if future.done():
++                    # Handle any exceptions that occurred
++                    if future.exception():
++                        await self.application_exception(future.exception(), details)
++                
++                    # Clean up the completed instance
++                    self.delete_application_instance(scope_id)
+     async def application_exception(self, exception, application_details):
+         """
+         Called whenever an application coroutine has an exception.

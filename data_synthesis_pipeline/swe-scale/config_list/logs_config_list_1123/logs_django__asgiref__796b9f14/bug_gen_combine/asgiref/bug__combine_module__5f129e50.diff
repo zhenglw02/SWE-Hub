@@ -1,0 +1,64 @@
+/tmp/PATCH_0_18ba2309.patch:23: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..b5b45c3 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -67,17 +67,23 @@ class ApplicationCommunicator:
+                 except asyncio.CancelledError:
+                     pass
+ 
+-    def stop(self, exceptions=True):
+-        future = self._future
+-        if future is None:
+-            return
+-
+-        if not future.done():
+-            future.cancel()
+-        elif exceptions:
+-            # Give a chance to raise any exceptions
+-            future.result()
+-
++    def stop (self, exceptions=True) :
++        """
++        Stops the application by cancelling the running task.
++    
++        Args:
++            exceptions: If True, exceptions will be raised. If False, exceptions
++                        will be suppressed.
++        """
++        if self._future is not None and not self._future.done():
++            self._future.cancel()
++            if exceptions:
++                # Allow the exception to propagate
++                try:
++                    self._future.result()
++                except asyncio.CancelledError:
++                    # CancelledError is expected when we cancel the task
++                    pass
+     def __del__(self):
+         # Clean up on deletion
+         try:
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..d9d8e8d 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -75,12 +75,12 @@ class timeout:
+         return self._cancelled
+ 
+     @property
+-    def remaining(self) -> Optional[float]:
+-        if self._cancel_at is not None:
+-            return max(self._cancel_at - self._loop.time(), 0.0)
+-        else:
++    def remaining (self) -> Optional[float] :
++        if self._timeout is None:
+             return None
+-
++        if self._cancelled:
++            return 0.0
++        return max(0.0, self._cancel_at - self._loop.time())
+     def _do_enter(self) -> "timeout":
+         # Support Tornado 5- without timeout
+         # Details: https://github.com/python/asyncio/issues/392

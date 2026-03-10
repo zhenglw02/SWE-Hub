@@ -1,0 +1,50 @@
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..9cb5e52 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -82,6 +82,11 @@ class Local:
+     def _lock_storage(self):
+         # Thread safe access to storage
+         if self._thread_critical:
++            with self._thread_lock:
++                yield self._storage
++        else:
++            # Lock for thread_critical=False as other threads
++            # can access the exact same storage object
+             is_async = True
+             try:
+                 # this is a test for are we in a async or sync
+@@ -110,12 +115,6 @@ class Local:
+                 # can't be accessed in another thread (we don't
+                 # need any locks)
+                 yield self._storage.cvar
+-        else:
+-            # Lock for thread_critical=False as other threads
+-            # can access the exact same storage object
+-            with self._thread_lock:
+-                yield self._storage
+-
+     def __getattr__(self, key):
+         with self._lock_storage() as storage:
+             return getattr(storage, key)
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..033e2f9 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -180,7 +180,7 @@ class AsyncToSync(Generic[_P, _R]):
+         # You can't call AsyncToSync from a thread with a running event loop
+         try:
+             asyncio.get_running_loop()
+-        except RuntimeError:
++        except AttributeError:
+             pass
+         else:
+             raise RuntimeError(
+@@ -260,7 +260,6 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+         # Wait for results from the future.
+         return call_result.result()
+-
+     def __get__(self, parent: Any, objtype: Any) -> Callable[_P, _R]:
+         """
+         Include self for methods

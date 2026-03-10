@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__procedural__func_pm_op_swap__119e0e05",
+    "patch": "diff --git a/asgiref/sync.py b/asgiref/sync.py\nindex 54496ef..3f4f9c3 100644\n--- a/asgiref/sync.py\n+++ b/asgiref/sync.py\n@@ -232,6 +232,8 @@ class AsyncToSync(Generic[_P, _R]):\n                     del self.loop_thread_executors[loop]\n \n             if self.main_event_loop is not None:\n+                running_in_main_event_loop = False\n+            else:\n                 try:\n                     self.main_event_loop.call_soon_threadsafe(\n                         self.main_event_loop.create_task, awaitable\n@@ -242,8 +244,6 @@ class AsyncToSync(Generic[_P, _R]):\n                     running_in_main_event_loop = True\n                     # Run the CurrentThreadExecutor until the future is done.\n                     current_executor.run_until_future(call_result)\n-            else:\n-                running_in_main_event_loop = False\n \n             if not running_in_main_event_loop:\n                 # Make our own event loop - in a new thread - and run inside that.\n@@ -260,7 +260,6 @@ class AsyncToSync(Generic[_P, _R]):\n \n         # Wait for results from the future.\n         return call_result.result()\n-\n     def __get__(self, parent: Any, objtype: Any) -> Callable[_P, _R]:\n         \"\"\"\n         Include self for methods\n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/sync.py/__call__/bug__procedural__func_pm_op_swap__119e0e05.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

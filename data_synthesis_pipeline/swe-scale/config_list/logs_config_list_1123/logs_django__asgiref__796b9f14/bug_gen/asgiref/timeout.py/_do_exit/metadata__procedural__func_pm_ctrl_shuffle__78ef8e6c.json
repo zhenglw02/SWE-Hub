@@ -1,0 +1,9 @@
+{
+  "instance_id": "procedural__func_pm_ctrl_shuffle__78ef8e6c",
+  "hash_code": "78ef8e6c",
+  "cost": 0.0,
+  "explanation": "The lines inside a function may be out of order.",
+  "output": "def _do_exit(self, exc_type: Type[BaseException]) -> None:\n    if self._timeout is not None and self._cancel_handler is not None:\n        self._cancel_handler.cancel()\n        self._cancel_handler = None\n    if exc_type is asyncio.CancelledError and self._cancelled:\n        self._cancel_handler = None\n        self._task = None\n        raise asyncio.TimeoutError\n    self._task = None\n    return None",
+  "rewrite": "def _do_exit(self, exc_type: Type[BaseException]) -> None:\n    if self._timeout is not None and self._cancel_handler is not None:\n        self._cancel_handler.cancel()\n        self._cancel_handler = None\n    if exc_type is asyncio.CancelledError and self._cancelled:\n        self._cancel_handler = None\n        self._task = None\n        raise asyncio.TimeoutError\n    self._task = None\n    return None",
+  "strategy": "func_pm_ctrl_shuffle"
+}

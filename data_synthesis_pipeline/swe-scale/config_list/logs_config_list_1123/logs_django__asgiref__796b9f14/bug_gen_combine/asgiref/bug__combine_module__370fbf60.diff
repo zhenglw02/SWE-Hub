@@ -1,0 +1,105 @@
+/tmp/PATCH_0_85332eca.patch:43: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..e45c350 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -90,34 +90,18 @@ class CurrentThreadExecutor(Executor):
+             work_item.run()
+             del work_item
+ 
+-    def submit(
+-        self,
+-        fn: Callable[_P, _R],
+-        /,
+-        *args: _P.args,
+-        **kwargs: _P.kwargs,
+-    ) -> "Future[_R]":
+-        # Check they're not submitting from the same thread
++    def submit ( self, fn: Callable[_P, _R], /, *args: _P.args, **kwargs: _P.kwargs, ) -> "Future[_R]" : # Check they're not submitting from the same thread
++        # Check that we're not being called from the same thread
+         if threading.current_thread() == self._work_thread:
+             raise RuntimeError(
+-                "You cannot submit onto CurrentThreadExecutor from its own thread"
++                "You cannot submit from the same thread as the executor"
+             )
+-        f: "Future[_R]" = Future()
+-        work_item = _WorkItem(f, fn, *args, **kwargs)
+-
+-        # Walk up the CurrentThreadExecutor stack to find the closest one still
+-        # running
+-        executor = self
+-        while True:
+-            with executor._work_ready:
+-                if not executor._broken:
+-                    # Add to work queue
+-                    executor._work_items.append(work_item)
+-                    executor._work_ready.notify()
+-                    break
+-            if executor._old_executor is None:
+-                raise RuntimeError("CurrentThreadExecutor already quit or is broken")
+-            executor = executor._old_executor
+-
+-        # Return the future
+-        return f
++    
++        with self._work_ready:
++            if self._broken:
++                raise RuntimeError("Executor is broken")
++            future: "Future[_R]" = Future()
++            work_item = _WorkItem(future, fn, *args, **kwargs)
++            self._work_items.append(work_item)
++            self._work_ready.notify()
++            return future
+\ No newline at end of file
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..bd866cb 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -131,36 +131,18 @@ class AsyncToSync(Generic[_P, _R]):
+     # inside create_task, we'll look it up here from the running event loop.
+     loop_thread_executors: "Dict[asyncio.AbstractEventLoop, CurrentThreadExecutor]" = {}
+ 
+-    def __init__(
+-        self,
+-        awaitable: Union[
+-            Callable[_P, Coroutine[Any, Any, _R]],
+-            Callable[_P, Awaitable[_R]],
+-        ],
+-        force_new_loop: bool = False,
+-    ):
+-        if not callable(awaitable) or (
+-            not iscoroutinefunction(awaitable)
+-            and not iscoroutinefunction(getattr(awaitable, "__call__", awaitable))
+-        ):
+-            # Python does not have very reliable detection of async functions
+-            # (lots of false negatives) so this is just a warning.
+-            warnings.warn(
+-                "async_to_sync was passed a non-async-marked callable", stacklevel=2
+-            )
++    def __init__ ( self, awaitable: Union[ Callable[_P, Coroutine[Any, Any, _R]], Callable[_P, Awaitable[_R]], ], force_new_loop: bool = False, ) :
++        if not callable(awaitable) and not hasattr(awaitable, '__call__'):
++            raise TypeError("The awaitable must be a callable.")
++        if force_new_loop:
++            self.main_event_loop = None
++        else:
++            try:
++                self.main_event_loop = asyncio.get_running_loop()
++            except RuntimeError:
++                self.main_event_loop = None
+         self.awaitable = awaitable
+-        try:
+-            self.__self__ = self.awaitable.__self__  # type: ignore[union-attr]
+-        except AttributeError:
+-            pass
+         self.force_new_loop = force_new_loop
+-        self.main_event_loop = None
+-        try:
+-            self.main_event_loop = asyncio.get_running_loop()
+-        except RuntimeError:
+-            # There's no event loop in this thread.
+-            pass
+-
+     def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841

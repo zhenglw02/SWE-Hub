@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__procedural__func_pm_unwrap_wrapper_ts__0aedd401",
+    "patch": "diff --git a/asgiref/sync.py b/asgiref/sync.py\nindex 54496ef..f259f9d 100644\n--- a/asgiref/sync.py\n+++ b/asgiref/sync.py\n@@ -290,25 +290,13 @@ class AsyncToSync(Generic[_P, _R]):\n         if current_task is not None and task_context is not None:\n             task_context.append(current_task)\n \n-        try:\n-            # If we have an exception, run the function inside the except block\n-            # after raising it so exc_info is correctly populated.\n-            if exc_info[1]:\n+        if exc_info[1]:\n                 try:\n                     raise exc_info[1]\n                 except BaseException:\n                     result = await awaitable\n             else:\n                 result = await awaitable\n-        except BaseException as e:\n-            call_result.set_exception(e)\n-        else:\n-            call_result.set_result(result)\n-        finally:\n-            if current_task is not None and task_context is not None:\n-                task_context.remove(current_task)\n-            context[0] = contextvars.copy_context()\n-\n \n class SyncToAsync(Generic[_P, _R]):\n     \"\"\"\n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/sync.py/main_wrap/bug__procedural__func_pm_unwrap_wrapper_ts__0aedd401.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

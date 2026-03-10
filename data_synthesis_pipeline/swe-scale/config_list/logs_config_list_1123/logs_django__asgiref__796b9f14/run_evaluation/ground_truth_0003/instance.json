@@ -1,0 +1,14 @@
+{
+    "cost": 0,
+    "explanation": null,
+    "output": null,
+    "rewrite": null,
+    "strategy": null,
+    "instance_id": "ground_truth",
+    "patch": null,
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": null,
+    "log_parser": "parse_log_pytest_xdist"
+}

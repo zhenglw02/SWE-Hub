@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__llm__lm_modify__bf41ad0e__0000",
+    "patch": "diff --git a/asgiref/timeout.py b/asgiref/timeout.py\nindex fd5381d..1277082 100644\n--- a/asgiref/timeout.py\n+++ b/asgiref/timeout.py\n@@ -82,8 +82,6 @@ class timeout:\n             return None\n \n     def _do_enter(self) -> \"timeout\":\n-        # Support Tornado 5- without timeout\n-        # Details: https://github.com/python/asyncio/issues/392\n         if self._timeout is None:\n             return self\n \n@@ -97,7 +95,7 @@ class timeout:\n             self._loop.call_soon(self._cancel_task)\n             return self\n \n-        self._cancel_at = self._loop.time() + self._timeout\n+        self._cancel_at = self._loop.time() - self._timeout\n         self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)\n         return self\n \n@@ -114,5 +112,5 @@ class timeout:\n \n     def _cancel_task(self) -> None:\n         if self._task is not None:\n-            self._task.cancel()\n             self._cancelled = True\n+            self._task.cancel()\n\\ No newline at end of file\n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/current_thread_executor.py/submit/bug__llm__lm_modify__bf41ad0e__0000.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

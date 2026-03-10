@@ -1,0 +1,125 @@
+/tmp/PATCH_0_99872aa5.patch:37: trailing whitespace.
+    
+/tmp/PATCH_0_99872aa5.patch:40: trailing whitespace.
+    
+/tmp/PATCH_0_99872aa5.patch:44: trailing whitespace.
+    
+/tmp/PATCH_0_99872aa5.patch:53: trailing whitespace.
+    
+/tmp/PATCH_0_99872aa5.patch:63: trailing whitespace.
+    
+warning: squelched 1 whitespace error
+warning: 6 lines add whitespace errors.
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..b376281 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -119,20 +119,22 @@ class StatelessServer:
+         }
+         return input_queue
+ 
+-    def delete_oldest_application_instance(self):
+-        """
+-        Finds and deletes the oldest application instance
+-        """
+-        oldest_time = min(
+-            details["last_used"] for details in self.application_instances.values()
+-        )
++    def delete_oldest_application_instance (self) :
++        """
++            Finds and deletes the oldest application instance
++            """
++        if not self.application_instances:
++            return
++        # Find the scope_id for the oldest instance (smallest last_used)
++        oldest_scope_id = None
++        min_last_used = float('inf')
+         for scope_id, details in self.application_instances.items():
+-            if details["last_used"] == oldest_time:
+-                self.delete_application_instance(scope_id)
+-                # Return to make sure we only delete one in case two have
+-                # the same oldest time
+-                return
+-
++            if details["last_used"] < min_last_used:
++                min_last_used = details["last_used"]
++                oldest_scope_id = scope_id
++        # Remove the oldest instance
++        if oldest_scope_id is not None:
++            self.delete_application_instance(oldest_scope_id)
+     def delete_application_instance(self, scope_id):
+         """
+         Removes an application instance (makes sure its task is stopped,
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..f3ae5c8 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -99,38 +99,42 @@ class WsgiToAsgiInstance:
+             environ[corrected_name] = value
+         return environ
+ 
+-    def start_response(self, status, response_headers, exc_info=None):
++    def start_response (self, status, response_headers, exc_info=None) :
+         """
+-        WSGI start_response callable.
+-        """
+-        # Don't allow re-calling once response has begun
+-        if self.response_started:
+-            raise exc_info[1].with_traceback(exc_info[2])
+-        # Don't allow re-calling without exc_info
+-        if hasattr(self, "response_start") and exc_info is None:
+-            raise ValueError(
+-                "You cannot call start_response a second time without exc_info"
+-            )
+-        # Extract status code
+-        status_code, _ = status.split(" ", 1)
+-        status_code = int(status_code)
+-        # Extract headers
+-        headers = [
+-            (name.lower().encode("ascii"), value.encode("ascii"))
+-            for name, value in response_headers
+-        ]
+-        # Extract content-length
+-        self.response_content_length = None
++            WSGI start_response callable.
++            """
++        # If we've already started the response and exc_info is provided, we should re-raise
++        if exc_info and self.response_started:
++            raise exc_info[0](exc_info[1]).with_traceback(exc_info[2])
++    
++        # Parse the status code from the status string (e.g., "200 OK" -> 200)
++        status_code = int(status.split()[0])
++    
++        # Convert headers to the format expected by ASGI
++        headers = []
++        content_length = None
++    
+         for name, value in response_headers:
+-            if name.lower() == "content-length":
+-                self.response_content_length = int(value)
+-        # Build and send response start message.
++            # Store Content-Length separately for tracking
++            if name.lower() == 'content-length':
++                content_length = int(value)
++            headers.append((name.lower().encode('latin1'), value.encode('latin1')))
++    
++        # Store the response start information
+         self.response_start = {
+             "type": "http.response.start",
+             "status": status_code,
+-            "headers": headers,
++            "headers": headers
+         }
+-
++        self.response_content_length = content_length
++    
++        # Return a write callable (though in this implementation, writing is handled separately)
++        def write(data):
++            # This would typically write data to the response body
++            # However, in our implementation, the response body is handled in run_wsgi_app
++            pass
++    
++        return write
+     @sync_to_async
+     def run_wsgi_app(self, body):
+         """

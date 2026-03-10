@@ -1,0 +1,46 @@
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..9af60d7 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -67,17 +67,31 @@ class ApplicationCommunicator:
+                 except asyncio.CancelledError:
+                     pass
+ 
+-    def stop(self, exceptions=True):
+-        future = self._future
+-        if future is None:
++    def stop (self, exceptions=True) :
++        if self._future is None :
+             return
+-
+-        if not future.done():
+-            future.cancel()
+-        elif exceptions:
+-            # Give a chance to raise any exceptions
+-            future.result()
+-
++        if not self._future.done() :
++            self._future.cancel()
++            try:
++                # Create a new event loop if none exists for this thread
++                loop = asyncio.get_event_loop()
++                if loop.is_running():
++                    # If loop is running, we need to run in a separate way
++                    # Since this is a synchronous method, we'll use run_until_complete
++                    # with a wrapper task
++                    async def _cancel_wait():
++                        try:
++                            await self._future
++                        except asyncio.CancelledError:
++                            pass
++                    loop.create_task(_cancel_wait())
++                else:
++                    loop.run_until_complete(self._future)
++            except (RuntimeError, asyncio.CancelledError):
++                # Event loop issues or cancellation complete
++                pass
++        if exceptions and self._future.done():
++            self._future.result()
+     def __del__(self):
+         # Clean up on deletion
+         try:

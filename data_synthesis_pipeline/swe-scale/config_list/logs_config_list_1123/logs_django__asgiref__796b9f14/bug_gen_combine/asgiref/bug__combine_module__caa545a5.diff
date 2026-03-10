@@ -1,0 +1,75 @@
+/tmp/PATCH_1_52447959.patch:24: trailing whitespace.
+    
+/tmp/PATCH_1_52447959.patch:30: trailing whitespace.
+    
+/tmp/PATCH_1_52447959.patch:39: trailing whitespace.
+    
+warning: 3 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..e6d9049 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -356,30 +356,19 @@ class SyncToAsync(Generic[_P, _R]):
+         weakref.WeakKeyDictionary()
+     )
+ 
+-    def __init__(
+-        self,
+-        func: Callable[_P, _R],
+-        thread_sensitive: bool = True,
+-        executor: Optional["ThreadPoolExecutor"] = None,
+-    ) -> None:
+-        if (
+-            not callable(func)
+-            or iscoroutinefunction(func)
+-            or iscoroutinefunction(getattr(func, "__call__", func))
+-        ):
+-            raise TypeError("sync_to_async can only be applied to sync functions.")
++    def __init__ ( self, func: Callable[_P, _R], thread_sensitive: bool = True, executor: Optional["ThreadPoolExecutor"] = None, ) -> None :
++        if not callable(func):
++            raise TypeError("func must be callable")
++    
+         self.func = func
+-        functools.update_wrapper(self, func)
+         self._thread_sensitive = thread_sensitive
+-        markcoroutinefunction(self)
++        self._executor = executor
++    
+         if thread_sensitive and executor is not None:
+             raise TypeError("executor must not be set when thread_sensitive is True")
+-        self._executor = executor
+-        try:
+-            self.__self__ = func.__self__  # type: ignore
+-        except AttributeError:
+-            pass
+-
++    
++        # Copy function attributes for __get__
++        functools.update_wrapper(self, func)
+     async def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+         loop = asyncio.get_running_loop()
+@@ -562,15 +551,7 @@ def sync_to_async(
+     ...
+ 
+ 
+-def sync_to_async(
+-    func: Optional[Callable[_P, _R]] = None,
+-    *,
+-    thread_sensitive: bool = True,
+-    executor: Optional["ThreadPoolExecutor"] = None,
+-) -> Union[
+-    Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]],
+-    Callable[_P, Coroutine[Any, Any, _R]],
+-]:
++def sync_to_async ( func: Optional[Callable[_P, _R]] = None, *, thread_sensitive: bool = True, executor: Optional["ThreadPoolExecutor"] = None, ) -> Union[ Callable[[Callable[_P, _R]], Callable[_P, Coroutine[Any, Any, _R]]], Callable[_P, Coroutine[Any, Any, _R]], ] :
+     if func is None:
+         return lambda f: SyncToAsync(
+             f,
+@@ -581,4 +562,4 @@ def sync_to_async(
+         func,
+         thread_sensitive=thread_sensitive,
+         executor=executor,
+-    )
++    )
+\ No newline at end of file

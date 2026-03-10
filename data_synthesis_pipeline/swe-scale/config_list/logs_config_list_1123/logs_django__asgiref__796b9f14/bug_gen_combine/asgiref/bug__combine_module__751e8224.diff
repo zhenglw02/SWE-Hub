@@ -1,0 +1,73 @@
+/tmp/PATCH_1_0d43ba96.patch:24: trailing whitespace.
+    
+/tmp/PATCH_1_0d43ba96.patch:37: trailing whitespace.
+    
+/tmp/PATCH_1_0d43ba96.patch:40: trailing whitespace.
+    
+warning: 3 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..4220dde 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -100,15 +100,10 @@ class ThreadSensitiveContext:
+ 
+         return self
+ 
+-    async def __aexit__(self, exc, value, tb):
+-        if not self.token:
+-            return
+-
+-        executor = SyncToAsync.context_to_thread_executor.pop(self, None)
+-        if executor:
+-            executor.shutdown()
+-        SyncToAsync.thread_sensitive_context.reset(self.token)
+-
++    async def __aexit__ (self, exc, value, tb) :
++        if self.token is not None:
++            SyncToAsync.thread_sensitive_context.reset(self.token)
++            self.token = None
+ 
+ class AsyncToSync(Generic[_P, _R]):
+     """
+@@ -356,30 +351,20 @@ class SyncToAsync(Generic[_P, _R]):
+         weakref.WeakKeyDictionary()
+     )
+ 
+-    def __init__(
+-        self,
+-        func: Callable[_P, _R],
+-        thread_sensitive: bool = True,
+-        executor: Optional["ThreadPoolExecutor"] = None,
+-    ) -> None:
+-        if (
+-            not callable(func)
+-            or iscoroutinefunction(func)
+-            or iscoroutinefunction(getattr(func, "__call__", func))
+-        ):
+-            raise TypeError("sync_to_async can only be applied to sync functions.")
++    def __init__ ( self, func: Callable[_P, _R], thread_sensitive: bool = True, executor: Optional["ThreadPoolExecutor"] = None, ) -> None :
++        if not callable(func):
++            raise TypeError("func must be a callable")
++    
+         self.func = func
+-        functools.update_wrapper(self, func)
+         self._thread_sensitive = thread_sensitive
+-        markcoroutinefunction(self)
+-        if thread_sensitive and executor is not None:
+-            raise TypeError("executor must not be set when thread_sensitive is True")
+         self._executor = executor
+-        try:
+-            self.__self__ = func.__self__  # type: ignore
+-        except AttributeError:
+-            pass
+-
++    
++        if self._thread_sensitive and self._executor is not None:
++            raise TypeError("executor must be None when thread_sensitive is True")
++    
++        # Mark the function as a coroutine function since it returns an awaitable
++        # when called via __call__
++        markcoroutinefunction(self)
+     async def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+         loop = asyncio.get_running_loop()

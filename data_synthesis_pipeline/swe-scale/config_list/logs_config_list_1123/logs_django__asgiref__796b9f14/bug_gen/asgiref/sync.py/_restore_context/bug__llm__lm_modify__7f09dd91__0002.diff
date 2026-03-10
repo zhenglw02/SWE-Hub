@@ -1,0 +1,21 @@
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..2ba85f7 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -124,14 +124,12 @@ class ApplicationCommunicator:
+         """
+         Checks that there is no message to receive in the given time.
+         """
+-        # Make sure there's not an exception to raise from the task
+         if self.future.done():
+             self.future.result()
+ 
+-        # `interval` has precedence over `timeout`
+         start = time.monotonic()
+         while time.monotonic() - start < timeout:
+             if not self.output_queue.empty():
+                 return False
+             await asyncio.sleep(interval)
+-        return self.output_queue.empty()
++        return True
+\ No newline at end of file

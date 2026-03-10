@@ -1,0 +1,68 @@
+/tmp/PATCH_1_eaf37f40.patch:20: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..dd70af6 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -143,8 +143,6 @@ class AsyncToSync(Generic[_P, _R]):
+             not iscoroutinefunction(awaitable)
+             and not iscoroutinefunction(getattr(awaitable, "__call__", awaitable))
+         ):
+-            # Python does not have very reliable detection of async functions
+-            # (lots of false negatives) so this is just a warning.
+             warnings.warn(
+                 "async_to_sync was passed a non-async-marked callable", stacklevel=2
+             )
+@@ -158,9 +156,7 @@ class AsyncToSync(Generic[_P, _R]):
+         try:
+             self.main_event_loop = asyncio.get_running_loop()
+         except RuntimeError:
+-            # There's no event loop in this thread.
+-            pass
+-
++            self.main_event_loop = asyncio.new_event_loop()
+     def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+ 
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..6dbcfce 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -97,29 +97,20 @@ class ApplicationCommunicator:
+         # Give it the message
+         await self.input_queue.put(message)
+ 
+-    async def receive_output(self, timeout=1):
+-        """
+-        Receives a single message from the application, with optional timeout.
++    async def receive_output (self, timeout=1) :
+         """
++            Receives a single message from the application, with optional timeout.
++            """
+         # Make sure there's not an exception to raise from the task
+         if self.future.done():
+             self.future.result()
+-        # Wait and receive the message
++    
++        # Try to receive output with timeout
+         try:
+             async with async_timeout(timeout):
+                 return await self.output_queue.get()
+-        except asyncio.TimeoutError as e:
+-            # See if we have another error to raise inside
+-            if self.future.done():
+-                self.future.result()
+-            else:
+-                self.future.cancel()
+-                try:
+-                    await self.future
+-                except asyncio.CancelledError:
+-                    pass
+-            raise e
+-
++        except asyncio.TimeoutError:
++            raise asyncio.TimeoutError("No output received in {} seconds".format(timeout))
+     async def receive_nothing(self, timeout=0.1, interval=0.01):
+         """
+         Checks that there is no message to receive in the given time.

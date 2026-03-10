@@ -1,0 +1,33 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..79f25ca 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -183,10 +183,7 @@ class AsyncToSync(Generic[_P, _R]):
+         except RuntimeError:
+             pass
+         else:
+-            raise RuntimeError(
+-                "You cannot use AsyncToSync in the same thread as an async event loop - "
+-                "just await the async function directly."
+-            )
++            pass
+ 
+         # Make a future for the return information
+         call_result: "Future[_R]" = Future()
+@@ -301,7 +298,7 @@ class AsyncToSync(Generic[_P, _R]):
+             else:
+                 result = await awaitable
+         except BaseException as e:
+-            call_result.set_exception(e)
++            call_result.set_result(e)
+         else:
+             call_result.set_result(result)
+         finally:
+@@ -309,7 +306,6 @@ class AsyncToSync(Generic[_P, _R]):
+                 task_context.remove(current_task)
+             context[0] = contextvars.copy_context()
+ 
+-
+ class SyncToAsync(Generic[_P, _R]):
+     """
+     Utility class which turns a synchronous callable into an awaitable that

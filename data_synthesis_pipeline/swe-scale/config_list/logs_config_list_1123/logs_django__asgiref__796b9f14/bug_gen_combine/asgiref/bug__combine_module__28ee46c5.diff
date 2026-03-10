@@ -1,0 +1,154 @@
+/tmp/PATCH_1_6be034c7.patch:42: trailing whitespace.
+    
+/tmp/PATCH_1_6be034c7.patch:46: trailing whitespace.
+        
+warning: 2 lines add whitespace errors.
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..1f59097 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -90,34 +90,18 @@ class CurrentThreadExecutor(Executor):
+             work_item.run()
+             del work_item
+ 
+-    def submit(
+-        self,
+-        fn: Callable[_P, _R],
+-        /,
+-        *args: _P.args,
+-        **kwargs: _P.kwargs,
+-    ) -> "Future[_R]":
+-        # Check they're not submitting from the same thread
++    def submit ( self, fn: Callable[_P, _R], /, *args: _P.args, **kwargs: _P.kwargs, ) -> "Future[_R]" : # Check they're not submitting from the same thread
+         if threading.current_thread() == self._work_thread:
+             raise RuntimeError(
+-                "You cannot submit onto CurrentThreadExecutor from its own thread"
++                "You cannot submit to CurrentThreadExecutor from the same thread"
+             )
+-        f: "Future[_R]" = Future()
+-        work_item = _WorkItem(f, fn, *args, **kwargs)
+-
+-        # Walk up the CurrentThreadExecutor stack to find the closest one still
+-        # running
+-        executor = self
+-        while True:
+-            with executor._work_ready:
+-                if not executor._broken:
+-                    # Add to work queue
+-                    executor._work_items.append(work_item)
+-                    executor._work_ready.notify()
+-                    break
+-            if executor._old_executor is None:
+-                raise RuntimeError("CurrentThreadExecutor already quit or is broken")
+-            executor = executor._old_executor
+-
+-        # Return the future
+-        return f
++    
++        with self._work_ready:
++            if self._broken:
++                raise RuntimeError("Executor is broken")
++        
++            future: "Future[_R]" = Future()
++            work_item = _WorkItem(future, fn, *args, **kwargs)
++            self._work_items.append(work_item)
++            self._work_ready.notify()
++            return future
+\ No newline at end of file
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..17421f9 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -165,19 +165,14 @@ class AsyncToSync(Generic[_P, _R]):
+         __traceback_hide__ = True  # noqa: F841
+ 
+         if not self.force_new_loop and not self.main_event_loop:
+-            # There's no event loop in this thread. Look for the threadlocal if
+-            # we're inside SyncToAsync
+             main_event_loop_pid = getattr(
+                 SyncToAsync.threadlocal, "main_event_loop_pid", None
+             )
+-            # We make sure the parent loop is from the same process - if
+-            # they've forked, this is not going to be valid any more (#194)
+             if main_event_loop_pid and main_event_loop_pid == os.getpid():
+                 self.main_event_loop = getattr(
+                     SyncToAsync.threadlocal, "main_event_loop", None
+                 )
+ 
+-        # You can't call AsyncToSync from a thread with a running event loop
+         try:
+             asyncio.get_running_loop()
+         except RuntimeError:
+@@ -188,38 +183,22 @@ class AsyncToSync(Generic[_P, _R]):
+                 "just await the async function directly."
+             )
+ 
+-        # Make a future for the return information
+         call_result: "Future[_R]" = Future()
+ 
+-        # Make a CurrentThreadExecutor we'll use to idle in this thread - we
+-        # need one for every sync frame, even if there's one above us in the
+-        # same thread.
+         old_executor = getattr(self.executors, "current", None)
+         current_executor = CurrentThreadExecutor(old_executor)
+         self.executors.current = current_executor
+ 
+-        # Wrapping context in list so it can be reassigned from within
+-        # `main_wrap`.
+         context = [contextvars.copy_context()]
+ 
+-        # Get task context so that parent task knows which task to propagate
+-        # an asyncio.CancelledError to.
+         task_context = getattr(SyncToAsync.threadlocal, "task_context", None)
+ 
+-        # Use call_soon_threadsafe to schedule a synchronous callback on the
+-        # main event loop's thread if it's there, otherwise make a new loop
+-        # in this thread.
+         try:
+             awaitable = self.main_wrap(
+                 call_result,
+                 sys.exc_info(),
+                 task_context,
+                 context,
+-                # prepare an awaitable which can be passed as is to self.main_wrap,
+-                # so that `args` and `kwargs` don't need to be
+-                # destructured when passed to self.main_wrap
+-                # (which is required by `ParamSpec`)
+-                # as that may cause overlapping arguments
+                 self.awaitable(*args, **kwargs),
+             )
+ 
+@@ -237,30 +216,23 @@ class AsyncToSync(Generic[_P, _R]):
+                         self.main_event_loop.create_task, awaitable
+                     )
+                 except RuntimeError:
+-                    running_in_main_event_loop = False
+-                else:
+                     running_in_main_event_loop = True
+-                    # Run the CurrentThreadExecutor until the future is done.
++                else:
++                    running_in_main_event_loop = False
+                     current_executor.run_until_future(call_result)
+             else:
+                 running_in_main_event_loop = False
+ 
+             if not running_in_main_event_loop:
+-                # Make our own event loop - in a new thread - and run inside that.
+                 loop_executor = ThreadPoolExecutor(max_workers=1)
+                 loop_future = loop_executor.submit(asyncio.run, new_loop_wrap())
+-                # Run the CurrentThreadExecutor until the future is done.
+-                current_executor.run_until_future(loop_future)
+-                # Wait for future and/or allow for exception propagation
+                 loop_future.result()
++                current_executor.run_until_future(loop_future)
+         finally:
+             _restore_context(context[0])
+-            # Restore old current thread executor state
+             self.executors.current = old_executor
+ 
+-        # Wait for results from the future.
+         return call_result.result()
+-
+     def __get__(self, parent: Any, objtype: Any) -> Callable[_P, _R]:
+         """
+         Include self for methods

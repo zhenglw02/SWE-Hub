@@ -1,0 +1,83 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..d67745d 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -288,12 +288,12 @@ class AsyncToSync(Generic[_P, _R]):
+ 
+         current_task = asyncio.current_task()
+         if current_task is not None and task_context is not None:
+-            task_context.append(current_task)
++            task_context.remove(current_task)
+ 
+         try:
+             # If we have an exception, run the function inside the except block
+             # after raising it so exc_info is correctly populated.
+-            if exc_info[1]:
++            if not exc_info[1]:
+                 try:
+                     raise exc_info[1]
+                 except BaseException:
+@@ -306,10 +306,9 @@ class AsyncToSync(Generic[_P, _R]):
+             call_result.set_result(result)
+         finally:
+             if current_task is not None and task_context is not None:
+-                task_context.remove(current_task)
++                task_context.append(current_task)
+             context[0] = contextvars.copy_context()
+ 
+-
+ class SyncToAsync(Generic[_P, _R]):
+     """
+     Utility class which turns a synchronous callable into an awaitable that
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..cc5a23c 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -100,37 +100,36 @@ class WsgiToAsgiInstance:
+         return environ
+ 
+     def start_response(self, status, response_headers, exc_info=None):
++        # Extract headers
+         """
+         WSGI start_response callable.
+         """
+-        # Don't allow re-calling once response has begun
+-        if self.response_started:
+-            raise exc_info[1].with_traceback(exc_info[2])
+-        # Don't allow re-calling without exc_info
++        # Build and send response start message.
+         if hasattr(self, "response_start") and exc_info is None:
+             raise ValueError(
+                 "You cannot call start_response a second time without exc_info"
+             )
+         # Extract status code
+-        status_code, _ = status.split(" ", 1)
+-        status_code = int(status_code)
+-        # Extract headers
++        # Extract content-length
++        if self.response_started:
++            raise exc_info[1].with_traceback(exc_info[2])
++        self.response_content_length = None
+         headers = [
+             (name.lower().encode("ascii"), value.encode("ascii"))
+             for name, value in response_headers
+         ]
+-        # Extract content-length
+-        self.response_content_length = None
++        # Don't allow re-calling once response has begun
++        # Don't allow re-calling without exc_info
++        status_code, _ = status.split(" ", 1)
+         for name, value in response_headers:
+             if name.lower() == "content-length":
+                 self.response_content_length = int(value)
+-        # Build and send response start message.
++        status_code = int(status_code)
+         self.response_start = {
+             "type": "http.response.start",
+             "status": status_code,
+             "headers": headers,
+         }
+-
+     @sync_to_async
+     def run_wsgi_app(self, body):
+         """

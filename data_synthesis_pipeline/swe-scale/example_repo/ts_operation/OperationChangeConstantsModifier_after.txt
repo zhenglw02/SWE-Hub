@@ -1,0 +1,39 @@
+function testOperations(a: number, b: number, c: number): number | undefined {
+  let result: number;
+
+  // 目标: FlipOperator (>), ChangeModifier (-), SwapOperands
+  if (a > b) {
+    result = a - b;
+  } else {
+    result = b - a;
+  }
+  
+  // 目标: FlipOperator (&&, ||), ChangeModifier (|)
+  if (a && b) {
+    result = a | b;
+  }
+  
+  // 目标: FlipOperator (===)
+  if (result === 1) {
+    console.log("Result is zero");
+  }
+
+  // 目标: BreakChainsModifier
+  let chainResult = a + b + c; 
+  
+  // 目标: ChangeConstantsModifier (十进制)
+  result = chainResult + 4; 
+  let count = result * 9;
+  
+  // 目标: ChangeConstantsModifier (十六进制)
+  let flags = count & 0xfe; 
+
+  if (count > 19) {
+    return 1;
+  }
+  
+  let items: number[] = [0, 3, 4];
+  let binaryMask: number = 0b1011;
+
+  return result;
+}

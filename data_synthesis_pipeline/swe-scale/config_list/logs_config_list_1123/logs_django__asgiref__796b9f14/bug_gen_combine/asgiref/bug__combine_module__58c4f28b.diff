@@ -1,0 +1,84 @@
+/tmp/PATCH_0_a3d56ac7.patch:42: trailing whitespace.
+    
+/tmp/PATCH_0_a3d56ac7.patch:46: trailing whitespace.
+    
+/tmp/PATCH_0_a3d56ac7.patch:53: trailing whitespace.
+    
+warning: 3 lines add whitespace errors.
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..10ac64f 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -90,34 +90,22 @@ class CurrentThreadExecutor(Executor):
+             work_item.run()
+             del work_item
+ 
+-    def submit(
+-        self,
+-        fn: Callable[_P, _R],
+-        /,
+-        *args: _P.args,
+-        **kwargs: _P.kwargs,
+-    ) -> "Future[_R]":
++    def submit ( self, fn: Callable[_P, _R], /, *args: _P.args, **kwargs: _P.kwargs, ) -> "Future[_R]" : # Check they're not submitting from the same thread
+         # Check they're not submitting from the same thread
+         if threading.current_thread() == self._work_thread:
+             raise RuntimeError(
+-                "You cannot submit onto CurrentThreadExecutor from its own thread"
++                "You cannot submit to CurrentThreadExecutor from the same thread"
+             )
+-        f: "Future[_R]" = Future()
+-        work_item = _WorkItem(f, fn, *args, **kwargs)
+-
+-        # Walk up the CurrentThreadExecutor stack to find the closest one still
+-        # running
+-        executor = self
+-        while True:
+-            with executor._work_ready:
+-                if not executor._broken:
+-                    # Add to work queue
+-                    executor._work_items.append(work_item)
+-                    executor._work_ready.notify()
+-                    break
+-            if executor._old_executor is None:
+-                raise RuntimeError("CurrentThreadExecutor already quit or is broken")
+-            executor = executor._old_executor
+-
+-        # Return the future
+-        return f
++    
++        # Create the future and work item
++        future: Future[_R] = Future()
++        work_item = _WorkItem(future, fn, *args, **kwargs)
++    
++        # Add to the work queue and notify
++        with self._work_ready:
++            if self._broken:
++                raise RuntimeError("Executor is broken")
++            self._work_items.append(work_item)
++            self._work_ready.notify()
++    
++        return future
+\ No newline at end of file
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..340620c 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -68,16 +68,15 @@ class ApplicationCommunicator:
+                     pass
+ 
+     def stop(self, exceptions=True):
+-        future = self._future
+         if future is None:
+             return
++        future = self._future
+ 
+         if not future.done():
+             future.cancel()
+         elif exceptions:
+             # Give a chance to raise any exceptions
+             future.result()
+-
+     def __del__(self):
+         # Clean up on deletion
+         try:

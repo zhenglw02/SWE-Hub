@@ -1,0 +1,68 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..10eed20 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -33,18 +33,16 @@ class _WorkItem:
+         self.kwargs = kwargs
+ 
+     def run(self) -> None:
+-        __traceback_hide__ = True  # noqa: F841
+-        if not self.future.set_running_or_notify_cancel():
+-            return
+-        try:
+-            result = self.fn(*self.args, **self.kwargs)
+-        except BaseException as exc:
+-            self.future.set_exception(exc)
+-            # Break a reference cycle with the exception 'exc'
+-            self = None  # type: ignore[assignment]
+-        else:
+-            self.future.set_result(result)
+-
++            if not self.future.set_running_or_notify_cancel():
++                return
++            try:
++                result = self.fn(*self.args, **self.kwargs)
++            except BaseException as exc:
++                self.future.set_exception(exc)
++                # Break a reference cycle with the exception 'exc'
++                self = None
++            else:
++                self.future.set_result(result)
+ 
+ class CurrentThreadExecutor(Executor):
+     """
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..9b11dba 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -133,14 +133,17 @@ class WsgiToAsgiInstance:
+ 
+     @sync_to_async
+     def run_wsgi_app(self, body):
++        # Run the WSGI app
++        if not self.response_started:
++            self.response_started = True
++            self.sync_send(self.response_start)
++        bytes_sent = 0
++        # Translate the scope and incoming request body into a WSGI environ
+         """
+         Called in a subthread to run the WSGI app. We encapsulate like
+         this so that the start_response callable is called in the same thread.
+         """
+-        # Translate the scope and incoming request body into a WSGI environ
+         environ = self.build_environ(self.scope, body)
+-        # Run the WSGI app
+-        bytes_sent = 0
+         for output in self.wsgi_application(environ, self.start_response):
+             # If this is the first response, include the response headers
+             if not self.response_started:
+@@ -160,7 +163,4 @@ class WsgiToAsgiInstance:
+             if bytes_sent == self.response_content_length:
+                 break
+         # Close connection
+-        if not self.response_started:
+-            self.response_started = True
+-            self.sync_send(self.response_start)
+-        self.sync_send({"type": "http.response.body"})
++        self.sync_send({"type": "http.response.body"})
+\ No newline at end of file

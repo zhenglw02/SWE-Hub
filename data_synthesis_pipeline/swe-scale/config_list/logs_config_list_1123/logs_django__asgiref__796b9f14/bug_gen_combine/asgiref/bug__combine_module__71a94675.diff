@@ -1,0 +1,63 @@
+/tmp/PATCH_1_e5136107.patch:23: trailing whitespace.
+    
+/tmp/PATCH_1_e5136107.patch:27: trailing whitespace.
+    
+/tmp/PATCH_1_e5136107.patch:38: trailing whitespace.
+    
+warning: 3 lines add whitespace errors.
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..be794c9 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -119,20 +119,26 @@ class StatelessServer:
+         }
+         return input_queue
+ 
+-    def delete_oldest_application_instance(self):
+-        """
+-        Finds and deletes the oldest application instance
+-        """
+-        oldest_time = min(
+-            details["last_used"] for details in self.application_instances.values()
+-        )
++    def delete_oldest_application_instance (self) :
++        """
++            Finds and deletes the oldest application instance
++            """
++        # Find the scope_id with the smallest last_used timestamp
++        if not self.application_instances:
++            return
++    
++        # Find the oldest instance by comparing last_used timestamps
++        oldest_scope_id = None
++        oldest_timestamp = float('inf')
++    
+         for scope_id, details in self.application_instances.items():
+-            if details["last_used"] == oldest_time:
+-                self.delete_application_instance(scope_id)
+-                # Return to make sure we only delete one in case two have
+-                # the same oldest time
+-                return
+-
++            if details["last_used"] < oldest_timestamp:
++                oldest_timestamp = details["last_used"]
++                oldest_scope_id = scope_id
++    
++        # If we found an oldest instance, delete it
++        if oldest_scope_id is not None:
++            self.delete_application_instance(oldest_scope_id)
+     def delete_application_instance(self, scope_id):
+         """
+         Removes an application instance (makes sure its task is stopped,
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..8752fd2 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -32,7 +32,6 @@ class ApplicationCommunicator:
+         if self._output_queue is None:
+             self._output_queue = asyncio.Queue()
+         return self._output_queue
+-
+     @property
+     def future(self):
+         if self._future is None:

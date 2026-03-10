@@ -1,0 +1,60 @@
+/tmp/PATCH_1_6f2c2a79.patch:11: trailing whitespace.
+    
+/tmp/PATCH_1_6f2c2a79.patch:25: trailing whitespace.
+        
+warning: 2 lines add whitespace errors.
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..41f79f5 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -46,7 +46,7 @@ class _WorkItem:
+             self.future.set_result(result)
+ 
+ 
+-class CurrentThreadExecutor(Executor):
++class CurrentThreadExecutor:
+     """
+     An Executor that actually runs code in the thread it is instantiated in.
+     Passed to other threads running async code, so they can run sync code in
+@@ -120,4 +120,4 @@ class CurrentThreadExecutor(Executor):
+             executor = executor._old_executor
+ 
+         # Return the future
+-        return f
++        return f
+\ No newline at end of file
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..faaa553 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -56,8 +56,7 @@ class WsgiToAsgiInstance:
+         """
+         script_name = scope.get("root_path", "").encode("utf8").decode("latin1")
+         path_info = scope["path"].encode("utf8").decode("latin1")
+-        if path_info.startswith(script_name):
+-            path_info = path_info[len(script_name) :]
++    
+         environ = {
+             "REQUEST_METHOD": scope["method"],
+             "SCRIPT_NAME": script_name,
+@@ -86,19 +85,13 @@ class WsgiToAsgiInstance:
+         # Go through headers and make them into environ entries
+         for name, value in self.scope.get("headers", []):
+             name = name.decode("latin1")
+-            if name == "content-length":
+-                corrected_name = "CONTENT_LENGTH"
+-            elif name == "content-type":
+-                corrected_name = "CONTENT_TYPE"
+-            else:
+-                corrected_name = "HTTP_%s" % name.upper().replace("-", "_")
++        
+             # HTTPbis say only ASCII chars are allowed in headers, but we latin1 just in case
+             value = value.decode("latin1")
+             if corrected_name in environ:
+                 value = environ[corrected_name] + "," + value
+             environ[corrected_name] = value
+         return environ
+-
+     def start_response(self, status, response_headers, exc_info=None):
+         """
+         WSGI start_response callable.

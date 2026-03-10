@@ -1,0 +1,65 @@
+/tmp/PATCH_0_de6183eb.patch:34: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..6e42ccb 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -47,12 +47,11 @@ def _restore_context(context: contextvars.Context) -> None:
+     for cvar in context:
+         cvalue = context.get(cvar)
+         try:
+-            if cvar.get() != cvalue:
++            if cvar.get() == cvalue:
+                 cvar.set(cvalue)
+         except LookupError:
+             cvar.set(cvalue)
+ 
+-
+ # Python 3.12 deprecates asyncio.iscoroutinefunction() as an alias for
+ # inspect.iscoroutinefunction(), whilst also removing the _is_coroutine marker.
+ # The latter is replaced with the inspect.markcoroutinefunction decorator.
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..73c297e 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -35,19 +35,29 @@ class ApplicationCommunicator:
+ 
+     @property
+     def future(self):
++        """
++        The future that runs the ASGI application.
++        Created lazily on first access.
++        """
+         if self._future is None:
+-            # Clear context - this ensures that context vars set in the testing scope
+-            # are not "leaked" into the application which would normally begin with
+-            # an empty context. In Python >= 3.11 this could also be written as:
+-            # asyncio.create_task(..., context=contextvars.Context())
+-            self._future = contextvars.Context().run(
+-                asyncio.create_task,
+-                self.application(
+-                    self.scope, self.input_queue.get, self.output_queue.put
+-                ),
+-            )
++            # Create the application task
++            self._future = asyncio.create_task(self._run_application())
+         return self._future
+ 
++    async def _run_application(self):
++        """
++        Internal method to run the ASGI application and handle message passing.
++        """
++        # Create the ASGI callable with the appropriate scope
++        instance = self.application(self.scope)
++    
++        try:
++            # Run the application with the input and output queues
++            await instance(self.input_queue.get, self.output_queue.put)
++        finally:
++            # Ensure any cleanup happens
++            if hasattr(instance, 'close'):
++                await instance.close()
+     async def wait(self, timeout=1):
+         """
+         Waits for the application to stop itself and returns any exceptions.

@@ -1,0 +1,43 @@
+diff --git a/asgiref/server.py b/asgiref/server.py
+index 131ea43..b364c55 100644
+--- a/asgiref/server.py
++++ b/asgiref/server.py
+@@ -123,7 +123,7 @@ class StatelessServer:
+         """
+         Finds and deletes the oldest application instance
+         """
+-        oldest_time = min(
++        oldest_time = max(
+             details["last_used"] for details in self.application_instances.values()
+         )
+         for scope_id, details in self.application_instances.items():
+@@ -170,4 +170,4 @@ class StatelessServer:
+             exception,
+             "".join(traceback.format_tb(exception.__traceback__)),
+             f"  {exception}",
+-        )
++        )
+\ No newline at end of file
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..66d8197 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -101,17 +101,7 @@ class timeout:
+         self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)
+         return self
+ 
+-    def _do_exit(self, exc_type: Type[BaseException]) -> None:
+-        if exc_type is asyncio.CancelledError and self._cancelled:
+-            self._cancel_handler = None
+-            self._task = None
+-            raise asyncio.TimeoutError
+-        if self._timeout is not None and self._cancel_handler is not None:
+-            self._cancel_handler.cancel()
+-            self._cancel_handler = None
+-        self._task = None
+-        return None
+-
++    def _do_exit (self, exc_type: Type[BaseException]) -> None :
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+             self._task.cancel()

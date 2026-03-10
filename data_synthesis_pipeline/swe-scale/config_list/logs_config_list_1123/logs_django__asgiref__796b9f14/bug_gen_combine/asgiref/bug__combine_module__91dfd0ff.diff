@@ -1,0 +1,62 @@
+/tmp/PATCH_0_0f58c6d6.patch:23: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..b5b45c3 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -67,17 +67,23 @@ class ApplicationCommunicator:
+                 except asyncio.CancelledError:
+                     pass
+ 
+-    def stop(self, exceptions=True):
+-        future = self._future
+-        if future is None:
+-            return
+-
+-        if not future.done():
+-            future.cancel()
+-        elif exceptions:
+-            # Give a chance to raise any exceptions
+-            future.result()
+-
++    def stop (self, exceptions=True) :
++        """
++        Stops the application by cancelling the running task.
++    
++        Args:
++            exceptions: If True, exceptions will be raised. If False, exceptions
++                        will be suppressed.
++        """
++        if self._future is not None and not self._future.done():
++            self._future.cancel()
++            if exceptions:
++                # Allow the exception to propagate
++                try:
++                    self._future.result()
++                except asyncio.CancelledError:
++                    # CancelledError is expected when we cancel the task
++                    pass
+     def __del__(self):
+         # Clean up on deletion
+         try:
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..729c0f4 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -93,14 +93,13 @@ class timeout:
+                 "Timeout context manager should be used " "inside a task"
+             )
+ 
+-        if self._timeout <= 0:
++        if self._timeout < 0:
+             self._loop.call_soon(self._cancel_task)
+             return self
+ 
+         self._cancel_at = self._loop.time() + self._timeout
+         self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)
+         return self
+-
+     def _do_exit(self, exc_type: Type[BaseException]) -> None:
+         if exc_type is asyncio.CancelledError and self._cancelled:
+             self._cancel_handler = None

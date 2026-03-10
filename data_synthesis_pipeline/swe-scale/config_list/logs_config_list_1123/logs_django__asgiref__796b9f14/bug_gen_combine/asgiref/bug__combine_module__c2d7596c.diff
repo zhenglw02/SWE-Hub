@@ -1,0 +1,92 @@
+/tmp/PATCH_0_e869bbc8.patch:17: trailing whitespace.
+            self.__self__ = self.awaitable.__self__  
+warning: 1 line adds whitespace errors.
+/tmp/PATCH_1_1ddd1e1c.patch:32: trailing whitespace.
+    
+/tmp/PATCH_1_1ddd1e1c.patch:41: trailing whitespace.
+    
+/tmp/PATCH_1_1ddd1e1c.patch:44: trailing whitespace.
+    
+warning: 3 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..3fad38d 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -143,24 +143,20 @@ class AsyncToSync(Generic[_P, _R]):
+             not iscoroutinefunction(awaitable)
+             and not iscoroutinefunction(getattr(awaitable, "__call__", awaitable))
+         ):
+-            # Python does not have very reliable detection of async functions
+-            # (lots of false negatives) so this is just a warning.
+             warnings.warn(
+                 "async_to_sync was passed a non-async-marked callable", stacklevel=2
+             )
+         self.awaitable = awaitable
+         try:
+-            self.__self__ = self.awaitable.__self__  # type: ignore[union-attr]
++            self.__self__ = self.awaitable.__self__  
+         except AttributeError:
+-            pass
++            self.__self__ = None
+         self.force_new_loop = force_new_loop
+-        self.main_event_loop = None
++        self.main_event_loop = asyncio.get_running_loop()
+         try:
+-            self.main_event_loop = asyncio.get_running_loop()
++            pass
+         except RuntimeError:
+-            # There's no event loop in this thread.
+             pass
+-
+     def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
+         __traceback_hide__ = True  # noqa: F841
+ 
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..801e322 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -31,25 +31,26 @@ class WsgiToAsgiInstance:
+         self.response_started = False
+         self.response_content_length = None
+ 
+-    async def __call__(self, scope, receive, send):
+-        if scope["type"] != "http":
+-            raise ValueError("WSGI wrapper received a non-HTTP scope")
++    async def __call__ (self, scope, receive, send) :
++        # Store the scope for later use in environ building
+         self.scope = scope
+-        with SpooledTemporaryFile(max_size=65536) as body:
+-            # Alright, wait for the http.request messages
+-            while True:
+-                message = await receive()
+-                if message["type"] != "http.request":
+-                    raise ValueError("WSGI wrapper received a non-HTTP-request message")
+-                body.write(message.get("body", b""))
+-                if not message.get("more_body"):
+-                    break
+-            body.seek(0)
+-            # Wrap send so it can be called from the subthread
+-            self.sync_send = AsyncToSync(send)
+-            # Call the WSGI app
+-            await self.run_wsgi_app(body)
+-
++        self.send = send
++        self.response_started = False
++    
++        # Read the entire request body
++        body = SpooledTemporaryFile(max_size=64 * 1024)
++        more_body = True
++        while more_body:
++            message = await receive()
++            body.write(message.get("body", b""))
++            more_body = message.get("more_body", False)
++        body.seek(0)
++    
++        # Wrap the send method to be synchronous for WSGI
++        self.sync_send = AsyncToSync(send)
++    
++        # Run the WSGI application
++        await self.run_wsgi_app(body)
+     def build_environ(self, scope, body):
+         """
+         Builds a scope and request body into a WSGI environ object.

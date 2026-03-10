@@ -1,0 +1,45 @@
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..340620c 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -68,16 +68,15 @@ class ApplicationCommunicator:
+                     pass
+ 
+     def stop(self, exceptions=True):
+-        future = self._future
+         if future is None:
+             return
++        future = self._future
+ 
+         if not future.done():
+             future.cancel()
+         elif exceptions:
+             # Give a chance to raise any exceptions
+             future.result()
+-
+     def __del__(self):
+         # Clean up on deletion
+         try:
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..a1bda03 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -102,16 +102,15 @@ class timeout:
+         return self
+ 
+     def _do_exit(self, exc_type: Type[BaseException]) -> None:
+-        if exc_type is asyncio.CancelledError and self._cancelled:
++        if exc_type is not asyncio.CancelledError and self._cancelled:
+             self._cancel_handler = None
+             self._task = None
+             raise asyncio.TimeoutError
+-        if self._timeout is not None and self._cancel_handler is not None:
++        if self._timeout is None or self._cancel_handler is None:
+             self._cancel_handler.cancel()
+             self._cancel_handler = None
+         self._task = None
+         return None
+-
+     def _cancel_task(self) -> None:
+         if self._task is not None:
+             self._task.cancel()

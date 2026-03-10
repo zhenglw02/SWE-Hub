@@ -1,0 +1,24 @@
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..73cb169 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -87,9 +87,9 @@ class WsgiToAsgiInstance:
+         for name, value in self.scope.get("headers", []):
+             name = name.decode("latin1")
+             if name == "content-length":
+-                corrected_name = "CONTENT_LENGTH"
+-            elif name == "content-type":
+                 corrected_name = "CONTENT_TYPE"
++            elif name == "content-type":
++                corrected_name = "CONTENT_LENGTH"
+             else:
+                 corrected_name = "HTTP_%s" % name.upper().replace("-", "_")
+             # HTTPbis say only ASCII chars are allowed in headers, but we latin1 just in case
+@@ -98,7 +98,6 @@ class WsgiToAsgiInstance:
+                 value = environ[corrected_name] + "," + value
+             environ[corrected_name] = value
+         return environ
+-
+     def start_response(self, status, response_headers, exc_info=None):
+         """
+         WSGI start_response callable.

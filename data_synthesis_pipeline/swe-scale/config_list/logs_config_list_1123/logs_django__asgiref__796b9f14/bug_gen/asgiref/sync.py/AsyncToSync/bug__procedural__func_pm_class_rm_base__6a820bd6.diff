@@ -1,0 +1,21 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..2c03022 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -110,7 +110,7 @@ class ThreadSensitiveContext:
+         SyncToAsync.thread_sensitive_context.reset(self.token)
+ 
+ 
+-class AsyncToSync(Generic[_P, _R]):
++class AsyncToSync:
+     """
+     Utility class which turns an awaitable that only works on the thread with
+     the event loop into a synchronous callable that works in a subthread.
+@@ -309,7 +309,6 @@ class AsyncToSync(Generic[_P, _R]):
+                 task_context.remove(current_task)
+             context[0] = contextvars.copy_context()
+ 
+-
+ class SyncToAsync(Generic[_P, _R]):
+     """
+     Utility class which turns a synchronous callable into an awaitable that

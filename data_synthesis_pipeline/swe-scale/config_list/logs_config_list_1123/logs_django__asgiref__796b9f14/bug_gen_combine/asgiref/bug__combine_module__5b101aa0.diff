@@ -1,0 +1,78 @@
+/tmp/PATCH_0_79394860.patch:46: trailing whitespace.
+        
+warning: 1 line adds whitespace errors.
+/tmp/PATCH_1_95c80452.patch:14: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..b47b9a8 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -120,12 +120,12 @@ class Local:
+         with self._lock_storage() as storage:
+             return getattr(storage, key)
+ 
+-    def __setattr__(self, key, value):
+-        if key in ("_local", "_storage", "_thread_critical", "_thread_lock"):
++    def __setattr__ (self, key, value) :
++        if key in ("_thread_critical", "_thread_lock", "_storage"):
+             return super().__setattr__(key, value)
++    
+         with self._lock_storage() as storage:
+             setattr(storage, key, value)
+-
+     def __delattr__(self, key):
+         with self._lock_storage() as storage:
+             delattr(storage, key)
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..f3ba70c 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -28,25 +28,29 @@ class timeout:
+     loop - asyncio compatible event loop
+     """
+ 
+-    def __init__(
+-        self,
+-        timeout: Optional[float],
+-        *,
+-        loop: Optional[asyncio.AbstractEventLoop] = None,
+-    ) -> None:
+-        self._timeout = timeout
+-        if loop is None:
+-            loop = asyncio.get_running_loop()
+-        else:
+-            warnings.warn(
+-                """The loop argument to timeout() is deprecated.""", DeprecationWarning
+-            )
+-        self._loop = loop
+-        self._task = None  # type: Optional[asyncio.Task[Any]]
+-        self._cancelled = False
+-        self._cancel_handler = None  # type: Optional[asyncio.Handle]
+-        self._cancel_at = None  # type: Optional[float]
+-
++    def __init__ ( self, timeout: Optional[float], *, loop: Optional[asyncio.AbstractEventLoop] = None, ) -> None :
++            self._timeout = timeout
++            if loop is None:
++                self._loop = asyncio.get_event_loop()
++            else:
++                self._loop = loop
++                # Warn if loop is passed and we can detect it's deprecated
++                try:
++                    # This warning was introduced in Python 3.10
++                    warnings.warn(
++                        "The loop argument is deprecated since Python 3.8, "
++                        "and scheduled for removal in Python 3.12.",
++                        DeprecationWarning,
++                        stacklevel=2,
++                    )
++                except (AttributeError, NameError):
++                    # warnings might not be available or version differs
++                    pass
++        
++            self._task = None
++            self._cancel_at = None
++            self._cancel_handler = None
++            self._cancelled = False
+     def __enter__(self) -> "timeout":
+         return self._do_enter()

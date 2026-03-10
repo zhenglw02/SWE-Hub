@@ -1,0 +1,96 @@
+/tmp/PATCH_0_a374b6a3.patch:32: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+/tmp/PATCH_1_54b78f6e.patch:11: trailing whitespace.
+    
+/tmp/PATCH_1_54b78f6e.patch:25: trailing whitespace.
+        
+warning: 2 lines add whitespace errors.
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..f6eac74 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -469,29 +469,30 @@ class SyncToAsync(Generic[_P, _R]):
+         func = functools.partial(self.__call__, parent)
+         return functools.update_wrapper(func, self.func)
+ 
+-    def thread_handler(self, loop, exc_info, task_context, func, *args, **kwargs):
++    def thread_handler (self, loop, exc_info, task_context, func, *args, **kwargs) :
+         """
+-        Wraps the sync application with exception handling.
+-        """
+-
+-        __traceback_hide__ = True  # noqa: F841
+-
+-        # Set the threadlocal for AsyncToSync
++            Wraps the sync application with exception handling.
++            """
++        # Set the threadlocal to pass the loop onto any underlying AsyncToSync
+         self.threadlocal.main_event_loop = loop
+         self.threadlocal.main_event_loop_pid = os.getpid()
+         self.threadlocal.task_context = task_context
+-
+-        # Run the function
+-        # If we have an exception, run the function inside the except block
+-        # after raising it so exc_info is correctly populated.
+-        if exc_info[1]:
+-            try:
+-                raise exc_info[1]
+-            except BaseException:
++    
++        try:
++            # If we have an exception, run the function inside the except block
++            # after raising it so exc_info is correctly populated.
++            if exc_info[1]:
++                try:
++                    raise exc_info[1]
++                except:
++                    return func(*args, **kwargs)
++            else:
+                 return func(*args, **kwargs)
+-        else:
+-            return func(*args, **kwargs)
+-
++        finally:
++            # Clear the threadlocal after execution
++            self.threadlocal.main_event_loop = None
++            self.threadlocal.main_event_loop_pid = None
++            self.threadlocal.task_context = None
+ 
+ @overload
+ def async_to_sync(
+diff --git a/asgiref/wsgi.py b/asgiref/wsgi.py
+index b9868e3..faaa553 100644
+--- a/asgiref/wsgi.py
++++ b/asgiref/wsgi.py
+@@ -56,8 +56,7 @@ class WsgiToAsgiInstance:
+         """
+         script_name = scope.get("root_path", "").encode("utf8").decode("latin1")
+         path_info = scope["path"].encode("utf8").decode("latin1")
+-        if path_info.startswith(script_name):
+-            path_info = path_info[len(script_name) :]
++    
+         environ = {
+             "REQUEST_METHOD": scope["method"],
+             "SCRIPT_NAME": script_name,
+@@ -86,19 +85,13 @@ class WsgiToAsgiInstance:
+         # Go through headers and make them into environ entries
+         for name, value in self.scope.get("headers", []):
+             name = name.decode("latin1")
+-            if name == "content-length":
+-                corrected_name = "CONTENT_LENGTH"
+-            elif name == "content-type":
+-                corrected_name = "CONTENT_TYPE"
+-            else:
+-                corrected_name = "HTTP_%s" % name.upper().replace("-", "_")
++        
+             # HTTPbis say only ASCII chars are allowed in headers, but we latin1 just in case
+             value = value.decode("latin1")
+             if corrected_name in environ:
+                 value = environ[corrected_name] + "," + value
+             environ[corrected_name] = value
+         return environ
+-
+     def start_response(self, status, response_headers, exc_info=None):
+         """
+         WSGI start_response callable.

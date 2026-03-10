@@ -1,0 +1,9 @@
+{
+    "instance_id": "django__asgiref__796b9f14.bug__procedural__func_pm_flip_operators__78ef8e6c",
+    "patch": "diff --git a/asgiref/timeout.py b/asgiref/timeout.py\nindex fd5381d..8feddd2 100644\n--- a/asgiref/timeout.py\n+++ b/asgiref/timeout.py\n@@ -93,14 +93,13 @@ class timeout:\n                 \"Timeout context manager should be used \" \"inside a task\"\n             )\n \n-        if self._timeout <= 0:\n+        if self._timeout > 0:\n             self._loop.call_soon(self._cancel_task)\n             return self\n \n         self._cancel_at = self._loop.time() + self._timeout\n         self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)\n         return self\n-\n     def _do_exit(self, exc_type: Type[BaseException]) -> None:\n         if exc_type is asyncio.CancelledError and self._cancelled:\n             self._cancel_handler = None\n",
+    "image_name": "iregistry.baidu-int.com/acg-airec/r2e_gym/my_swe_smith/swesmith.x86_64.django__asgiref.796b9f14:latest",
+    "repo": "django__asgiref__796b9f14",
+    "commit": "796b9f14fd92d3131c7c39fab308ddd986d271eb",
+    "file_path": "/mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/bug_gen/asgiref/timeout.py/_do_exit/bug__procedural__func_pm_flip_operators__78ef8e6c.diff",
+    "log_parser": "parse_log_pytest_xdist"
+}

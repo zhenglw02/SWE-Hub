@@ -1,0 +1,64 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.11, pytest-8.4.2, pluggy-1.6.0 -- /opt/miniconda3/envs/testbed/bin/python
+cachedir: .pytest_cache
+rootdir: /testbed
+configfile: setup.cfg
+testpaths: tests
+plugins: xdist-3.8.0, asyncio-1.2.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+created: 10/10 workers
+10 workers [83 items]
+
+scheduling tests via LoadScopeScheduling
+
+tests/test_sync_contextvars.py::test_thread_sensitive_with_context_different 
+tests/test_wsgi.py::test_basic_wsgi 
+tests/test_garbage_collection.py::test_thread_critical_Local_remove_all_reference_cycles 
+tests/test_sync.py::ASGITest::test_wrapped_case_is_collected 
+tests/test_server.py::test_stateless_server 
+tests/test_local.py::test_local_task 
+tests/test_sync.py::test_sync_to_async 
+tests/test_compatibility.py::test_is_double_callable 
+tests/test_testing.py::test_receive_nothing 
+[gw3] [  1%] PASSED tests/test_compatibility.py::test_is_double_callable 
+tests/test_compatibility.py::test_double_to_single_signature 
+[gw3] [  2%] PASSED tests/test_compatibility.py::test_double_to_single_signature 
+tests/test_compatibility.py::test_double_to_single_communicator 
+[gw1] [  3%] PASSED tests/test_local.py::test_local_task 
+tests/test_local.py::test_local_thread 
+[gw1] [  4%] PASSED tests/test_local.py::test_local_thread 
+[gw5] [  6%] PASSED tests/test_server.py::test_stateless_server 
+tests/test_server.py::test_server_delete_instance 
+[gw5] [  7%] PASSED tests/test_server.py::test_server_delete_instance 
+tests/test_local.py::test_local_thread_nested 
+[gw1] [  8%] PASSED tests/test_local.py::test_local_thread_nested 
+tests/test_local.py::test_local_cycle 
+[gw3] [  9%] PASSED tests/test_compatibility.py::test_double_to_single_communicator 
+[gw4] [ 10%] PASSED tests/test_sync_contextvars.py::test_thread_sensitive_with_context_different 
+tests/test_sync_contextvars.py::test_sync_to_async_contextvars 
+[gw7] [ 12%] PASSED tests/test_garbage_collection.py::test_thread_critical_Local_remove_all_reference_cycles 
+[gw1] [ 13%] PASSED tests/test_local.py::test_local_cycle 
+tests/test_local.py::test_local_task_to_sync 
+[gw1] [ 14%] PASSED tests/test_local.py::test_local_task_to_sync 
+tests/test_local.py::test_local_thread_to_async 
+[gw6] [ 15%] FAILED tests/test_testing.py::test_receive_nothing 
+[gw4] [ 16%] PASSED tests/test_sync_contextvars.py::test_sync_to_async_contextvars 
+tests/test_sync_contextvars.py::test_async_to_sync_contextvars 
+[gw0] [ 18%] PASSED tests/test_sync.py::test_sync_to_async 
+tests/test_sync.py::test_sync_to_async_fail_non_function 
+[gw0] [ 19%] PASSED tests/test_sync.py::test_sync_to_async_fail_non_function 
+tests/test_sync.py::test_sync_to_async_fail_async 
+[gw0] [ 20%] PASSED tests/test_sync.py::test_sync_to_async_fail_async 
+tests/test_sync.py::test_async_to_sync_fail_partial 
+[gw0] [ 21%] PASSED tests/test_sync.py::test_async_to_sync_fail_partial 
+tests/test_sync.py::test_sync_to_async_raises_typeerror_for_async_callable_instance 
+[gw0] [ 22%] PASSED tests/test_sync.py::test_sync_to_async_raises_typeerror_for_async_callable_instance 
+tests/test_sync.py::test_sync_to_async_decorator 
+[gw0] [ 24%] PASSED tests/test_sync.py::test_sync_to_async_decorator 
+tests/test_sync.py::test_nested_sync_to_async_retains_wrapped_function_attributes 
+[gw0] [ 25%] PASSED tests/test_sync.py::test_nested_sync_to_async_retains_wrapped_function_attributes 
+tests/test_sync.py::test_sync_to_async_method_decorator 
+[gw0] [ 26%] PASSED tests/test_sync.py::test_sync_to_async_method_decorator 
+tests/test_sync.py::test_sync_to_async_method_self_attribute 
+[gw0] [ 27%] PASSED tests/test_sync.py::test_sync_to_async_method_self_attribute 
+tests/test_sync.py::test_async_to_sync_to_async 

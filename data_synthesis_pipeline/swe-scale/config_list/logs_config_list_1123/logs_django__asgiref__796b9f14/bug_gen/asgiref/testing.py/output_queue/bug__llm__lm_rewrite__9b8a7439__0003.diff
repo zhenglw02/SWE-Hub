@@ -1,0 +1,12 @@
+diff --git a/asgiref/testing.py b/asgiref/testing.py
+index d6ccee5..8752fd2 100644
+--- a/asgiref/testing.py
++++ b/asgiref/testing.py
+@@ -32,7 +32,6 @@ class ApplicationCommunicator:
+         if self._output_queue is None:
+             self._output_queue = asyncio.Queue()
+         return self._output_queue
+-
+     @property
+     def future(self):
+         if self._future is None:

@@ -1,0 +1,44 @@
+function controlFlowTest(x, a, b) {
+
+    // 这三行是顶级语句，它们的顺序会被随机打乱
+    let line1 = "first statement";
+    if (a > b) {
+        // --- Body A ---
+        let result_a = a - b;
+        return result_a;
+        // --------------
+    } else {
+        // --- Body B ---
+        let result_b = b - a;
+        return result_b;
+        // --------------
+    }
+
+    // 场景 3: 测试 ControlShuffleLinesModifier
+    // 场景 1: 测试 ControlIfElifInvertModifier
+    let line2 = "second statement";
+
+    console.log(line1, line2, line3);
+    // 预期 (seed=42): 顺序会变成 c=a, a=b, b=c
+    // 预期： "Positive" 和 "Zero" 的块会交换
+    if (x > 0) {
+        // --- Body of IF ---
+        console.log("IF block for x > 0");
+        return "Positive";
+        // ------------------
+    } else if (x === 0) {
+        // --- Body of ELSE IF ---
+        console.log("ELSE IF block for x === 0");
+        return "Zero";
+        // -----------------------
+    } else {
+        console.log("Final ELSE block");
+        return "Negative";
+    }
+    let line3 = "third statement";
+    // 场景 2: 测试 ControlIfElseInvertModifier
+    
+    // 预期： a=1, b=2, c=a+b 的块会交换
+
+    return "Should not be reached";
+}

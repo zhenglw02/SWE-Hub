@@ -1,0 +1,21 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..d707dd3 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -446,7 +446,7 @@ class SyncToAsync(Generic[_P, _R]):
+                     await task
+                     cancel_parent = False
+                 except asyncio.CancelledError:
+-                    pass
++                    cancel_parent = False
+             except IndexError:
+                 pass
+             if exec_coro.done():
+@@ -492,7 +492,6 @@ class SyncToAsync(Generic[_P, _R]):
+         else:
+             return func(*args, **kwargs)
+ 
+-
+ @overload
+ def async_to_sync(
+     *,

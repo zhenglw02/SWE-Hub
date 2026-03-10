@@ -1,0 +1,47 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..bf15400 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -32,20 +32,17 @@ class _WorkItem:
+         self.args = args
+         self.kwargs = kwargs
+ 
+-    def run(self) -> None:
+-        __traceback_hide__ = True  # noqa: F841
++    def run (self) -> None :
+         if not self.future.set_running_or_notify_cancel():
+             return
++
+         try:
+             result = self.fn(*self.args, **self.kwargs)
+         except BaseException as exc:
+             self.future.set_exception(exc)
+-            # Break a reference cycle with the exception 'exc'
+-            self = None  # type: ignore[assignment]
+         else:
+             self.future.set_result(result)
+ 
+-
+ class CurrentThreadExecutor(Executor):
+     """
+     An Executor that actually runs code in the thread it is instantiated in.
+diff --git a/asgiref/timeout.py b/asgiref/timeout.py
+index fd5381d..8feddd2 100644
+--- a/asgiref/timeout.py
++++ b/asgiref/timeout.py
+@@ -93,14 +93,13 @@ class timeout:
+                 "Timeout context manager should be used " "inside a task"
+             )
+ 
+-        if self._timeout <= 0:
++        if self._timeout > 0:
+             self._loop.call_soon(self._cancel_task)
+             return self
+ 
+         self._cancel_at = self._loop.time() + self._timeout
+         self._cancel_handler = self._loop.call_at(self._cancel_at, self._cancel_task)
+         return self
+-
+     def _do_exit(self, exc_type: Type[BaseException]) -> None:
+         if exc_type is asyncio.CancelledError and self._cancelled:
+             self._cancel_handler = None

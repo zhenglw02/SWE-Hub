@@ -1,0 +1,27 @@
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..3c00b91 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -100,15 +100,13 @@ class ThreadSensitiveContext:
+ 
+         return self
+ 
+-    async def __aexit__(self, exc, value, tb):
+-        if not self.token:
+-            return
+-
+-        executor = SyncToAsync.context_to_thread_executor.pop(self, None)
+-        if executor:
+-            executor.shutdown()
+-        SyncToAsync.thread_sensitive_context.reset(self.token)
+-
++    async def __aexit__ (self, exc, value, tb) :
++        # If we have a token, then we are the outer-most context and should
++        # remove the context from the context variable.
++        if self.token is not None:
++            self.token = None
++            # Remove the current context from the context variable
++            _ = SyncToAsync.thread_sensitive_context.reset()
+ 
+ class AsyncToSync(Generic[_P, _R]):
+     """

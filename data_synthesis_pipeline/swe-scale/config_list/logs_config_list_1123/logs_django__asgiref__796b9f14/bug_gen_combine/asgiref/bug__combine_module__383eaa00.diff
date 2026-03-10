@@ -1,0 +1,87 @@
+/tmp/PATCH_0_f3734404.patch:38: trailing whitespace.
+    
+warning: 1 line adds whitespace errors.
+/tmp/PATCH_1_135a91ab.patch:22: trailing whitespace.
+        
+warning: 1 line adds whitespace errors.
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..6140e14 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -60,35 +60,7 @@ class CurrentThreadExecutor(Executor):
+         self._broken = False  # synchronized by _work_ready
+         self._old_executor = old_executor
+ 
+-    def run_until_future(self, future: "Future[Any]") -> None:
+-        """
+-        Runs the code in the work queue until a result is available from the future.
+-        Should be run from the thread the executor is initialised in.
+-        """
+-        # Check we're in the right thread
+-        if threading.current_thread() != self._work_thread:
+-            raise RuntimeError(
+-                "You cannot run CurrentThreadExecutor from a different thread"
+-            )
+-
+-        def done(future: "Future[Any]") -> None:
+-            with self._work_ready:
+-                self._broken = True
+-                self._work_ready.notify()
+-
+-        future.add_done_callback(done)
+-        # Keep getting and running work items until the future we're waiting for
+-        # is done and the queue is empty.
+-        while True:
+-            with self._work_ready:
+-                while not self._work_items and not self._broken:
+-                    self._work_ready.wait()
+-                if not self._work_items:
+-                    break
+-                # Get a work item and run it
+-                work_item = self._work_items.popleft()
+-            work_item.run()
+-            del work_item
++    
+ 
+     def submit(
+         self,
+@@ -120,4 +92,4 @@ class CurrentThreadExecutor(Executor):
+             executor = executor._old_executor
+ 
+         # Return the future
+-        return f
++        return f
+\ No newline at end of file
+diff --git a/asgiref/local.py b/asgiref/local.py
+index 845313a..85cd771 100644
+--- a/asgiref/local.py
++++ b/asgiref/local.py
+@@ -20,14 +20,20 @@ class _CVar:
+         except KeyError:
+             raise AttributeError(f"{self!r} object has no attribute {key!r}")
+ 
+-    def __setattr__(self, key: str, value: Any) -> None:
+-        if key == "_data":
+-            return super().__setattr__(key, value)
+-
+-        storage_object = self._data.get({}).copy()
+-        storage_object[key] = value
+-        self._data.set(storage_object)
+-
++    def __setattr__ (self, key: str, value: Any) -> None :
++            if key == "_data":
++                # Special case for setting the _data attribute itself
++                super().__setattr__(key, value)
++                return
++        
++            # Get current storage or empty dict if none exists
++            storage_object = self._data.get({})
++            # Create a copy to avoid mutating the original
++            storage_object = storage_object.copy()
++            # Update with new key-value pair
++            storage_object[key] = value
++            # Set the updated storage back to the context variable
++            self._data.set(storage_object)
+     def __delattr__(self, key: str) -> None:
+         storage_object = self._data.get({}).copy()
+         if key in storage_object:

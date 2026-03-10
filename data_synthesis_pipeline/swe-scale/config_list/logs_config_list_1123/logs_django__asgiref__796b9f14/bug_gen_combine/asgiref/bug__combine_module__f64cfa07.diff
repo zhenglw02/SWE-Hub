@@ -1,0 +1,62 @@
+diff --git a/asgiref/current_thread_executor.py b/asgiref/current_thread_executor.py
+index 6293cbd..74e6de5 100644
+--- a/asgiref/current_thread_executor.py
++++ b/asgiref/current_thread_executor.py
+@@ -98,7 +98,7 @@ class CurrentThreadExecutor(Executor):
+         **kwargs: _P.kwargs,
+     ) -> "Future[_R]":
+         # Check they're not submitting from the same thread
+-        if threading.current_thread() == self._work_thread:
++        if threading.current_thread().ident == self._work_thread.ident:
+             raise RuntimeError(
+                 "You cannot submit onto CurrentThreadExecutor from its own thread"
+             )
+@@ -110,7 +110,7 @@ class CurrentThreadExecutor(Executor):
+         executor = self
+         while True:
+             with executor._work_ready:
+-                if not executor._broken:
++                if executor._broken:
+                     # Add to work queue
+                     executor._work_items.append(work_item)
+                     executor._work_ready.notify()
+@@ -120,4 +120,4 @@ class CurrentThreadExecutor(Executor):
+             executor = executor._old_executor
+ 
+         # Return the future
+-        return f
++        return f
+\ No newline at end of file
+diff --git a/asgiref/sync.py b/asgiref/sync.py
+index 54496ef..79f25ca 100644
+--- a/asgiref/sync.py
++++ b/asgiref/sync.py
+@@ -183,10 +183,7 @@ class AsyncToSync(Generic[_P, _R]):
+         except RuntimeError:
+             pass
+         else:
+-            raise RuntimeError(
+-                "You cannot use AsyncToSync in the same thread as an async event loop - "
+-                "just await the async function directly."
+-            )
++            pass
+ 
+         # Make a future for the return information
+         call_result: "Future[_R]" = Future()
+@@ -301,7 +298,7 @@ class AsyncToSync(Generic[_P, _R]):
+             else:
+                 result = await awaitable
+         except BaseException as e:
+-            call_result.set_exception(e)
++            call_result.set_result(e)
+         else:
+             call_result.set_result(result)
+         finally:
+@@ -309,7 +306,6 @@ class AsyncToSync(Generic[_P, _R]):
+                 task_context.remove(current_task)
+             context[0] = contextvars.copy_context()
+ 
+-
+ class SyncToAsync(Generic[_P, _R]):
+     """
+     Utility class which turns a synchronous callable into an awaitable that

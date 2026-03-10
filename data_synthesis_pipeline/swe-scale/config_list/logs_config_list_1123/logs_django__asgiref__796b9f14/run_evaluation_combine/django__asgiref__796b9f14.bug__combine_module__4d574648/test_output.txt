@@ -1,0 +1,26 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.11, pytest-8.4.2, pluggy-1.6.0 -- /opt/miniconda3/envs/testbed/bin/python
+cachedir: .pytest_cache
+rootdir: /testbed
+configfile: setup.cfg
+testpaths: tests
+plugins: xdist-3.8.0, asyncio-1.2.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+created: 10/10 workers
+10 workers [1 item]
+
+scheduling tests via LoadScopeScheduling
+
+tests/test_garbage_collection.py::test_thread_critical_Local_remove_all_reference_cycles 
+[gw0] [100%] PASSED tests/test_garbage_collection.py::test_thread_critical_Local_remove_all_reference_cycles 
+
+- generated xml file: /mnt/cfs_bj_mt/workspace/zhengliwei/code/baidu/qianfan/code-data-agent-sdk/data_synthesis_pipeline/swe-smith/qianfan_coder_smith/config_list/logs_config_list_1123/logs_django__asgiref__796b9f14/run_evaluation_combine/django__asgiref__796b9f14.bug__combine_module__4d574648/test_report.xml -
+=========================== short test summary info ============================
+ERROR tests/test_compatibility.py
+ERROR tests/test_local.py
+ERROR tests/test_server.py
+ERROR tests/test_sync.py
+ERROR tests/test_sync_contextvars.py
+ERROR tests/test_testing.py
+ERROR tests/test_wsgi.py
+========================= 1 passed, 7 errors in 1.11s ==========================

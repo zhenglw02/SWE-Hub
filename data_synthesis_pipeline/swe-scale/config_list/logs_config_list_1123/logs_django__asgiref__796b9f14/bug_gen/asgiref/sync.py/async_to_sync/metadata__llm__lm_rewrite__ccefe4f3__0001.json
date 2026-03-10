@@ -1,0 +1,9 @@
+{
+  "instance_id": "llm__lm_rewrite__ccefe4f3__0001",
+  "hash_code": "ccefe4f3",
+  "cost": 0,
+  "explanation": "",
+  "output": "```python\ndef async_to_sync ( awaitable: Optional[ Union[ Callable[_P, Coroutine[Any, Any, _R]], Callable[_P, Awaitable[_R]], ] ] = None, *, force_new_loop: bool = False, ) -> Union[ Callable[ [Union[Callable[_P, Coroutine[Any, Any, _R]], Callable[_P, Awaitable[_R]]]], Callable[_P, _R], ], Callable[_P, _R], ] :\n    if awaitable is None:\n        return lambda f: AsyncToSync(f, force_new_loop=force_new_loop)\n    return AsyncToSync(awaitable, force_new_loop=force_new_loop)\n```\n\nThis implementation:\n\n1. Handles both decorator usage patterns:\n   - `@async_to_sync` without parentheses\n   - `@async_to_sync()` or `@async_to_sync(force_new_loop=True)` with parameters\n\n2. Returns an `AsyncToSync` instance appropriately wrapped based on whether `awaitable` is provided:\n   - If `awaitable` is `None`, returns a lambda that takes a function and creates an `AsyncToSync` instance\n   - If `awaitable` is provided, directly returns an `AsyncToSync` instance\n\n3. Passes the `force_new_loop` parameter through to the `AsyncToSync` constructor\n\n4. Maintains the exact function signature as specified, including all type annotations and default values\n\nThe implementation leverages the existing `AsyncToSync` class which contains the actual logic for converting async functions to sync ones.",
+  "rewrite": "def async_to_sync ( awaitable: Optional[ Union[ Callable[_P, Coroutine[Any, Any, _R]], Callable[_P, Awaitable[_R]], ] ] = None, *, force_new_loop: bool = False, ) -> Union[ Callable[ [Union[Callable[_P, Coroutine[Any, Any, _R]], Callable[_P, Awaitable[_R]]]], Callable[_P, _R], ], Callable[_P, _R], ] :\n    if awaitable is None:\n        return lambda f: AsyncToSync(f, force_new_loop=force_new_loop)\n    return AsyncToSync(awaitable, force_new_loop=force_new_loop)",
+  "strategy": "lm_rewrite"
+}
